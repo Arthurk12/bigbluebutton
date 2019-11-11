@@ -521,6 +521,7 @@ public class MeetingService implements MessageListener {
       // TODO: Need a better way to store these values for recordings
       metadata.put("meetingId", m.getExternalId());
       metadata.put("meetingName", m.getName());
+      metadata.put("record", String.valueOf(m.isRecord()));
       metadata.put("isBreakout", m.isBreakout().toString());
 
       storeService.recordMeetingInfo(m.getInternalId(), metadata);
