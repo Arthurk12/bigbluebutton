@@ -25,6 +25,7 @@ trait TestFixtures {
   val webcamsOnlyForModerator = false
   val meetingCameraCap = 0
   val userCameraCap = 0
+  val maxPinnedCameras = 3
   val moderatorPassword = "modpass"
   val viewerPassword = "viewpass"
   val learningDashboardAccessToken = "ldToken"
@@ -45,7 +46,7 @@ trait TestFixtures {
   val metadata: collection.immutable.Map[String, String] = Map("foo" -> "bar", "bar" -> "baz", "baz" -> "foo")
 
   val meetingProp = MeetingProp(name = meetingName, extId = externalMeetingId, intId = meetingId,
-    meetingCameraCap = meetingCameraCap,
+    meetingCameraCap = meetingCameraCap, maxPinnedCameras = maxPinnedCameras,
     isBreakout = isBreakout.booleanValue())
   val breakoutProps = BreakoutProps(parentId = parentMeetingId, sequence = sequence, freeJoin = false, breakoutRooms = Vector())
 
