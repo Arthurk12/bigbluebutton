@@ -250,6 +250,8 @@ public:
     signalCandidates: false
     # Forces relay usage only on Firefox. Applies to listen only, webcams and screenshare.
     forceRelayOnFirefox: false
+    # traceLogs: <Boolean> - enable trace logs in SFU peers
+    traceLogs: false
     cameraTimeouts:
       # Base camera timeout: used as the camera *sharing* timeout and
       # as the minimum camera subscribe reconnection timeout
@@ -611,11 +613,11 @@ public:
     #   be used in Chromium browsers. Works around the fact that Chromium has no
     #   echo cancellation in non-rtc audio streams
     localEchoTest:
-      enabled: false
-      initialHearingState: false
-      useRtcLoopbackInChromium: false
+      enabled: true
+      initialHearingState: true
+      useRtcLoopbackInChromium: true
     # showVolumeMeter: shows an energy bar for microphones in the AudioSettings view
-    showVolumeMeter: false
+    showVolumeMeter: true
   stats:
     enabled: true
     interval: 10000

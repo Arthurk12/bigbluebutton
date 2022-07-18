@@ -81,6 +81,7 @@ class MeetingActor(
   with MuteMeetingCmdMsgHdlr
   with IsMeetingMutedReqMsgHdlr
   with GetGlobalAudioPermissionReqMsgHdlr
+  with GetMicrophonePermissionReqMsgHdlr
   with GetScreenBroadcastPermissionReqMsgHdlr
   with GetScreenSubscribePermissionReqMsgHdlr
 
@@ -471,6 +472,8 @@ class MeetingActor(
         handleUserStatusVoiceConfEvtMsg(m)
       case m: GetGlobalAudioPermissionReqMsg =>
         handleGetGlobalAudioPermissionReqMsg(m)
+      case m: GetMicrophonePermissionReqMsg =>
+        handleGetMicrophonePermissionReqMsg(m)
 
       // Layout
       case m: GetCurrentLayoutReqMsg  => handleGetCurrentLayoutReqMsg(m)
@@ -501,6 +504,9 @@ class MeetingActor(
       // Presentation
       case m: PreuploadedPresentationsSysPubMsg              => presentationApp2x.handle(m, liveMeeting, msgBus)
       case m: AssignPresenterReqMsg                          => state = handlePresenterChange(m, state)
+      case m: MakePresentationWithAnnotationDownloadReqMsg   => presentationPodsApp.handle(m, state, liveMeeting, msgBus)
+      case m: ExportPresentationWithAnnotationReqMsg         => presentationPodsApp.handle(m, state, liveMeeting, msgBus)
+      case m: NewPresAnnFileAvailableMsg                     => log.info("***** New PDF with annotations available.")
 
       // Presentation Pods
       case m: CreateNewPresentationPodPubMsg                 => state = presentationPodsApp.handle(m, state, liveMeeting, msgBus)

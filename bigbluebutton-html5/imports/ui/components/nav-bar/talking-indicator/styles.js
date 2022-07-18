@@ -93,7 +93,7 @@ const TalkingIndicatorButton = styled(Button)`
     opacity: 1;
   }
 
-  ${({ spoke }) => spoke && `
+  ${({ $spoke }) => $spoke && `
     opacity: ${spokeOpacity};
 
     [dir="rtl"]  & {
@@ -101,15 +101,15 @@ const TalkingIndicatorButton = styled(Button)`
     }
   `}
 
-  ${({ muted }) => muted && `
+  ${({ $muted }) => $muted && `
     cursor: default;
-  
+
     i {
       background-color: ${colorDanger};
     }
   `}
 
-  ${({ isViewer }) => isViewer && `
+  ${({ $isViewer }) => $isViewer && `
     cursor: default;
   `}
 `;
