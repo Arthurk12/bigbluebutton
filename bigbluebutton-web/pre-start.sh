@@ -68,18 +68,18 @@ for key in $KEYS; do
     echo "The meeting ${meetingId} is recorded"
     hasTag $meetingId; if [ $? != 0 ]; then
       echo "Creating recorded done tag for meeting ${meetingId}"
-      sudo -u bigbluebutton touch ${RECORDED_DIR}/${meetingId}.done
+      touch ${RECORDED_DIR}/${meetingId}.done
     fi
   else
     hasTag $meetingId; if [ $? != 0 ]; then
       echo "Creating non-recorded tag for meeting ${meetingId}"
-      sudo -u bigbluebutton touch ${RECORDED_DIR}/${meetingId}.norecord
+      touch ${RECORDED_DIR}/${meetingId}.norecord
     fi
   fi
 
   hasEndedTag $meetingId; if [ $? != 0 ]; then
     echo "Creating ended done tag for meeting ${meetingId}"
-    sudo -u bigbluebutton touch ${ENDED_DIR}/${meetingId}.done
+    touch ${ENDED_DIR}/${meetingId}.done
   fi
   echo "-----------------------------------------------------------------------------------------"
 done
