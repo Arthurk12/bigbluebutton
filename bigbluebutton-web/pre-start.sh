@@ -48,6 +48,12 @@ hasEndedTag() {
   return -1
 }
 
+echo "Waiting for redis."
+while [ "$(redis-cli ping)" != "PONG" ]
+do
+  echo "."
+  sleep 2
+done
 echo "Collecting redis meeting info"
 KEYS=$(redis-cli keys "meeting:info:*")
 echo -e "Meetings found in redis are:\n${KEYS}"
