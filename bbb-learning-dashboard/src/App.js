@@ -62,7 +62,7 @@ class App extends React.Component {
 
     const link = document.createElement('a');
     const data = makeUserCSVData(users, polls, intl);
-    const filename = `LearningDashboard_${meetingName}_${new Date(createdOn).toISOString().substr(0, 10)}.csv`.replace(/ /g, '-');
+    const filename = `EngagementReport_${meetingName}_${new Date(createdOn).toISOString().substr(0, 10)}.csv`.replace(/ /g, '-');
 
     downloadButton.setAttribute('disabled', 'true');
     downloadButton.style.cursor = 'not-allowed';
