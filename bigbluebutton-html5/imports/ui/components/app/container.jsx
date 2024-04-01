@@ -65,7 +65,6 @@ const AppContainer = (props) => {
     shouldShowScreenshare: propsShouldShowScreenshare,
     shouldShowSharedNotes,
     presentationRestoreOnUpdate,
-    randomlySelectedUser,
     isModalOpen,
     meetingLayout,
     meetingLayoutUpdatedAt,
@@ -142,17 +141,6 @@ const AppContainer = (props) => {
   }
   presentationVideoRate = parseFloat(presentationVideoRate.toFixed(2));
 
-  const prevRandomUser = usePrevious(randomlySelectedUser);
-
-  const [mountRandomUserModal, setMountRandomUserModal] = useState(false);
-
-  useEffect(() => {
-    setMountRandomUserModal(!isPresenter
-      && !isEqual(prevRandomUser, randomlySelectedUser)
-      && randomlySelectedUser.length > 0
-      && !isModalOpen);
-  }, [isPresenter, prevRandomUser, randomlySelectedUser, isModalOpen]);
-
   const setPushLayout = () => {
     setSyncWithPresenterLayout({
       variables: {
@@ -202,7 +190,6 @@ const AppContainer = (props) => {
   const shouldShowPresentation = (!shouldShowScreenshare && !shouldShowSharedNotes
     && !shouldShowExternalVideo && !shouldShowGenericComponent
     && (presentationIsOpen || presentationRestoreOnUpdate)) && isPresentationEnabled();
-
   return currentUserId
     ? (
       <App
@@ -237,8 +224,6 @@ const AppContainer = (props) => {
           sidebarContentPanel,
           sidebarContentIsOpen,
           shouldShowExternalVideo,
-          mountRandomUserModal,
-          setMountRandomUserModal,
           isPresenter,
           numCameras: cameraDockInput.numCameras,
           enforceLayout: validateEnforceLayout(currentUserData),
@@ -269,7 +254,7 @@ const currentUserEmoji = (currentUser) => (currentUser
 );
 
 export default withTracker(() => {
-  Users.find({ userId: Auth.userID, meetingId: Auth.meetingID }).observe({
+  Users.find({ userId: Auth.userID, }).observe({
     removed(userData) {
       // wait 3secs (before endMeeting), client will try to authenticate again
       const delayForReconnection = userData.ejected ? 0 : 3000;
@@ -301,6 +286,7 @@ export default withTracker(() => {
     },
   );
 
+
   const currentMeeting = Meetings.findOne({ meetingId: Auth.meetingID },
     {
       fields: {
@@ -312,17 +298,23 @@ export default withTracker(() => {
     randomlySelectedUser,
   } = currentMeeting;
 
-  const meetingLayoutObj = LayoutMeetings.findOne({ meetingId: Auth.meetingID }) || {};
+  const meetingLayoutObj = Meetings
+    .findOne({ meetingId: Auth.meetingID }) || {};
+
+  const { layout } = meetingLayoutObj;
+
   const {
-    layout: meetingLayout,
-    pushLayout: pushLayoutMeeting,
-    layoutUpdatedAt: meetingLayoutUpdatedAt,
-    presentationIsOpen: meetingPresentationIsOpen,
-    isResizing: isMeetingLayoutResizing,
-    cameraPosition: meetingLayoutCameraPosition,
-    focusedCamera: meetingLayoutFocusedCamera,
+    currentLayoutType: meetingLayout,
+    propagateLayout: pushLayoutMeeting,
+    cameraDockIsResizing: isMeetingLayoutResizing,
+    cameraDockPlacement: meetingLayoutCameraPosition,
     presentationVideoRate: meetingLayoutVideoRate,
-  } = meetingLayoutObj;
+    cameraWithFocus: meetingLayoutFocusedCamera,
+  } = layout;
+
+  const meetingLayoutUpdatedAt = new Date(layout.updatedAt).getTime();
+
+  const meetingPresentationIsOpen = !layout.presentationMinimized;
 
   const UserInfo = UserInfos.find({
     meetingId: Auth.meetingID,
@@ -356,7 +348,6 @@ export default withTracker(() => {
     currentUserEmoji: currentUserEmoji(currentUser),
     currentUserAway: currentUser.away,
     currentUserRaiseHand: currentUser.raiseHand,
-    randomlySelectedUser,
     currentUserId: currentUser?.userId,
     meetingLayout,
     meetingLayoutUpdatedAt,
