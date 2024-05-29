@@ -3,29 +3,18 @@ import Users from '/imports/api/users';
 import VoiceUsers from '/imports/api/voice-users';
 import Breakouts from '/imports/api/breakouts';
 import Meetings from '/imports/api/meetings';
-import UserReaction from '/imports/api/user-reaction';
 import Auth from '/imports/ui/services/auth';
 import Storage from '/imports/ui/services/storage/session';
 import { EMOJI_STATUSES } from '/imports/utils/statuses';
-import { makeCall } from '/imports/ui/services/api';
 import KEY_CODES from '/imports/utils/keyCodes';
 import AudioService from '/imports/ui/components/audio/service';
-import VideoService from '/imports/ui/components/video-provider/service';
-import UserReactionService from '/imports/ui/components/user-reaction/service';
 import logger from '/imports/startup/client/logger';
 import { Session } from 'meteor/session';
-import Settings from '/imports/ui/services/settings';
+import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 import { notify } from '/imports/ui/services/notification';
 import { FormattedMessage } from 'react-intl';
 import { getDateString } from '/imports/utils/string-utils';
 import { isEmpty } from 'radash';
-
-const CHAT_CONFIG = window.meetingClientSettings.public.chat;
-const PUBLIC_CHAT_ID = CHAT_CONFIG.public_id;
-const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
-const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
-const ROLE_VIEWER = window.meetingClientSettings.public.user.role_viewer;
-const USER_STATUS_ENABLED = window.meetingClientSettings.public.userStatus.enabled;
 
 const DIAL_IN_CLIENT_TYPE = 'dial-in-user';
 
@@ -61,8 +50,8 @@ const sortUsersByUserId = (a, b) => {
 };
 
 const sortUsersByName = (a, b) => {
-  const aName = a.sortName || '';
-  const bName = b.sortName || '';
+  const aName = a.sortName || a.nameSortable || '';
+  const bName = b.sortName || b.nameSortable || '';
 
   // Extending for sorting strings with non-ASCII characters
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#sorting_non-ascii_characters
@@ -90,6 +79,8 @@ const sortUsersByRaiseHand = (a, b) => sortByPropTime('raiseHand', 'raiseHandTim
 const sortUsersByReaction = (a, b) => sortByPropTime('reaction', 'reactionTime', 'none', a, b);
 
 const sortUsersByModerator = (a, b) => {
+  const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
+
   if (a.role === ROLE_MODERATOR && b.role === ROLE_MODERATOR) {
     return 0;
   } if (a.role === ROLE_MODERATOR) {
@@ -139,98 +130,9 @@ const sortUsers = (a, b) => {
   return sort;
 };
 
-const isPublicChat = (chat) => (
-  chat.userId === PUBLIC_CHAT_ID
-);
-
-const userFindSorting = {
-  emojiTime: 1,
-  role: 1,
-  phoneUser: 1,
-  name: 1,
-  userId: 1,
-};
-
-const addIsSharingWebcam = (users) => {
-  const usersId = VideoService.getUsersIdFromVideoStreams();
-
-  return users.map((user) => {
-    const isSharingWebcam = usersId.includes(user.userId);
-
-    return {
-      ...user,
-      isSharingWebcam,
-    };
-  });
-};
-
-const addUserReaction = (users) => {
-  const usersReactions = UserReaction.find({
-    meetingId: Auth.meetingID,
-  }).fetch();
-
-  return users.map((user) => {
-    let reaction = '';
-    const obj = usersReactions.find((us) => us.userId === user.userId);
-    if (obj !== undefined) {
-      ({ reaction } = obj);
-    }
-
-    return {
-      ...user,
-      reaction,
-    };
-  });
-};
-
-// TODO I think this method is no longer used, verify
-const getUsers = () => {
-  let users = Users
-    .find({
-      meetingId: Auth.meetingID,
-    }, userFindSorting)
-    .fetch();
-
-  const currentUser = Users.findOne({ userId: Auth.userID }, { fields: { role: 1, locked: 1 } });
-  if (currentUser && currentUser.role === ROLE_VIEWER && currentUser.locked) {
-    const meeting = Meetings.findOne({ meetingId: Auth.meetingID },
-      { fields: { 'lockSettings.hideUserList': 1 } });
-    if (meeting && meeting.lockSettings && meeting.lockSettings.hideUserList) {
-      const moderatorOrCurrentUser = (u) => u.role === ROLE_MODERATOR || u.userId === Auth.userID;
-      users = users.filter(moderatorOrCurrentUser);
-    }
-  }
-
-  return addIsSharingWebcam(addUserReaction(users)).sort(sortUsers);
-};
-
-const formatUsers = (contextUsers, videoUsers, whiteboardUsers, reactionUsers) => {
-  let users = contextUsers.filter((user) => user.loggedOut === false && user.left === false);
-
-  const currentUser = Users.findOne({ userId: Auth.userID }, { fields: { role: 1, locked: 1 } });
-  if (currentUser && currentUser.role === ROLE_VIEWER && currentUser.locked) {
-    const meeting = Meetings.findOne({ meetingId: Auth.meetingID },
-      { fields: { 'lockSettings.hideUserList': 1 } });
-    if (meeting && meeting.lockSettings && meeting.lockSettings.hideUserList) {
-      const moderatorOrCurrentUser = (u) => u.role === ROLE_MODERATOR || u.userId === Auth.userID;
-      users = users.filter(moderatorOrCurrentUser);
-    }
-  }
-
-  return users.map((user) => {
-    const isSharingWebcam = videoUsers?.includes(user.userId);
-    const whiteboardAccess = whiteboardUsers?.includes(user.userId);
-    const reaction = reactionUsers?.includes(user.userId)
-      ? UserReactionService.getUserReaction(user.userId)
-      : { reaction: 'none', reactionTime: 0 };
-
-    return {
-      ...user,
-      isSharingWebcam,
-      whiteboardAccess,
-      ...reaction,
-    };
-  }).sort(sortUsers);
+const isPublicChat = (chat) => {
+  const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+  return chat.userId === CHAT_CONFIG.public_id;
 };
 
 const getUserCount = () => Users.find({ meetingId: Auth.meetingID }).count();
@@ -241,6 +143,9 @@ const hasBreakoutRoom = () => Breakouts.find({ parentMeetingId: Auth.meetingID }
 const isMe = (userId) => userId === Auth.userID;
 
 const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
+  const PUBLIC_GROUP_CHAT_ID = window.meetingClientSettings.public.chat.public_group_id;
+  const PUBLIC_CHAT_ID = window.meetingClientSettings.public.chat.public_id;
+
   if (isEmpty(groupChats) && isEmpty(users)) return [];
 
   const chatIds = Object.keys(groupChats);
@@ -288,6 +193,8 @@ const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
       const user = users[otherParticipant.id];
       const startedChats = Session.get(STARTED_CHAT_LIST_KEY) || [];
 
+      const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
+
       return {
         color: user?.color || '#7b1fa2',
         isModerator: user?.role === ROLE_MODERATOR,
@@ -315,6 +222,7 @@ const getActiveChats = ({ groupChatsMessages, groupChats, users }) => {
   const currentClosedChats = Storage.getItem(CLOSED_CHAT_LIST_KEY) || [];
   const removeClosedChats = chatInfo.filter((chat) => !currentClosedChats.find(closedChat => closedChat.chatId === chat.chatId)
     && chat.shouldDisplayInChatList);
+
   const sortByChatIdAndUnread = removeClosedChats.sort((a, b) => {
     if (a.chatId === PUBLIC_GROUP_CHAT_ID) {
       return -1;
@@ -399,6 +307,9 @@ const curatedVoiceUser = (userId) => {
 const getAvailableActions = (
   amIModerator, isBreakoutRoom, subjectUser, subjectVoiceUser, usersProp, amIPresenter,
 ) => {
+  const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
+  const USER_STATUS_ENABLED = window.meetingClientSettings.public.userStatus.enabled;
+
   const isDialInUser = isVoiceOnlyUser(subjectUser.userId) || subjectUser.phone_user;
   const amISubjectUser = isMe(subjectUser.userId);
   const isSubjectUserModerator = subjectUser.role === ROLE_MODERATOR;
@@ -574,10 +485,6 @@ const roving = (...args) => {
   }
 };
 
-const requestUserInformation = (userId) => {
-  makeCall('requestUserInformation', userId);
-};
-
 const sortUsersByFirstName = (a, b) => {
   const aUser = { sortName: a.firstName ? a.firstName : '' };
   const bUser = { sortName: b.firstName ? b.firstName : '' };
@@ -598,9 +505,9 @@ const isUserPresenter = (userId = Auth.userID) => {
   return user ? user.presenter : false;
 };
 
-export const getUserNamesLink = (docTitle, fnSortedLabel, lnSortedLabel) => {
+export const getUserNamesLink = (docTitle, fnSortedLabel, lnSortedLabel, users) => {
   const mimeType = 'text/plain';
-  const userNamesObj = getUsers()
+  const userNamesObj = users
     .map((u) => {
       const name = u.name.split(' ');
       return ({
@@ -636,6 +543,7 @@ export const getUserNamesLink = (docTitle, fnSortedLabel, lnSortedLabel) => {
 };
 
 const UserJoinedMeetingAlert = (obj) => {
+  const Settings = getSettingsSingletonInstance();
   const {
     userJoinAudioAlerts,
     userJoinPushAlerts,
@@ -664,6 +572,7 @@ const UserJoinedMeetingAlert = (obj) => {
 }
 
 const UserLeftMeetingAlert = (obj) => {
+  const Settings = getSettingsSingletonInstance();
   const {
     userLeaveAudioAlerts,
     userLeavePushAlerts,
@@ -689,14 +598,12 @@ const UserLeftMeetingAlert = (obj) => {
       obj.icon,
     );
   }
-}
+};
 
 export default {
   sortUsersByName,
   sortUsers,
   toggleVoice,
-  getUsers,
-  formatUsers,
   getActiveChats,
   getAvailableActions,
   curatedVoiceUser,
@@ -708,7 +615,6 @@ export default {
   hasBreakoutRoom,
   getEmojiList: () => EMOJI_STATUSES,
   getEmoji,
-  requestUserInformation,
   focusFirstDropDownItem,
   isUserPresenter,
   getUsersProp,

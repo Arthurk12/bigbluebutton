@@ -48,6 +48,32 @@ subscription userCurrentSubscription {
       parameter
       value
     }
+    reaction {
+      reactionEmoji
+    }
+    breakoutRooms {
+      currentRoomJoined
+      assignedAt
+      breakoutRoomId
+      currentRoomPriority
+      currentRoomRegisteredAt
+      durationInSeconds
+      endedAt
+      freeJoin
+      inviteDismissedAt
+      isDefaultName
+      joinURL
+      lastRoomIsOnline
+      lastRoomJoinedAt
+      lastRoomJoinedId
+      name
+      sendInvitationToModerators
+      sequence
+      shortName
+      showInvitation
+      startedAt
+      currentRoomIsOnline
+    }
     lastBreakoutRoom {
       breakoutRoomId
       currentlyInRoom
@@ -66,13 +92,14 @@ subscription userCurrentSubscription {
       muted
       spoke
       listenOnly
+      talking
     }
     presPagesWritable {
       isCurrentPage
       changedModeOn
       pageId
       presentationId
-    }
+    } 
   }
 }
 `;

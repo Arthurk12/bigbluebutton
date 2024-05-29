@@ -1,8 +1,5 @@
 import React from 'react';
 
-const WHITEBOARD_CONFIG = window.meetingClientSettings.public.whiteboard;
-const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
-
 const usePrevious = (value) => {
   const ref = React.useRef();
   React.useEffect(() => {
@@ -79,7 +76,7 @@ const filterInvalidShapes = (shapes, curPageId, tldrawAPI) => {
 };
 
 const isValidShapeType = (shape) => {
-  const invalidTypes = ['image', 'video'];
+  const invalidTypes = ['image', 'embed'];
   return !invalidTypes.includes(shape?.type);
 };
 
@@ -106,5 +103,5 @@ const Utils = {
 
 export default Utils;
 export {
-  usePrevious, findRemoved, filterInvalidShapes, mapLanguage,
+  usePrevious, findRemoved, filterInvalidShapes, mapLanguage, isValidShapeType,
 };

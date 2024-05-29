@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Session } from 'meteor/session';
+import { v4 as uuid } from 'uuid';
 import { ErrorScreen } from '../../error-screen/component';
 import LoadingScreen from '../../common/loading-screen/component';
 
@@ -12,6 +13,7 @@ interface Response {
     learningDashboardBase: string,
     fallbackLocale: string,
     fallbackOnEmptyString: boolean,
+    mediaTag: string,
     clientLog: {
       server: {
         level: string,
@@ -51,6 +53,10 @@ const StartupDataFetch: React.FC<StartupDataFetchProps> = ({
       setError('Timeout on fetching startup data');
       setLoading(false);
     }, connectionTimeout);
+
+    const clientSessionUUID = uuid();
+    sessionStorage.setItem('clientSessionUUID', clientSessionUUID);
+
     const urlParams = new URLSearchParams(window.location.search);
     const sessionToken = urlParams.get('sessionToken');
 
@@ -59,14 +65,13 @@ const StartupDataFetch: React.FC<StartupDataFetchProps> = ({
       setLoading(false);
       return;
     }
-    const clientStartupSettings = '/api/rest/clientStartupSettings/';
+    const clientStartupSettings = `/api/rest/clientStartupSettings/?sessionToken=${sessionToken}`;
     const url = new URL(`${window.location.origin}${clientStartupSettings}`);
-    const headers = new Headers({ 'X-Session-Token': sessionToken, 'Content-Type': 'application/json' });
-    fetch(url, { method: 'get', headers })
+    fetch(url, { method: 'get' })
       .then((resp) => resp.json())
       .then((data: Response) => {
         const settings = data.meeting_clientSettings[0];
-        sessionStorage.setItem('clientStartupSettings', JSON.stringify(settings));
+        sessionStorage.setItem('clientStartupSettings', JSON.stringify(settings || {}));
         setSettingsFetched(true);
         clearTimeout(timeoutRef.current);
         setLoading(false);

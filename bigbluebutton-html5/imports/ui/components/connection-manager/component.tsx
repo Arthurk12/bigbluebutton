@@ -1,11 +1,14 @@
 import {
-  ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject,
+  ApolloClient, ApolloProvider, InMemoryCache, NormalizedCacheObject, ApolloLink,
 } from '@apollo/client';
-import { WebSocketLink } from '@apollo/client/link/ws';
-import { SubscriptionClient } from 'subscriptions-transport-ws';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
 import React, { useContext, useEffect } from 'react';
 import { LoadingContext } from '/imports/ui/components/common/loading-screen/loading-screen-HOC/component';
 import logger from '/imports/startup/client/logger';
+import { onError } from '@apollo/client/link/error';
+import apolloContextHolder from '../../core/graphql/apolloContextHolder/apolloContextHolder';
+import deviceInfo from '/imports/utils/deviceInfo';
 
 interface ConnectionManagerProps {
   children: React.ReactNode;
@@ -20,6 +23,44 @@ interface Response {
   graphqlWebsocketUrl: string;
   }
 }
+
+const DEFAULT_MAX_MUTATION_PAYLOAD_SIZE = 10485760; // 10MB
+const getMaxMutationPayloadSize = () => window.meetingClientSettings?.public?.app?.maxMutationPayloadSize
+  ?? DEFAULT_MAX_MUTATION_PAYLOAD_SIZE;
+
+const estimatePayloadSize = (variables: Record<string, unknown>) => {
+  const variablesAsString = JSON.stringify(variables);
+  const variablesAsBlob = new Blob([variablesAsString]);
+  return variablesAsBlob.size;
+};
+
+const payloadSizeCheckLink = new ApolloLink((operation, forward) => {
+  if (operation.query.definitions.some((def) => 'operation' in def && def.operation === 'mutation')) {
+    const size = estimatePayloadSize(operation.variables);
+    const maxPayloadSize = getMaxMutationPayloadSize();
+
+    if (size > maxPayloadSize) {
+      const errorMsg = `Mutation payload is too large: ${size} bytes. ${maxPayloadSize} maximum allowed.`;
+      logger.warn(errorMsg);
+      return null;
+    }
+  }
+
+  // logger.debug(`Valid ${operation.operationName} payload. Following with the query.`);
+  return forward(operation);
+});
+
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message }) => {
+      logger.error(`[GraphQL error]: Message: ${message}`);
+    });
+  }
+
+  if (networkError) {
+    logger.error(`[Network error]: ${networkError}`);
+  }
+});
 
 const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): React.ReactNode => {
   const [graphqlUrlApolloClient, setApolloClient] = React.useState<ApolloClient<NormalizedCacheObject> | null>(null);
@@ -53,29 +94,39 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): Reac
       }
       sessionStorage.setItem('sessionToken', sessionToken);
 
+      const clientSessionUUID = sessionStorage.getItem('clientSessionUUID');
+      const { isMobile } = deviceInfo;
+
       let wsLink;
       try {
-        const subscription = new SubscriptionClient(graphqlUrl, {
-          reconnect: true,
-          timeout: 30000,
-          minTimeout: 30000,
+        const subscription = createClient({
+          url: graphqlUrl,
+          retryAttempts: 2,
           connectionParams: {
             headers: {
               'X-Session-Token': sessionToken,
+              'X-ClientSessionUUID': clientSessionUUID,
+              'X-ClientType': 'HTML5',
+              'X-ClientIsMobile': isMobile ? 'true' : 'false',
+            },
+          },
+          on: {
+            error: (error) => {
+              logger.error(`Error: on subscription to server: ${error}`);
+              loadingContextInfo.setLoading(false, '');
+              throw new Error(`Error: on subscription to server: ${JSON.stringify(error)}`);
             },
           },
         });
-        subscription.onError(() => {
-          loadingContextInfo.setLoading(false, '');
-          throw new Error('Error: on subscription to server');
-        });
-        wsLink = new WebSocketLink(
+        const graphWsLink = new GraphQLWsLink(
           subscription,
         );
+        wsLink = ApolloLink.from([payloadSizeCheckLink, errorLink, graphWsLink]);
         wsLink.setOnError((error) => {
           loadingContextInfo.setLoading(false, '');
           throw new Error('Error: on apollo connection'.concat(JSON.stringify(error) || ''));
         });
+        apolloContextHolder.setLink(subscription);
       } catch (error) {
         loadingContextInfo.setLoading(false, '');
         throw new Error('Error creating WebSocketLink: '.concat(JSON.stringify(error) || ''));
@@ -88,6 +139,7 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): Reac
           connectToDevTools: true,
         });
         setApolloClient(client);
+        apolloContextHolder.setClient(client);
       } catch (error) {
         loadingContextInfo.setLoading(false, '');
         throw new Error('Error creating Apollo Client: '.concat(JSON.stringify(error) || ''));

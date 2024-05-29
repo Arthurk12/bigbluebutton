@@ -9,8 +9,7 @@ import { getVideoData, getVideoDataGrid } from './queries';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import Auth from '/imports/ui/services/auth';
 import useCurrentUser from '../../core/hooks/useCurrentUser';
-
-const { defaultSorting: DEFAULT_SORTING } = window.meetingClientSettings.public.kurento.cameraSortingModes;
+import VideoProviderContainerGraphql from './video-provider-graphql/container';
 
 const VideoProviderContainer = ({ children, ...props }) => {
   const { streams, isGridEnabled } = props;
@@ -47,7 +46,7 @@ const VideoProviderContainer = ({ children, ...props }) => {
   );
 };
 
-export default withTracker(({ swapLayout, ...rest }) => {
+withTracker(({ swapLayout, ...rest }) => {
   const isGridLayout = Session.get('isGridEnabled');
   const graphqlQuery = isGridLayout ? getVideoDataGrid : getVideoData;
   const currUserId = Auth.userID;
@@ -94,6 +93,10 @@ export default withTracker(({ swapLayout, ...rest }) => {
 
   let usersVideo = streams;
 
+  const {
+    defaultSorting: DEFAULT_SORTING,
+  } = window.meetingClientSettings.public.kurento.cameraSortingModes;
+
   if (gridUsers.length > 0) {
     const items = usersVideo.concat(gridUsers);
     usersVideo = sortVideoStreams(items, DEFAULT_SORTING);
@@ -123,3 +126,5 @@ export default withTracker(({ swapLayout, ...rest }) => {
     ...rest,
   };
 })(VideoProviderContainer);
+
+export default VideoProviderContainerGraphql;

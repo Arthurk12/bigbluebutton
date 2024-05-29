@@ -49,9 +49,6 @@ const messages = defineMessages({
   },
 });
 
-// @ts-ignore - temporary, while meteor exists in the project
-const LABEL = window.meetingClientSettings.public.user.label;
-
 const { isChrome, isFirefox, isEdge } = browserInfo;
 
 interface EmojiProps {
@@ -106,6 +103,8 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings }) => {
   const voiceUser = user.voice;
   const subs = [];
 
+  const LABEL = window.meetingClientSettings.public.user.label;
+
   if (user.isModerator && LABEL.moderator) {
     subs.push(intl.formatMessage(messages.moderator));
   }
@@ -115,7 +114,7 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings }) => {
   if (user.mobile && LABEL.mobile) {
     subs.push(intl.formatMessage(messages.mobile));
   }
-  if (user.locked && lockSettings.hasActiveLockSetting && !user.isModerator) {
+  if (user.locked && lockSettings?.hasActiveLockSetting && !user.isModerator) {
     subs.push(
       <span key={uniqueId('lock-')}>
         <Icon iconName="lock" />

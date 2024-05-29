@@ -17,7 +17,7 @@ import { ACTIONS, LAYOUT_TYPE } from '../layout/enums';
 import DEFAULT_VALUES from '../layout/defaultValues';
 import { colorContentBackground } from '/imports/ui/stylesheets/styled-components/palette';
 import browserInfo from '/imports/utils/browserInfo';
-import { addNewAlert } from '../screenreader-alert/service';
+import { addAlert } from '../screenreader-alert/service';
 import { debounce } from '/imports/utils/debounce';
 import { throttle } from '/imports/utils/throttle';
 
@@ -57,8 +57,6 @@ const FULLSCREEN_CHANGE_EVENT = isSafari
   ? 'webkitfullscreenchange'
   : 'fullscreenchange';
 
-const PAN_ZOOM_INTERVAL = window.meetingClientSettings.public.presentation.panZoomInterval || 200;
-
 const getToolbarHeight = () => {
   let height = 0;
   const toolbarEl = document.getElementById('presentationToolbarWrapper');
@@ -84,6 +82,8 @@ class Presentation extends PureComponent {
       isToolbarVisible: true,
       hadPresentation: false,
     };
+
+    const PAN_ZOOM_INTERVAL = window.meetingClientSettings.public.presentation.panZoomInterval || 200;
 
     this.currentPresentationToastId = null;
 
@@ -236,7 +236,7 @@ class Presentation extends PureComponent {
       && prevProps?.currentSlide?.num != null
       && currentSlide?.num !== prevProps.currentSlide?.num
     ) {
-      addNewAlert(
+      addAlert(
         intl.formatMessage(intlMessages.slideContentChanged, {
           0: currentSlide.num,
         }),

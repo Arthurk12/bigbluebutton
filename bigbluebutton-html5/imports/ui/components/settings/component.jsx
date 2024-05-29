@@ -176,6 +176,7 @@ class Settings extends Component {
       isScreenSharingEnabled,
       isVideoEnabled,
       isReactionsEnabled,
+      paginationToggleEnabled,
     } = this.props;
 
     const {
@@ -229,6 +230,7 @@ class Settings extends Component {
             selectedLayout={selectedLayout}
             isPresenter={isPresenter}
             isReactionsEnabled={isReactionsEnabled}
+            paginationToggleEnabled={paginationToggleEnabled}
           />
         </Styled.SettingsTabPanel>
         <Styled.SettingsTabPanel selectedClassName="is-selected">
@@ -280,7 +282,7 @@ class Settings extends Component {
 
             if (saved.application.locale !== current.application.locale) {
               const { language } = formatLocaleCode(saved.application.locale);
-              const { language: newLanguage } = formatLocaleCode(current.application.locale);
+              const newLanguage = current.application.locale;
               setUseCurrentLocale(newLanguage);
               document.body.classList.remove(`lang-${language}`);
             }

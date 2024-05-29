@@ -2,10 +2,6 @@ import React from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import Styled from './styles';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - temporary, while meteor exists in the project
-const APP_CONFIG = window.meetingClientSettings.public.app;
-
 interface ChatMessagePresentationContentProps {
   metadata: string;
 }
@@ -31,10 +27,6 @@ const intlMessages = defineMessages({
     id: 'app.presentation.downloadLabel',
     description: 'used as label for presentation download link',
   },
-  notAccessibleWarning: {
-    id: 'app.presentationUploader.export.notAccessibleWarning',
-    description: 'used for indicating that a link may be not accessible',
-  },
   withWhiteboardAnnotations: {
     id: 'app.presentationUploader.export.withWhiteboardAnnotations',
     description: 'used for indicating that presentation has annotations',
@@ -47,6 +39,10 @@ const ChatMessagePresentationContent: React.FC<ChatMessagePresentationContentPro
   const intl = useIntl();
   const presentationData = JSON.parse(string) as unknown;
   assertAsMetadata(presentationData);
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - temporary, while meteor exists in the project
+  const APP_CONFIG = window.meetingClientSettings.public.app;
 
   const downloadUrl = `${APP_CONFIG.bbbWebBase}/${presentationData.fileURI}`;
   const parseFilename = (filename = '') => {
@@ -68,13 +64,11 @@ const ChatMessagePresentationContent: React.FC<ChatMessagePresentationContentPro
       </span>
       <Styled.ChatLink
         href={downloadUrl}
-        aria-label={intl.formatMessage(intlMessages.notAccessibleWarning)}
         type="application/pdf"
         rel="noopener, noreferrer"
         download={`${parsedFileName}.pdf`}
       >
         {intl.formatMessage(intlMessages.download)}
-        <i className="icon-bbb-warning" title={intl.formatMessage(intlMessages.notAccessibleWarning)} />
       </Styled.ChatLink>
     </Styled.ChatDowloadContainer>
   );

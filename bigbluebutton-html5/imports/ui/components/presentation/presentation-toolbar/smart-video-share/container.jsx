@@ -2,7 +2,6 @@ import React from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import { useMutation } from '@apollo/client';
 import { SmartMediaShare } from './component';
-import NotesService from '/imports/ui/components/notes/service';
 import Panopto from '../../../external-video-player/custom-players/panopto';
 import { layoutSelect } from '/imports/ui/components/layout/context';
 import { isMobile } from '/imports/ui/components/layout/utils';
@@ -23,25 +22,20 @@ const SmartMediaShareContainer = (props) => {
       externalVideoUrl = Panopto.getSocialUrl(url);
     }
 
-    // Close Shared Notes if open.
-    NotesService.pinSharedNotes(false);
-
     startExternalVideo({ variables: { externalVideoUrl } });
   };
+
+  const isRTL = layoutSelect((i) => i.isRTL);
 
   return (
     <SmartMediaShare {...{
       startWatching,
+      isRTL,
+      isMobile: isMobile(),
       ...props,
     }}
     />
   );
 };
 
-export default withTracker(() => {
-  const isRTL = layoutSelect((i) => i.isRTL);
-  return {
-    isRTL,
-    isMobile: isMobile(),
-  };
-})(SmartMediaShareContainer);
+export default SmartMediaShareContainer;
