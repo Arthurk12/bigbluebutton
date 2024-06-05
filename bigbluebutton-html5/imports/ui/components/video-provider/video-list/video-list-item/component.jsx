@@ -12,7 +12,7 @@ import {
   subscribeToStreamStateChange,
   unsubscribeFromStreamStateChange,
 } from '/imports/ui/services/bbb-webrtc-sfu/stream-state-service';
-import Settings from '/imports/ui/services/settings';
+import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 import VideoService from '/imports/ui/components/video-provider/service';
 import Styled from './styles';
 import { withDragAndDrop } from './drag-and-drop/component';
@@ -53,7 +53,8 @@ const VideoListItem = (props) => {
   const videoContainer = useRef();
 
   const videoIsReady = isStreamHealthy && videoDataLoaded && !isSelfViewDisabled;
-  const { animations } = Settings.application;
+  const Settings = getSettingsSingletonInstance();
+  const { animations, webcamBorderHighlightColor } = Settings.application;
   const talking = voiceUser?.talking;
 
   const onStreamStateChange = (e) => {
@@ -231,6 +232,7 @@ const VideoListItem = (props) => {
     <Styled.Content
       ref={videoContainer}
       talking={talking}
+      customHighlight={webcamBorderHighlightColor}
       fullscreen={isFullscreenContext}
       data-test={talking ? 'webcamItemTalkingUser' : 'webcamItem'}
       animations={animations}

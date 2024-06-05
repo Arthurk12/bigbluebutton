@@ -3,43 +3,44 @@ import { useMutation } from '@apollo/client';
 import { withTracker } from 'meteor/react-meteor-data';
 import Service from './service';
 import VideoPreview from './component';
-import VideoService from '../video-provider/service';
-import ScreenShareService from '/imports/ui/components/screenshare/service';
+import VideoService from '../video-provider/video-provider-graphql/service';
+import * as ScreenShareService from '/imports/ui/components/screenshare/service';
 import logger from '/imports/startup/client/logger';
 import { SCREENSHARING_ERRORS } from '/imports/api/screenshare/client/bridge/errors';
 import { EXTERNAL_VIDEO_STOP } from '../external-video-player/mutations';
-import { CAMERA_BROADCAST_STOP } from '../video-provider/mutations';
+import {
+  useSharedDevices, useHasVideoStream, useHasCapReached, useIsUserLocked, useStreams,
+  useExitVideo,
+  useStopVideo,
+} from '/imports/ui/components/video-provider/video-provider-graphql/hooks';
 
 const VideoPreviewContainer = (props) => {
-  const { buildStartSharingCameraAsContent, buildStopSharing, ...rest } = props;
+  const {
+    callbackToClose,
+    setIsOpen,
+  } = props;
   const [stopExternalVideoShare] = useMutation(EXTERNAL_VIDEO_STOP);
-  const [cameraBroadcastStop] = useMutation(CAMERA_BROADCAST_STOP);
 
-  const sendUserUnshareWebcam = (cameraId) => {
-    cameraBroadcastStop({ variables: { cameraId } });
-  };
+  const { streams } = useStreams();
+  const exitVideo = useExitVideo();
+  const stopVideo = useStopVideo();
+  const sharedDevices = useSharedDevices();
+  const hasVideoStream = useHasVideoStream();
+  const camCapReached = useHasCapReached();
+  const isCamLocked = useIsUserLocked();
 
-  const startSharingCameraAsContent = buildStartSharingCameraAsContent(stopExternalVideoShare);
-  const stopSharing = buildStopSharing(sendUserUnshareWebcam);
-
-  return (
-    <VideoPreview
-      {...{
-        startSharingCameraAsContent,
-        stopSharing,
-        ...rest,
-      }}
-    />
-  );
-};
-
-export default withTracker(({ setIsOpen, callbackToClose }) => ({
-  startSharing: (deviceId) => {
+  const stopSharing = (deviceId) => {
     callbackToClose();
     setIsOpen(false);
-    VideoService.joinVideo(deviceId);
-  },
-  buildStartSharingCameraAsContent: (stopExternalVideoShare) => (deviceId) => {
+    if (deviceId) {
+      const streamId = VideoService.getMyStreamId(deviceId, streams);
+      if (streamId) stopVideo(streamId);
+    } else {
+      exitVideo();
+    }
+  };
+
+  const startSharingCameraAsContent = (deviceId) => {
     callbackToClose();
     setIsOpen(false);
     const handleFailure = (error) => {
@@ -57,33 +58,54 @@ export default withTracker(({ setIsOpen, callbackToClose }) => ({
     };
     ScreenShareService.shareScreen(
       stopExternalVideoShare,
-      true, handleFailure, { stream: Service.getStream(deviceId)._mediaStream }
+      true, handleFailure, { stream: Service.getStream(deviceId)._mediaStream },
     );
     ScreenShareService.setCameraAsContentDeviceId(deviceId);
-  },
-  buildStopSharing: (sendUserUnshareWebcam) => (deviceId) => {
+  };
+
+  return (
+    <VideoPreview
+      {...{
+        startSharingCameraAsContent,
+        stopSharing,
+        sharedDevices,
+        hasVideoStream,
+        camCapReached,
+        isCamLocked,
+        ...props,
+      }}
+    />
+  );
+};
+
+const VideoPreviewContainerTracker = withTracker(({ setIsOpen, callbackToClose }) => ({
+  startSharing: (deviceId) => {
     callbackToClose();
     setIsOpen(false);
-    if (deviceId) {
-      const streamId = VideoService.getMyStreamId(deviceId);
-      if (streamId) VideoService.stopVideo(streamId, sendUserUnshareWebcam);
-    } else {
-      VideoService.exitVideo(sendUserUnshareWebcam);
-    }
+    VideoService.joinVideo(deviceId);
   },
   stopSharingCameraAsContent: () => {
     callbackToClose();
     setIsOpen(false);
     ScreenShareService.screenshareHasEnded();
   },
-  sharedDevices: VideoService.getSharedDevices(),
-  cameraAsContentDeviceId: ScreenShareService.getCameraAsContentDeviceId(),
-  isCamLocked: VideoService.isUserLocked(),
-  camCapReached: VideoService.hasCapReached(),
   closeModal: () => {
     callbackToClose();
     setIsOpen(false);
   },
   webcamDeviceId: Service.webcamDeviceId(),
-  hasVideoStream: VideoService.hasVideoStream(),
 }))(VideoPreviewContainer);
+
+// TODO: Remove this
+// Temporary component until we remove all trackers
+export default (props) => {
+  const cameraAsContentDeviceId = ScreenShareService.useCameraAsContentDeviceIdType();
+  return (
+    <VideoPreviewContainerTracker
+      {...{
+        ...props,
+        cameraAsContentDeviceId,
+      }}
+    />
+  );
+};

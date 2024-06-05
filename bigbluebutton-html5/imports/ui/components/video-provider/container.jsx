@@ -1,6 +1,6 @@
 import React from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
-import { useMutation, useSubscription } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import VideoProvider from './component';
 import VideoService from './service';
 import { sortVideoStreams } from '/imports/ui/components/video-provider/stream-sorting';
@@ -9,8 +9,8 @@ import { getVideoData, getVideoDataGrid } from './queries';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import Auth from '/imports/ui/services/auth';
 import useCurrentUser from '../../core/hooks/useCurrentUser';
-
-const { defaultSorting: DEFAULT_SORTING } = window.meetingClientSettings.public.kurento.cameraSortingModes;
+import VideoProviderContainerGraphql from './video-provider-graphql/container';
+import useDeduplicatedSubscription from '../../core/hooks/useDeduplicatedSubscription';
 
 const VideoProviderContainer = ({ children, ...props }) => {
   const { streams, isGridEnabled } = props;
@@ -47,7 +47,7 @@ const VideoProviderContainer = ({ children, ...props }) => {
   );
 };
 
-export default withTracker(({ swapLayout, ...rest }) => {
+withTracker(({ swapLayout, ...rest }) => {
   const isGridLayout = Session.get('isGridEnabled');
   const graphqlQuery = isGridLayout ? getVideoDataGrid : getVideoData;
   const currUserId = Auth.userID;
@@ -58,7 +58,6 @@ export default withTracker(({ swapLayout, ...rest }) => {
   const { data: currentUser } = useCurrentUser((user) => ({
     locked: user.locked,
   }));
- 
 
   const fetchedStreams = VideoService.fetchVideoStreams();
 
@@ -70,7 +69,7 @@ export default withTracker(({ swapLayout, ...rest }) => {
 
   const {
     data: videoUserSubscription,
-  } = useSubscription(graphqlQuery, { variables });
+  } = useDeduplicatedSubscription(graphqlQuery, { variables });
 
   const users = videoUserSubscription?.user || [];
 
@@ -93,6 +92,10 @@ export default withTracker(({ swapLayout, ...rest }) => {
   }
 
   let usersVideo = streams;
+
+  const {
+    defaultSorting: DEFAULT_SORTING,
+  } = window.meetingClientSettings.public.kurento.cameraSortingModes;
 
   if (gridUsers.length > 0) {
     const items = usersVideo.concat(gridUsers);
@@ -123,3 +126,5 @@ export default withTracker(({ swapLayout, ...rest }) => {
     ...rest,
   };
 })(VideoProviderContainer);
+
+export default VideoProviderContainerGraphql;

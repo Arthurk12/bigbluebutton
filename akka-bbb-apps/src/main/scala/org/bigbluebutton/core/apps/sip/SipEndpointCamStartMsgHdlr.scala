@@ -40,7 +40,7 @@ trait SipEndpointCamStartMsgHdlr {
       )
 
       for {
-        uvo <- Webcams.addWebcamStream(liveMeeting.webcams, webcamStream)
+        uvo <- Webcams.addWebcamStream(liveMeeting.props.meetingProp.intId, liveMeeting.webcams, webcamStream)
       } yield {
         broadcastEvent(msg)
       }

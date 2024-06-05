@@ -1,8 +1,12 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from 'react';
 import LockViewersContainer from '/imports/ui/components/lock-viewers/container';
 import GuestPolicyContainer from '/imports/ui/components/waiting-users/guest-policy/container';
-import CreateBreakoutRoomContainerGraphql from '../../../../breakout-room/breakout-room-graphql/create-breakout-room/component';
-import WriterMenuContainer from '/imports/ui/components/captions/writer-menu/container';
+import CreateBreakoutRoomContainerGraphql from '../../../../breakout-room/create-breakout-room/component';
 import BBBMenu from '/imports/ui/components/common/menu/component';
 import Styled from './styles';
 import { defineMessages, useIntl } from 'react-intl';
@@ -16,10 +20,11 @@ import {
 } from './service';
 import { User } from '/imports/ui/Types/user';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import { isBreakoutRoomsEnabled, isLearningDashboardEnabled, isCaptionsEnabled } from '/imports/ui/services/features';
-import { useMutation } from '@apollo/client';
+import { isBreakoutRoomsEnabled, isLearningDashboardEnabled } from '/imports/ui/services/features';
+import { useMutation, useLazyQuery } from '@apollo/client';
 import { CLEAR_ALL_EMOJI } from '/imports/ui/core/graphql/mutations/userMutations';
 import { SET_MUTED } from './mutations';
+import { GET_USER_NAMES } from '/imports/ui/core/graphql/queries/users';
 import { notify } from '/imports/ui/services/notification';
 import logger from '/imports/startup/client/logger';
 
@@ -96,14 +101,6 @@ const intlMessages = defineMessages({
     id: 'app.actionsBar.actionsDropdown.saveUserNames',
     description: 'Save user name feature description',
   },
-  captionsLabel: {
-    id: 'app.actionsBar.actionsDropdown.captionsLabel',
-    description: 'Captions menu toggle label',
-  },
-  captionsDesc: {
-    id: 'app.actionsBar.actionsDropdown.captionsDesc',
-    description: 'Captions menu toggle description',
-  },
   newTab: {
     id: 'app.modal.newTab',
     description: 'label used in aria description',
@@ -113,10 +110,6 @@ const intlMessages = defineMessages({
     description: 'Used in toast notification when emojis have been cleared',
   },
 });
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - temporary, while meteor exists in the project
-const { dynamicGuestPolicy } = window.meetingClientSettings.public.app;
 
 interface RenderModalProps {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -179,10 +172,25 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
   const [isCreateBreakoutRoomModalOpen, setCreateBreakoutRoomModalIsOpen] = useState(false);
   const [isGuestPolicyModalOpen, setGuestPolicyModalIsOpen] = useState(false);
   const [isLockViewersModalOpen, setLockViewersModalIsOpen] = useState(false);
-  const [isWriterMenuModalOpen, setIsWriterMenuModalOpen] = useState(false);
 
   const [clearAllEmoji] = useMutation(CLEAR_ALL_EMOJI);
   const [setMuted] = useMutation(SET_MUTED);
+  const [getUsers, { data: usersData, error: usersError }] = useLazyQuery(GET_USER_NAMES, { fetchPolicy: 'no-cache' });
+  const users = usersData?.user || [];
+
+  if (usersError) {
+    logger.error({
+      logCode: 'user_options_get_users_error',
+      extraInfo: { usersError },
+    }, 'Error fetching users names');
+  }
+
+  // users will only be fetched when getUsers is called
+  useEffect(() => {
+    if (users.length > 0) {
+      onSaveUserNames(intl, meetingName ?? '', users);
+    }
+  }, [users]);
 
   const toggleStatus = () => {
     clearAllEmoji();
@@ -217,6 +225,8 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
       logMessage,
     );
   };
+
+  const { dynamicGuestPolicy } = window.meetingClientSettings.public.app;
 
   const actions = useMemo(() => {
     const canCreateBreakout = isModerator
@@ -264,7 +274,7 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
         allow: isModerator,
         key: uuids.current[4],
         label: intl.formatMessage(intlMessages.saveUserNames),
-        onClick: onSaveUserNames.bind(null, intl, meetingName ?? ''),
+        onClick: () => getUsers(),
         icon: 'download',
         dataTest: 'downloadUserNamesList',
       },
@@ -291,15 +301,6 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
         dataTest: 'createBreakoutRooms',
       },
       {
-        allow: isModerator && isCaptionsEnabled(),
-        icon: 'closed_caption',
-        label: intl.formatMessage(intlMessages.captionsLabel),
-        description: intl.formatMessage(intlMessages.captionsDesc),
-        key: uuids.current[7],
-        onClick: () => setIsWriterMenuModalOpen(true),
-        dataTest: 'writeClosedCaptions',
-      },
-      {
         key: 'separator-02',
         isSeparator: true,
         allow: true,
@@ -317,7 +318,7 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
         dataTest: 'learningDashboard',
       },
     ].filter(({ allow }) => allow);
-  }, [isModerator, hasBreakoutRooms, isMeetingMuted, locale]);
+  }, [isModerator, hasBreakoutRooms, isMeetingMuted, locale, intl]);
 
   const newLocal = 'true';
   return (
@@ -360,14 +361,6 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
         setIsOpen: setGuestPolicyModalIsOpen,
         priority: 'low',
         Component: GuestPolicyContainer,
-        otherOptions: {},
-      })}
-
-      {renderModal({
-        isOpen: isWriterMenuModalOpen,
-        setIsOpen: setIsWriterMenuModalOpen,
-        priority: 'low',
-        Component: WriterMenuContainer,
         otherOptions: {},
       })}
 

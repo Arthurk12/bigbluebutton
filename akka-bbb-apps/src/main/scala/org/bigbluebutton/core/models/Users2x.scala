@@ -46,10 +46,10 @@ object Users2x {
     for {
       u <- findWithIntId(users, intId)
     } yield {
-      val newUser = u.copy(userLeftFlag = UserLeftFlag(false, 0))
+      val newUser = u.copy(userLeftFlag = UserLeftFlag(left = false, 0))
       users.save(newUser)
       UserStateDAO.update(newUser)
-      UserStateDAO.updateExpired(u.intId, false)
+      UserStateDAO.updateExpired(u.meetingId, u.intId, expired = false)
       newUser
     }
   }
@@ -101,7 +101,7 @@ object Users2x {
   def resetLastInactivityInspect(users: Users2x, u: UserState): UserState = {
     val newUserState = modify(u)(_.lastInactivityInspect).setTo(0)
     users.save(newUserState)
-    UserStateDAO.updateInactivityWarning(u.intId, inactivityWarningDisplay = false, 0)
+    UserStateDAO.updateInactivityWarning(u.meetingId, u.intId, inactivityWarningDisplay = false, 0)
     newUserState
   }
 
@@ -121,6 +121,13 @@ object Users2x {
     val newUserState = modify(u)(_.mobile).setTo(true)
     users.save(newUserState)
     UserStateDAO.update((newUserState))
+    newUserState
+  }
+
+  def setClientType(users: Users2x, u: UserState, clientType: String): UserState = {
+    val newUserState = modify(u)(_.clientType).setTo(clientType)
+    users.save(newUserState)
+    UserStateDAO.update(newUserState)
     newUserState
   }
 
@@ -207,7 +214,7 @@ object Users2x {
         .modify(_.reactionChangedOn).setTo(System.currentTimeMillis())
 
       users.save(newUser)
-      UserReactionDAO.insert(intId, reactionEmoji, durationInSeconds)
+      UserReactionDAO.insert(u.meetingId, u.intId, reactionEmoji, durationInSeconds)
       newUser
     }
   }
@@ -250,6 +257,17 @@ object Users2x {
       u <- findWithIntId(users, intId)
     } yield {
       val newUser = u.modify(_.speechLocale).setTo(locale)
+      UserStateDAO.update(newUser)
+      users.save(newUser)
+      newUser
+    }
+  }
+
+  def setUserCaptionLocale(users: Users2x, intId: String, locale: String): Option[UserState] = {
+    for {
+      u <- findWithIntId(users, intId)
+    } yield {
+      val newUser = u.modify(_.captionLocale).setTo(locale)
       UserStateDAO.update(newUser)
       users.save(newUser)
       newUser
@@ -409,6 +427,7 @@ case class UserLeftFlag(left: Boolean, leftOn: Long)
 case class UserState(
     intId:                 String,
     extId:                 String,
+    meetingId:             String,
     name:                  String,
     role:                  String,
     guest:                 Boolean,
@@ -430,7 +449,9 @@ case class UserState(
     lastInactivityInspect: Long         = 0,
     clientType:            String,
     userLeftFlag:          UserLeftFlag,
-    speechLocale:          String       = ""
+    speechLocale:          String       = "",
+    captionLocale:         String       = ""
+
 )
 
 case class UserIdAndName(id: String, name: String)

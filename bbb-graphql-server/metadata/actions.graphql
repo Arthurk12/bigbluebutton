@@ -60,6 +60,12 @@ type Mutation {
 }
 
 type Mutation {
+  captionAddLocale(
+    locale: String!
+  ): Boolean
+}
+
+type Mutation {
   captionSubmitText(
     transcriptId: String!
     start: Int!
@@ -201,17 +207,19 @@ type Mutation {
 }
 
 type Mutation {
-  pluginDataChannelDeleteMessage(
+  pluginDataChannelDeleteEntry(
     pluginName: String!
-    dataChannel: String!
-    messageId: String!
+    channelName: String!
+    subChannelName: String!
+    entryId: String!
   ): Boolean
 }
 
 type Mutation {
-  pluginDataChannelDispatchMessage(
+  pluginDataChannelPushEntry(
     pluginName: String!
-    dataChannel: String!
+    subChannelName: String!
+    channelName: String!
     payloadJson: String!
     toRoles: [String]!
     toUserIds: [String]!
@@ -221,7 +229,8 @@ type Mutation {
 type Mutation {
   pluginDataChannelReset(
     pluginName: String!
-    dataChannel: String!
+    channelName: String!
+    subChannelName: String!
   ): Boolean
 }
 
@@ -460,11 +469,7 @@ type Mutation {
 }
 
 type Mutation {
-  userSetConnectionAlive: Boolean
-}
-
-type Mutation {
-  userSetConnectionRtt(
+  userSetConnectionAlive(
     networkRttInMs: Float!
   ): Boolean
 }
@@ -485,12 +490,6 @@ type Mutation {
   userSetLocked(
     userId: String!
     locked: Boolean!
-  ): Boolean
-}
-
-type Mutation {
-  userSetMobileFlag(
-    mobile: Boolean!
   ): Boolean
 }
 
@@ -529,6 +528,13 @@ type Mutation {
 
 type Mutation {
   userSetSpeechLocale(
+    locale: String!
+    provider: String!
+  ): Boolean
+}
+
+type Mutation {
+  userSetCaptionLocale(
     locale: String!
     provider: String!
   ): Boolean

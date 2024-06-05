@@ -3,9 +3,8 @@ import PropTypes from 'prop-types';
 import Styled from './styles';
 import UserListParticipants from './user-participants/user-list-participants/component';
 import ChatList from './user-messages/chat-list/component';
-import UserNotesContainer from './user-notes/container';
+import UserNotesContainer from '../user-list-graphql/user-list-content/user-notes/component';
 import TimerContainer from './timer/container';
-import UserCaptionsContainer from './user-captions/container';
 import GuestPanelOpenerContainer from '../user-list-graphql/user-participants-title/guest-panel-opener/component';
 import UserPollsContainer from './user-polls/container';
 import BreakoutRoomContainer from './breakout-room/container';
@@ -18,16 +17,16 @@ const propTypes = {
     presenter: PropTypes.bool.isRequired,
   }),
   compact: PropTypes.bool,
-  isTimerActive: PropTypes.bool.isRequired,
+  isTimerActive: PropTypes.bool,
 };
 
-const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
 const defaultProps = {
   currentUser: {
     role: '',
     presenter: false,
   },
   compact: false,
+  isTimerActive: false,
 };
 
 class UserContent extends PureComponent {
@@ -38,10 +37,11 @@ class UserContent extends PureComponent {
       compact,
     } = this.props;
 
+    const ROLE_MODERATOR = window.meetingClientSettings.public.user.role_moderator;
+
     return (
       <Styled.Content data-test="userListContent">
         {isChatEnabled() ? <ChatList /> : null}
-        {currentUser?.role === ROLE_MODERATOR ? <UserCaptionsContainer /> : null}
         <UserNotesContainer />
         {isTimerActive && <TimerContainer isModerator={currentUser?.role === ROLE_MODERATOR} />}
         {currentUser?.role === ROLE_MODERATOR ? (

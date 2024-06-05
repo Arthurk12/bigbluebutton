@@ -1,7 +1,6 @@
 import React from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import VideoService from '/imports/ui/components/video-provider/service';
-import { useSubscription } from '@apollo/client';
 import {
   layoutSelect,
   layoutSelectInput,
@@ -14,8 +13,9 @@ import { sortVideoStreams } from '/imports/ui/components/video-provider/stream-s
 import {
   CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
 } from '/imports/ui/components/whiteboard/queries';
-const { defaultSorting: DEFAULT_SORTING } = window.meetingClientSettings.public.kurento.cameraSortingModes;
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import WebcamContainerGraphql from './webcam-graphql/component';
+import useDeduplicatedSubscription from '../../core/hooks/useDeduplicatedSubscription';
 
 const WebcamContainer = ({
   audioModalIsOpen,
@@ -26,11 +26,12 @@ const WebcamContainer = ({
   const fullscreen = layoutSelect((i) => i.fullscreen);
   const isRTL = layoutSelect((i) => i.isRTL);
   const cameraDockInput = layoutSelectInput((i) => i.cameraDock);
-  const focusedId = layoutSelectInput((i) => i.focusedId);
   const presentation = layoutSelectOutput((i) => i.presentation);
   const cameraDock = layoutSelectOutput((i) => i.cameraDock);
   const layoutContextDispatch = layoutDispatch();
-  const { data: presentationPageData } = useSubscription(CURRENT_PRESENTATION_PAGE_SUBSCRIPTION);
+  const { data: presentationPageData } = useDeduplicatedSubscription(
+    CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
+  );
   const presentationPage = presentationPageData?.pres_page_curr[0] || {};
   const hasPresentation = !!presentationPage?.presentationId;
 
@@ -77,13 +78,14 @@ const WebcamContainer = ({
     : null;
 };
 
-export default withTracker(() => {
+withTracker(() => {
   const data = {
     audioModalIsOpen: Session.get('audioModalIsOpen'),
     isMeteorConnected: Meteor.status().connected,
   };
 
   const { streams: usersVideo, gridUsers } = VideoService.getVideoStreams();
+  const { defaultSorting: DEFAULT_SORTING } = window.meetingClientSettings.public.kurento.cameraSortingModes;
 
   if (gridUsers.length > 0) {
     const items = usersVideo.concat(gridUsers);
@@ -94,3 +96,5 @@ export default withTracker(() => {
 
   return data;
 })(WebcamContainer);
+
+export default WebcamContainerGraphql;

@@ -4,10 +4,7 @@ import { withTracker } from 'meteor/react-meteor-data';
 import { Session } from 'meteor/session';
 import { injectIntl, defineMessages } from 'react-intl';
 import { range } from '/imports/utils/array-utils';
-import Auth from '/imports/ui/services/auth';
-import Breakouts from '/imports/api/breakouts';
 import AppService from '/imports/ui/components/app/service';
-import BreakoutsService from '/imports/ui/components/breakout-room/service';
 import { notify } from '/imports/ui/services/notification';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import VideoPreviewContainer from '/imports/ui/components/video-preview/container';
@@ -21,12 +18,12 @@ import {
 
 import Service from './service';
 import AudioModalContainer from './audio-modal/container';
-import Settings from '/imports/ui/services/settings';
 import useToggleVoice from './audio-graphql/hooks/useToggleVoice';
-import { usePreviousValue } from '/imports/ui/components/utils/hooks';
-
-const APP_CONFIG = window.meetingClientSettings.public.app;
-const KURENTO_CONFIG = window.meetingClientSettings.public.kurento;
+import usePreviousValue from '/imports/ui/hooks/usePreviousValue';
+import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import { toggleMuteMicrophone } from '/imports/ui/components/audio/audio-graphql/audio-controls/input-stream-live-selector/service';
+import useSettings from '../../services/settings/hooks/useSettings';
+import { SETTINGS } from '../../services/settings/enums';
 
 const intlMessages = defineMessages({
   joinedAudio: {
@@ -88,13 +85,16 @@ const AudioContainer = (props) => {
     init,
     intl,
     userLocks,
-    microphoneConstraints,
   } = props;
+
+  const { microphoneConstraints } = useSettings(SETTINGS.APPLICATION);
 
   const prevProps = usePreviousValue(props);
   const toggleVoice = useToggleVoice();
   const { hasBreakoutRooms: hadBreakoutRooms } = prevProps || {};
   const userIsReturningFromBreakoutRoom = hadBreakoutRooms && !hasBreakoutRooms;
+
+  const { data: currentUserMuted } = useCurrentUser((u) => u?.voice?.muted ?? false);
 
   const joinAudio = () => {
     if (Service.isConnected()) return;
@@ -124,8 +124,8 @@ const AudioContainer = (props) => {
   if (Service.isConnected() && !Service.isListenOnly()) {
     Service.updateAudioConstraints(microphoneConstraints);
 
-    if (userLocks.userMic && !Service.isMuted()) {
-      Service.toggleMuteMicrophone(toggleVoice);
+    if (userLocks.userMic && !currentUserMuted) {
+      toggleMuteMicrophone(!currentUserMuted, toggleVoice);
       notify(intl.formatMessage(intlMessages.reconectingAsListener), 'info', 'volume_level_2');
     }
   }
@@ -185,8 +185,11 @@ const messages = {
 
 export default lockContextContainer(injectIntl(withTracker(({
   intl, userLocks, isAudioModalOpen, setAudioModalIsOpen, setVideoPreviewModalIsOpen,
+  speechLocale,
 }) => {
-  const { microphoneConstraints } = Settings.application;
+  const APP_CONFIG = window.meetingClientSettings.public.app;
+  const KURENTO_CONFIG = window.meetingClientSettings.public.kurento;
+
   const autoJoin = getFromUserSettings('bbb_auto_join_audio', APP_CONFIG.autoJoin);
   const enableVideo = getFromUserSettings('bbb_enable_video', KURENTO_CONFIG.enableVideo);
   const autoShareWebcam = getFromUserSettings('bbb_auto_share_webcam', KURENTO_CONFIG.autoShareWebcam);
@@ -203,33 +206,6 @@ export default lockContextContainer(injectIntl(withTracker(({
     setVideoPreviewModalIsOpen(true);
   };
 
-  const breakoutUserIsIn = BreakoutsService.getBreakoutUserIsIn(Auth.userID);
-  if (!!breakoutUserIsIn && !meetingIsBreakout) {
-    const userBreakout = Breakouts.find({ id: breakoutUserIsIn.id });
-    userBreakout.observeChanges({
-      removed() {
-        // if the user joined a breakout room, the main room's audio was
-        // programmatically dropped to avoid interference. On breakout end,
-        // offer to rejoin main room audio only if the user is not in audio already
-        if (Service.isUsingAudio()
-          || userSelectedMicrophone
-          || userSelectedListenOnly) {
-          if (enableVideo && autoShareWebcam) {
-            openVideoPreviewModal();
-          }
-
-          return;
-        }
-        setTimeout(() => {
-          openAudioModal();
-          if (enableVideo && autoShareWebcam) {
-            openVideoPreviewModal();
-          }
-        }, 0);
-      },
-    });
-  }
-
   return {
     hasBreakoutRooms,
     meetingIsBreakout,
@@ -237,9 +213,8 @@ export default lockContextContainer(injectIntl(withTracker(({
     userSelectedListenOnly,
     isAudioModalOpen,
     setAudioModalIsOpen,
-    microphoneConstraints,
     init: async (toggleVoice) => {
-      await Service.init(messages, intl, toggleVoice);
+      await Service.init(messages, intl, toggleVoice, speechLocale);
       if ((!autoJoin || didMountAutoJoin)) {
         if (enableVideo && autoShareWebcam) {
           openVideoPreviewModal();

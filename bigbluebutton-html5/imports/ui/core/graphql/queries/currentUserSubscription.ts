@@ -43,10 +43,37 @@ subscription userCurrentSubscription {
     registeredOn
     role
     speechLocale
+    captionLocale
     userId
     customParameters {
       parameter
       value
+    }
+    reaction {
+      reactionEmoji
+    }
+    breakoutRooms {
+      currentRoomJoined
+      assignedAt
+      breakoutRoomId
+      currentRoomPriority
+      currentRoomRegisteredAt
+      durationInSeconds
+      endedAt
+      freeJoin
+      inviteDismissedAt
+      isDefaultName
+      joinURL
+      lastRoomIsOnline
+      lastRoomJoinedAt
+      lastRoomJoinedId
+      name
+      sendInvitationToModerators
+      sequence
+      shortName
+      showInvitation
+      startedAt
+      currentRoomIsOnline
     }
     lastBreakoutRoom {
       breakoutRoomId
@@ -66,12 +93,17 @@ subscription userCurrentSubscription {
       muted
       spoke
       listenOnly
+      talking
     }
     presPagesWritable {
       isCurrentPage
       changedModeOn
       pageId
       presentationId
+    }
+    welcomeMsgs {
+      welcomeMsg
+      welcomeMsgForModerators
     }
   }
 }

@@ -1,40 +1,47 @@
 package org.bigbluebutton.core.db
 
-import org.bigbluebutton.core.models.{UserState}
+import org.bigbluebutton.core.models.UserState
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
+
+case class UserEjectColumnsDbModel(
+    ejected:                      Boolean = false,
+    ejectReason:                  Option[String],
+    ejectReasonCode:              Option[String],
+    ejectedByModerator:           Option[String],
+)
 case class UserStateDbModel(
-    userId:       String,
-    emoji: String = "none",
-    away: Boolean = false,
-    raiseHand: Boolean = false,
-    guestStatus: String,
-    guestStatusSetByModerator: Option[String],
-    guestLobbyMessage: Option[String],
-    mobile: Boolean,
-    clientType: String,
-    disconnected: Boolean = false,
-    expired: Boolean = false,
-    ejected: Boolean = false,
-    ejectReason: Option[String],
-    ejectReasonCode: Option[String],
-    ejectedByModerator: Option[String],
-    presenter: Boolean = false,
-    pinned: Boolean = false,
-    locked: Boolean = false,
-    speechLocale: String,
-    inactivityWarningDisplay: Boolean = false,
+    meetingId:                    String,
+    userId:                       String,
+    emoji:                        String = "none",
+    away:                         Boolean = false,
+    raiseHand:                    Boolean = false,
+    guestStatus:                  String,
+    guestStatusSetByModerator:    Option[String],
+    guestLobbyMessage:            Option[String],
+    mobile:                       Boolean,
+    clientType:                   String,
+    disconnected:                 Boolean = false,
+    expired:                      Boolean = false,
+    ejectColumns:                 UserEjectColumnsDbModel,
+    presenter:                    Boolean = false,
+    pinned:                       Boolean = false,
+    locked:                       Boolean = false,
+    speechLocale:                 String,
+    captionLocale:                String,
+    inactivityWarningDisplay:     Boolean = false,
     inactivityWarningTimeoutSecs: Option[Long],
 )
 
 class UserStateDbTableDef(tag: Tag) extends Table[UserStateDbModel](tag, None, "user") {
   override def * = (
-    userId,emoji,away,raiseHand,guestStatus,guestStatusSetByModerator,guestLobbyMessage,mobile,clientType,disconnected,
-    expired,ejected,ejectReason,ejectReasonCode,ejectedByModerator,presenter,pinned,locked,speechLocale,
+    meetingId, userId,emoji,away,raiseHand,guestStatus,guestStatusSetByModerator,guestLobbyMessage,mobile,clientType,disconnected,
+    expired,ejectColumns,presenter,pinned,locked,speechLocale, captionLocale,
     inactivityWarningDisplay, inactivityWarningTimeoutSecs) <> (UserStateDbModel.tupled, UserStateDbModel.unapply)
+  val meetingId = column[String]("meetingId", O.PrimaryKey)
   val userId = column[String]("userId", O.PrimaryKey)
   val emoji = column[String]("emoji")
   val away = column[Boolean]("away")
@@ -50,10 +57,12 @@ class UserStateDbTableDef(tag: Tag) extends Table[UserStateDbModel](tag, None, "
   val ejectReason = column[Option[String]]("ejectReason")
   val ejectReasonCode = column[Option[String]]("ejectReasonCode")
   val ejectedByModerator = column[Option[String]]("ejectedByModerator")
+  val ejectColumns = (ejected, ejectReason, ejectReasonCode, ejectedByModerator) <> (UserEjectColumnsDbModel.tupled, UserEjectColumnsDbModel.unapply)
   val presenter = column[Boolean]("presenter")
   val pinned = column[Boolean]("pinned")
   val locked = column[Boolean]("locked")
   val speechLocale = column[String]("speechLocale")
+  val captionLocale = column[String]("captionLocale")
   val inactivityWarningDisplay = column[Boolean]("inactivityWarningDisplay")
   val inactivityWarningTimeoutSecs = column[Option[Long]]("inactivityWarningTimeoutSecs")
 }
@@ -62,18 +71,32 @@ object UserStateDAO {
   def update(userState: UserState) = {
     DatabaseConnection.db.run(
       TableQuery[UserStateDbTableDef]
+        .filter(_.meetingId === userState.meetingId)
         .filter(_.userId === userState.intId)
-        .map(u => (u.presenter, u.pinned, u.locked, u.speechLocale, u.emoji, u.away, u.raiseHand, u.mobile, u.clientType, u.disconnected))
-        .update((userState.presenter, userState.pin, userState.locked, userState.speechLocale, userState.emoji, userState.away, userState.raiseHand, userState.mobile, userState.clientType, userState.userLeftFlag.left))
+        .map(u => (u.presenter, u.pinned, u.locked, u.speechLocale, u.captionLocale, u.emoji, u.away, u.raiseHand, u.mobile, u.clientType, u.disconnected))
+        .update((
+          userState.presenter,
+          userState.pin,
+          userState.locked,
+          userState.speechLocale,
+          userState.captionLocale,
+          userState.emoji,
+          userState.away,
+          userState.raiseHand,
+          userState.mobile,
+          userState.clientType,
+          userState.userLeftFlag.left
+        ))
     ).onComplete {
       case Success(rowsAffected) => DatabaseConnection.logger.debug(s"$rowsAffected row(s) updated on user table!")
       case Failure(e) => DatabaseConnection.logger.error(s"Error updating user: $e")
     }
   }
 
-  def updateEjected(userId: String, ejectReason: String, ejectReasonCode: String, ejectedByModerator: String) = {
+  def updateEjected(meetingId: String, userId: String, ejectReason: String, ejectReasonCode: String, ejectedByModerator: String) = {
     DatabaseConnection.db.run(
       TableQuery[UserStateDbTableDef]
+        .filter(_.meetingId === meetingId)
         .filter(_.userId === userId)
         .map(u => (u.ejected, u.ejectReason, u.ejectReasonCode, u.ejectedByModerator))
         .update((true, Some(ejectReason), Some(ejectReasonCode), Some(ejectedByModerator)))
@@ -83,10 +106,11 @@ object UserStateDAO {
     }
   }
 
-  def updateExpired(intId: String, expired: Boolean) = {
+  def updateExpired(meetingId: String, userId: String, expired: Boolean) = {
     DatabaseConnection.db.run(
       TableQuery[UserStateDbTableDef]
-        .filter(_.userId === intId)
+        .filter(_.meetingId === meetingId)
+        .filter(_.userId === userId)
         .map(u => (u.expired))
         .update((expired))
     ).onComplete {
@@ -95,10 +119,11 @@ object UserStateDAO {
     }
   }
 
-  def updateGuestStatus(intId: String, guestStatus: String, guestStatusSetByModerator: String) = {
+  def updateGuestStatus(meetingId: String, userId: String, guestStatus: String, guestStatusSetByModerator: String) = {
     DatabaseConnection.db.run(
       TableQuery[UserStateDbTableDef]
-        .filter(_.userId === intId)
+        .filter(_.meetingId === meetingId)
+        .filter(_.userId === userId)
         .map(u => (u.guestStatus, u.guestStatusSetByModerator))
         .update((guestStatus,
           guestStatusSetByModerator match {
@@ -113,10 +138,11 @@ object UserStateDAO {
     }
   }
 
-  def updateGuestLobbyMessage(intId: String, guestLobbyMessage: String) = {
+  def updateGuestLobbyMessage(meetingId: String, userId: String, guestLobbyMessage: String) = {
     DatabaseConnection.db.run(
       TableQuery[UserStateDbTableDef]
-        .filter(_.userId === intId)
+        .filter(_.meetingId === meetingId)
+        .filter(_.userId === userId)
         .map(u => u.guestLobbyMessage)
         .update(Some(guestLobbyMessage))
     ).onComplete {
@@ -125,10 +151,11 @@ object UserStateDAO {
     }
   }
 
-  def updateInactivityWarning(intId: String, inactivityWarningDisplay: Boolean, inactivityWarningTimeoutSecs: Long) = {
+  def updateInactivityWarning(meetingId: String, userId: String, inactivityWarningDisplay: Boolean, inactivityWarningTimeoutSecs: Long) = {
     DatabaseConnection.db.run(
       TableQuery[UserStateDbTableDef]
-        .filter(_.userId === intId)
+        .filter(_.meetingId === meetingId)
+        .filter(_.userId === userId)
         .map(u => (u.inactivityWarningDisplay, u.inactivityWarningTimeoutSecs))
         .update((inactivityWarningDisplay,
           inactivityWarningTimeoutSecs match {

@@ -1,14 +1,14 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { withTracker } from 'meteor/react-meteor-data';
-import PresentationToolbar from './component';
+import { useMutation } from '@apollo/client';
 import FullscreenService from '/imports/ui/components/common/fullscreen-button/service';
-import { isPollingEnabled } from '/imports/ui/services/features';
+import { useIsPollingEnabled } from '/imports/ui/services/features';
 import { PluginsContext } from '/imports/ui/components/components-data/plugin-context/context';
-import { useSubscription, useMutation } from '@apollo/client';
 import POLL_SUBSCRIPTION from '/imports/ui/core/graphql/queries/pollSubscription';
 import { POLL_CANCEL, POLL_CREATE } from '/imports/ui/components/poll/mutations';
 import { PRESENTATION_SET_PAGE } from '../mutations';
+import PresentationToolbar from './component';
+import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
 
 const PresentationToolbarContainer = (props) => {
   const pluginsContext = useContext(PluginsContext);
@@ -19,9 +19,10 @@ const PresentationToolbarContainer = (props) => {
     layoutSwapped,
     currentSlideNum,
     presentationId,
+    numberOfSlides,
   } = props;
 
-  const { data: pollData } = useSubscription(POLL_SUBSCRIPTION);
+  const { data: pollData } = useDeduplicatedSubscription(POLL_SUBSCRIPTION);
   const hasPoll = pollData?.poll?.length > 0;
 
   const handleToggleFullScreen = (ref) => FullscreenService.toggleFullScreen(ref);
@@ -50,11 +51,17 @@ const PresentationToolbarContainer = (props) => {
 
   const previousSlide = () => {
     const prevSlideNum = currentSlideNum - 1;
+    if (prevSlideNum < 1) {
+      return;
+    }
     skipToSlide(prevSlideNum);
   };
 
   const nextSlide = () => {
     const nextSlideNum = currentSlideNum + 1;
+    if (nextSlideNum > numberOfSlides) {
+      return;
+    }
     skipToSlide(nextSlideNum);
   };
 
@@ -75,6 +82,8 @@ const PresentationToolbarContainer = (props) => {
     });
   };
 
+  const isPollingEnabled = useIsPollingEnabled();
+
   if (userIsPresenter && !layoutSwapped) {
     // Only show controls if user is presenter and layout isn't swapped
 
@@ -86,6 +95,9 @@ const PresentationToolbarContainer = (props) => {
         {...props}
         amIPresenter={userIsPresenter}
         endCurrentPoll={endCurrentPoll}
+        isPollingEnabled={isPollingEnabled}
+        // TODO: Remove this
+        isMeteorConnected
         {...{
           pluginProvidedPresentationToolbarItems,
           handleToggleFullScreen,
@@ -100,18 +112,11 @@ const PresentationToolbarContainer = (props) => {
   return null;
 };
 
-export default withTracker(() => {
-  return {
-    isMeteorConnected: Meteor.status().connected,
-    isPollingEnabled: isPollingEnabled(),
-  };
-})(PresentationToolbarContainer);
+export default PresentationToolbarContainer;
 
 PresentationToolbarContainer.propTypes = {
   // Number of current slide being displayed
   currentSlideNum: PropTypes.number.isRequired,
-  zoom: PropTypes.number.isRequired,
-  zoomChanger: PropTypes.func.isRequired,
 
   // Total number of slides in this presentation
   numberOfSlides: PropTypes.number.isRequired,

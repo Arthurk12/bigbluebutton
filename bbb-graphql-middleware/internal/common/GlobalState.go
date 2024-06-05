@@ -3,6 +3,7 @@ package common
 import (
 	"github.com/google/uuid"
 	"sync"
+	"time"
 )
 
 var uniqueID string
@@ -15,23 +16,31 @@ func GetUniqueID() string {
 	return uniqueID
 }
 
-var activitiesOverview = make(map[string]int64)
-var activitiesOverviewMux = sync.Mutex{}
+var JsonPatchCache = make(map[string][]byte)
+var JsonPatchCacheMutex sync.RWMutex
 
-func ActivitiesOverviewIncIndex(index string) {
-	activitiesOverviewMux.Lock()
-	defer activitiesOverviewMux.Unlock()
+func GetJsonPatchCache(cacheKey string) ([]byte, bool) {
+	JsonPatchCacheMutex.RLock()
+	defer JsonPatchCacheMutex.RUnlock()
 
-	if _, exists := activitiesOverview[index]; !exists {
-		activitiesOverview[index] = 0
-	}
-
-	activitiesOverview[index]++
+	jsonDiffPatch, jsonDiffPatchExists := JsonPatchCache[cacheKey]
+	return jsonDiffPatch, jsonDiffPatchExists
 }
 
-func GetActivitiesOverview() map[string]int64 {
-	activitiesOverviewMux.Lock()
-	defer activitiesOverviewMux.Unlock()
+func StoreJsonPatchCache(cacheKey string, data []byte) {
+	JsonPatchCacheMutex.Lock()
+	defer JsonPatchCacheMutex.Unlock()
 
-	return activitiesOverview
+	JsonPatchCache[cacheKey] = data
+
+	//Remove the cache after 30 seconds
+	go RemoveJsonPatchCache(cacheKey, 30)
+}
+
+func RemoveJsonPatchCache(cacheKey string, delayInSecs time.Duration) {
+	time.Sleep(delayInSecs * time.Second)
+
+	JsonPatchCacheMutex.Lock()
+	defer JsonPatchCacheMutex.Unlock()
+	delete(JsonPatchCache, cacheKey)
 }

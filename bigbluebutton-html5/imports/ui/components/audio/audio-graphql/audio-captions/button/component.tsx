@@ -4,16 +4,19 @@ import { Layout } from '/imports/ui/components/layout/layoutTypes';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
 import ButtonEmoji from '/imports/ui/components/common/button/button-emoji/ButtonEmoji';
 import BBBMenu from '/imports/ui/components/common/menu/component';
+import { defineMessages, useIntl } from 'react-intl';
+import { useMutation } from '@apollo/client';
 import Styled from './styles';
 import {
-  getSpeechVoices, isAudioTranscriptionEnabled, setAudioCaptions, setSpeechLocale,
+  setAudioCaptions, setUserLocaleProperty,
 } from '../service';
-import { defineMessages, useIntl } from 'react-intl';
 import { MenuSeparatorItemType, MenuOptionItemType } from '/imports/ui/components/common/menu/menuTypes';
 import useAudioCaptionEnable from '/imports/ui/core/local-states/useAudioCaptionEnable';
 import { User } from '/imports/ui/Types/user';
-import { useMutation } from '@apollo/client';
-import { SET_SPEECH_LOCALE } from '/imports/ui/core/graphql/mutations/userMutations';
+import { SET_CAPTION_LOCALE } from '/imports/ui/core/graphql/mutations/userMutations';
+import useMeeting from '/imports/ui/core/hooks/useMeeting';
+import { ActiveCaptionsResponse, getactiveCaptions } from './queries';
+import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
 
 const intlMessages = defineMessages({
   start: {
@@ -87,51 +90,49 @@ const intlMessages = defineMessages({
 interface AudioCaptionsButtonProps {
   isRTL: boolean;
   availableVoices: string[];
-  currentSpeechLocale: string;
+  currentCaptionLocale: string;
   isSupported: boolean;
-  isVoiceUser: boolean;
 }
 
 const DISABLED = '';
 
 const AudioCaptionsButton: React.FC<AudioCaptionsButtonProps> = ({
   isRTL,
-  currentSpeechLocale,
+  currentCaptionLocale,
   availableVoices,
   isSupported,
-  isVoiceUser,
 }) => {
+  const knownLocales = window.meetingClientSettings.public.captions.locales;
+  const PROVIDER = window.meetingClientSettings.public.app.audioCaptions.provider;
+
   const intl = useIntl();
   const [active] = useAudioCaptionEnable();
-  const [setSpeechLocaleMutation] = useMutation(SET_SPEECH_LOCALE);
-  const setUserSpeechLocale = (speechLocale: string, provider: string) => {
-    setSpeechLocaleMutation({
+  const [setCaptionLocaleMutation] = useMutation(SET_CAPTION_LOCALE);
+  const setUserCaptionLocale = (captionLocale: string, provider: string) => {
+    setCaptionLocaleMutation({
       variables: {
-        locale: speechLocale,
+        locale: captionLocale,
         provider,
       },
     });
   };
-  const isTranscriptionDisabled = () => currentSpeechLocale === DISABLED;
+  const isCaptionLocaleSet = () => currentCaptionLocale === DISABLED;
   const fallbackLocale = availableVoices.includes(navigator.language)
     ? navigator.language
     : 'en-US'; // Assuming 'en-US' is the default fallback locale
 
-  const getSelectedLocaleValue = isTranscriptionDisabled()
+  const getSelectedLocaleValue = isCaptionLocaleSet()
     ? fallbackLocale
-    : currentSpeechLocale;
+    : currentCaptionLocale;
 
   const selectedLocale = useRef(getSelectedLocaleValue);
 
   useEffect(() => {
-    if (!isTranscriptionDisabled()) selectedLocale.current = getSelectedLocaleValue;
-  }, [currentSpeechLocale]);
+    if (!isCaptionLocaleSet()) selectedLocale.current = getSelectedLocaleValue;
+  }, [currentCaptionLocale]);
 
-  const shouldRenderChevron = isSupported && isVoiceUser;
-
-  const toggleTranscription = () => {
-    setSpeechLocale(isTranscriptionDisabled() ? selectedLocale.current : DISABLED, setUserSpeechLocale);
-  };
+  const shouldRenderChevron = isSupported;
+  const shouldRenderSelector = isSupported && availableVoices.length > 0;
 
   const getAvailableLocales = () => {
     let indexToInsertSeparator = -1;
@@ -147,10 +148,10 @@ const AudioCaptionsButton: React.FC<AudioCaptionsButtonProps> = ({
             key: availableVoice,
             iconRight: selectedLocale.current === availableVoice ? 'check' : null,
             customStyles: (selectedLocale.current === availableVoice) && Styled.SelectedLabel,
-            disabled: isTranscriptionDisabled(),
+            disabled: false,
             onClick: () => {
               selectedLocale.current = availableVoice;
-              setSpeechLocale(selectedLocale.current, setUserSpeechLocale);
+              setUserLocaleProperty(selectedLocale.current, setUserCaptionLocale);
             },
           }
         );
@@ -166,39 +167,60 @@ const AudioCaptionsButton: React.FC<AudioCaptionsButtonProps> = ({
     ];
   };
 
-  const getAvailableLocalesList = () => (
-    [{
+  const getAvailableCaptions = () => {
+    return availableVoices.map((caption) => {
+      const localeName = knownLocales ? knownLocales.find((l) => l.locale === caption)?.name : 'en';
+
+      return {
+        key: caption,
+        label: localeName,
+        customStyles: (selectedLocale.current === caption) && Styled.SelectedLabel,
+        iconRight: selectedLocale.current === caption ? 'check' : null,
+        onClick: () => {
+          selectedLocale.current = caption;
+          setUserLocaleProperty(selectedLocale.current, setUserCaptionLocale);
+        },
+      };
+    });
+  };
+
+  const getAvailableLocalesList = () => {
+    // audio captions
+    if (shouldRenderChevron) {
+      return [{
+        key: 'availableLocalesList',
+        label: intl.formatMessage(intlMessages.language),
+        customStyles: Styled.TitleLabel,
+        disabled: true,
+      },
+      ...getAvailableLocales(),
+      {
+        key: 'divider',
+        label: intl.formatMessage(intlMessages.transcription),
+        customStyles: Styled.TitleLabel,
+        disabled: true,
+      },
+      {
+        key: 'separator-02',
+        isSeparator: true,
+      }];
+    }
+
+    // typed captions
+    return [{
       key: 'availableLocalesList',
       label: intl.formatMessage(intlMessages.language),
       customStyles: Styled.TitleLabel,
       disabled: true,
     },
-    ...getAvailableLocales(),
-    {
-      key: 'divider',
-      label: intl.formatMessage(intlMessages.transcription),
-      customStyles: Styled.TitleLabel,
-      disabled: true,
-    },
-    {
-      key: 'separator-02',
-      isSeparator: true,
-    },
-    {
-      key: 'transcriptionStatus',
-      label: intl.formatMessage(
-        isTranscriptionDisabled()
-          ? intlMessages.transcriptionOn
-          : intlMessages.transcriptionOff,
-      ),
-      customStyles: isTranscriptionDisabled()
-        ? Styled.EnableTrascription : Styled.DisableTrascription,
-      disabled: false,
-      onClick: toggleTranscription,
-    }]
-  );
+    ...getAvailableCaptions(),
+    ];
+  };
   const onToggleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!currentCaptionLocale && !active) {
+      setUserCaptionLocale(availableVoices[0], PROVIDER);
+    }
     setAudioCaptions(!active);
   };
 
@@ -216,7 +238,7 @@ const AudioCaptionsButton: React.FC<AudioCaptionsButtonProps> = ({
   );
 
   return (
-    shouldRenderChevron
+    shouldRenderChevron || shouldRenderSelector
       ? (
         <Styled.SpanButtonWrapper>
           <BBBMenu
@@ -256,28 +278,43 @@ const AudioCaptionsButtonContainer: React.FC = () => {
     loading: currentUserLoading,
   } = useCurrentUser(
     (user: Partial<User>) => ({
-      speechLocale: user.speechLocale,
+      captionLocale: user.captionLocale,
       voice: user.voice,
+      speechLocale: user.speechLocale,
     }),
   );
 
+  const {
+    data: currentMeetingData,
+    loading: currentMeetingLoading,
+  } = useMeeting((m) => ({
+    componentsFlags: m.componentsFlags,
+  }));
+
+  const {
+    data: activeCaptionsData,
+    loading: activeCaptionsLoading,
+  } = useDeduplicatedSubscription<ActiveCaptionsResponse>(getactiveCaptions);
+
   if (currentUserLoading) return null;
+  if (currentMeetingLoading) return null;
+  if (activeCaptionsLoading) return null;
   if (!currentUser) return null;
+  if (!currentMeetingData) return null;
+  if (!activeCaptionsData) return null;
 
-  const availableVoices = getSpeechVoices();
-  const currentSpeechLocale = currentUser.speechLocale || '';
+  const availableVoices = activeCaptionsData.caption_activeLocales.map((caption) => caption.locale);
+  const currentCaptionLocale = currentUser.captionLocale || '';
   const isSupported = availableVoices.length > 0;
-  const isVoiceUser = !!currentUser.voice;
 
-  if (!isAudioTranscriptionEnabled()) return null;
+  if (!currentMeetingData.componentsFlags?.hasCaption) return null;
 
   return (
     <AudioCaptionsButton
       isRTL={isRTL}
       availableVoices={availableVoices}
-      currentSpeechLocale={currentSpeechLocale}
+      currentCaptionLocale={currentCaptionLocale}
       isSupported={isSupported}
-      isVoiceUser={isVoiceUser}
     />
   );
 };

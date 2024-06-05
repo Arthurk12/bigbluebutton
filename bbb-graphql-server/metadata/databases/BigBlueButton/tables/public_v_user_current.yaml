@@ -59,7 +59,7 @@ object_relationships:
           userId: userId
         insertion_order: null
         remote_table:
-          name: v_user_reaction
+          name: v_user_reaction_current
           schema: public
   - name: sharedNotesSession
     using:
@@ -96,6 +96,15 @@ object_relationships:
         insertion_order: null
         remote_table:
           name: v_user_voice
+          schema: public
+  - name: welcomeMsgs
+    using:
+      manual_configuration:
+        column_mapping:
+          userId: userId
+        insertion_order: null
+        remote_table:
+          name: v_user_welcomeMsgs
           schema: public
 array_relationships:
   - name: breakoutRooms
@@ -177,12 +186,16 @@ select_permissions:
         - registeredOn
         - role
         - speechLocale
+        - captionLocale
         - inactivityWarningDisplay
         - inactivityWarningTimeoutSecs
         - userId
       filter:
-        userId:
-          _eq: X-Hasura-UserId
+        _and:
+          - meetingId:
+              _eq: X-Hasura-MeetingId
+          - userId:
+              _eq: X-Hasura-UserId
   - role: not_joined_bbb_client
     permission:
       columns:
@@ -209,8 +222,11 @@ select_permissions:
         - registeredOn
         - userId
       filter:
-        userId:
-          _eq: X-Hasura-UserId
+        _and:
+          - meetingId:
+              _eq: X-Hasura-MeetingId
+          - userId:
+              _eq: X-Hasura-UserId
     comment: ""
 update_permissions:
   - role: bbb_client
