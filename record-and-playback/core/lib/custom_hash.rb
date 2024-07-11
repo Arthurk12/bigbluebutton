@@ -22,11 +22,12 @@
 require 'nokogiri'
 
 # modified from http://stackoverflow.com/questions/1230741/convert-a-nokogiri-document-to-a-ruby-hash/1231297#1231297
-class Hash
+class ::Hash
   class << self
     def from_xml(xml_io)
       begin
-        result = Nokogiri::XML(xml_io)
+        result = Nokogiri::XML(xml_io) { |x| x.noblanks }
+        result.xpath("//text()").each { |node| node.content = node.text.strip }
         return { result.root.name.to_sym => xml_node_to_hash(result.root)}
       rescue Exception => e
         # raise your custom exception here
@@ -49,7 +50,12 @@ class Hash
 
             if child.name == "text"
               unless child.next_sibling || child.previous_sibling
-                return prepare(result)
+                if result_hash[:attributes]
+                  result_hash['value'] = prepare(result)
+                  return result_hash
+                else
+                  return prepare(result)
+                end
               end
             elsif result_hash[child.name.to_sym]
               if result_hash[child.name.to_sym].is_a?(Object::Array)
@@ -78,5 +84,11 @@ class Hash
 
   def to_struct(struct_name)
       Struct.new(struct_name,*keys).new(*values)
+  end
+
+  # from: https://stackoverflow.com/questions/9381553/ruby-merge-nested-hash
+  def deep_merge(second)
+    merger = proc { |key, v1, v2| Hash === v1 && Hash === v2 ? v1.merge(v2, &merger) : v2 }
+    merge(second, &merger)
   end
 end

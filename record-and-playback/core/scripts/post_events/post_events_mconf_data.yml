@@ -1,0 +1,20 @@
+dir: /var/bigbluebutton/mconf-data
+data:
+  - activities
+  - chat
+  - notes
+  - breakout_rooms_notes
+  - presentations
+  - learning_dasbhoard
+  - thumbnails
+  - svgs
+s3:
+  enabled: false
+  bucket_name: DATA_BUCKET_NAME
+  region:
+  endpoint:
+  key:
+  secret:
+default_locale: pt
+default_timezone: America/Sao_Paulo
+default_timezone_offset: '-0300'

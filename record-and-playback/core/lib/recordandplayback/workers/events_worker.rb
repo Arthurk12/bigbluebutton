@@ -43,7 +43,9 @@ module BigBlueButton
         notes_id = BigBlueButton::Events.get_notes_id(events)
 
         events_etherpad = "#{target_dir}/events.etherpad"
-        BigBlueButton.try_download("#{@notes_endpoint}/#{CGI.escape notes_id}/export/etherpad", events_etherpad)
+
+        notes_api = Etherpad::Api.new(@notes_endpoint, @notes_apikey)
+        notes_api.export_pad(notes_id, events_etherpad, "etherpad", "events_worker") if notes_api.pad_exists? notes_id
       end
 
       def perform
@@ -88,6 +90,7 @@ module BigBlueButton
         @step_name = 'events'
         @events_dir = @props['events_dir']
         @notes_endpoint = @props['notes_endpoint']
+        @notes_apikey = @props['notes_apikey']
         @post_scripts_path = File.join(BigBlueButton.rap_scripts_path, 'post_events')
         @ended_done = "#{@recording_dir}/status/ended/#{@full_id}.done"
       end

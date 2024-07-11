@@ -34,6 +34,7 @@ require 'json'
 
 opts = Optimist.options do
   opt :meeting_id, 'Meeting id to archive', default: '58f4a6b3-cd07-444d-8564-59116cb53974', type: String
+  opt :log_stdout, "Log to STDOUT", :type => :flag
 end
 
 meeting_id = opts[:meeting_id]
@@ -58,7 +59,7 @@ log_dir = props['log_dir']
 target_dir = "#{recording_dir}/process/presentation/#{meeting_id}"
 unless FileTest.directory?(target_dir)
   FileUtils.mkdir_p "#{log_dir}/presentation"
-  logger = Logger.new("#{log_dir}/presentation/process-#{meeting_id}.log", 'daily')
+  logger = opts[:log_stdout] ? Logger.new(STDOUT) : Logger.new("#{log_dir}/presentation/process-#{meeting_id}.log", 'daily' )
   BigBlueButton.logger = logger
   BigBlueButton.logger.info('Processing script presentation.rb')
   FileUtils.mkdir_p target_dir
@@ -73,6 +74,7 @@ unless FileTest.directory?(target_dir)
       b.start_time
       b.end_time
       b.participants
+      b.recording_users
       b.playback
       b.meta
     end
@@ -127,6 +129,19 @@ unless FileTest.directory?(target_dir)
 
     participants = recording.at_xpath('participants')
     participants.content = BigBlueButton::Events.get_num_participants(@doc)
+
+    ## Remove empty recording_users
+    metadata.search('//recording/recording_users').each do |recording_users|
+      recording_users.remove
+    end
+    ## Add the actual recording_users
+    Nokogiri::XML::Builder.with(metadata.at('recording')) do |xml|
+      xml.recording_users do
+        BigBlueButton::Events.get_recording_users_external_id(@doc).each { |external_user_id|
+          xml.externalUserId(external_user_id)
+        }
+      end
+    end
 
     ## Remove empty meta
     ## TODO: Clarify reasoning behind creating an empty node to then remove it

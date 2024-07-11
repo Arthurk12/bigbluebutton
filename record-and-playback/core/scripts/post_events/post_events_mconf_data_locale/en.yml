@@ -1,0 +1,31 @@
+en:
+  time:
+    formats:
+      datetime: "%m/%d/%Y %H:%M:%S"
+  session:
+    name: "Session name: %{val}"
+    date: "Date: %{val}"
+    duration: "Duration: %{val}"
+  recorded_segments:
+    title: "%{val} recorded segments:"
+    item: "# %{index} - from %{start} to %{stop} (duration of %{duration})"
+    total: "Total duration: %{val}"
+  moderators: "Moderators:"
+  viewers: "Viewers:"
+  transfer_attendees: "Streaming viewers:"
+  activity:
+    title: "Activity:"
+    name: "Name"
+    chat: "Chat"
+    talk: "Talks"
+    poll_votes: "Poll votes"
+    raisehand: "Raise hand"
+    talk_time: "Talking time"
+    join: "Join time"
+    leave: "Leave time"
+    duration: "Duration"
+  polls:
+    title: "Polls:"
+    item: "# %{index} - Started at %{start}, %{votes} votes"
+    name: "Name"
+  timezone: "* Timezone: %{val}"

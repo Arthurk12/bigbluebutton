@@ -60,6 +60,9 @@ def process_archived_meetings(recording_dir)
       processed_done = "#{recording_dir}/status/processed/#{done_base}-#{process_type}.done"
       next if File.exists?(processed_done)
 
+      published_done = "#{recording_dir}/status/published/#{done_base}-#{process_type}.done"
+      next if File.exists?(published_done)
+
       processed_fail = "#{recording_dir}/status/processed/#{done_base}-#{process_type}.fail"
       if File.exists?(processed_fail)
         step_succeeded = false

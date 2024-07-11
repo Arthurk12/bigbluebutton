@@ -1,0 +1,31 @@
+pt:
+  time:
+    formats:
+      datetime: "%d/%m/%Y %H:%M:%S"
+  session:
+    name: "Nome da sessão: %{val}"
+    date: "Data: %{val}"
+    duration: "Duração: %{val}"
+  recorded_segments:
+    title: "%{val} segmentos gravados:"
+    item: "# %{index} - %{start} até %{stop} (duração de %{duration})"
+    total: "Duração total: %{val}"
+  moderators: "Moderadores:"
+  viewers: "Participantes:"
+  transfer_attendees: "Espectadores via transmissão (streaming):"
+  activity:
+    title: "Atividade:"
+    name: "Nome"
+    chat: "Bate-papo"
+    talk: "Falas"
+    poll_votes: "Resposta a enquetes"
+    raisehand: "Levantar a mão"
+    talk_time: "Tempo falando"
+    join: "Horário de entrada"
+    leave: "Horário de saída"
+    duration: "Duração"
+  polls:
+    title: "Enquetes:"
+    item: "# %{index} - Iniciada às %{start}, %{votes} votos"
+    name: "Nome"
+  timezone: "* Fuso horário: %{val}"

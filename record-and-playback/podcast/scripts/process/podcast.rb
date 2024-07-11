@@ -33,6 +33,7 @@ require 'json'
 
 opts = Optimist::options do
   opt :meeting_id, "Meeting id to archive", :default => '58f4a6b3-cd07-444d-8564-59116cb53974', :type => String
+  opt :log_stdout, "Log to STDOUT", :type => :flag
 end
 
 meeting_id = opts[:meeting_id]
@@ -48,7 +49,11 @@ log_dir = props['log_dir']
 target_dir = "#{recording_dir}/process/podcast/#{meeting_id}"
 if not FileTest.directory?(target_dir)
   FileUtils.mkdir_p "#{log_dir}/podcast"
-  logger = Logger.new("#{log_dir}/podcast/process-#{meeting_id}.log", 'daily' )
+  logger = if opts[:log_stdout]
+             Logger.new(STDOUT)
+           else
+             Logger.new("#{log_dir}/podcast/process-#{meeting_id}.log", 'daily' )
+           end
   BigBlueButton.logger = logger
   BigBlueButton.logger.info("Processing script podcast.rb")
   FileUtils.mkdir_p target_dir

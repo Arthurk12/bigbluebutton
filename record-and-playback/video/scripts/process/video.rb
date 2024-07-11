@@ -26,9 +26,12 @@ require 'yaml'
 require 'nokogiri'
 require 'erb'
 require 'cgi'
+require 'i18n'
+require 'securerandom'
 
 opts = Optimist.options do
   opt :meeting_id, 'Meeting id to process', type: String
+  opt :log_stdout, "Log to STDOUT", :type => :flag
   opt :stderr, 'Log output to stderr'
 end
 Optimist.die :meeting_id, 'must be provided' unless opts[:meeting_id]
@@ -52,7 +55,13 @@ raw_archive_dir = "#{recording_dir}/raw/#{meeting_id}"
 donefile = "#{recording_dir}/status/processed/#{meeting_id}-video.done"
 log_file = "#{props['log_dir']}/video/process-#{meeting_id}.log"
 
-logger = opts[:stderr] ? Logger.new($stderr) : Logger.new(log_file)
+logger = if opts[:log_stdout]
+           Logger.new(STDOUT)
+         elsif opts[:stderr]
+           Logger.new($stderr)
+         else
+           Logger.new(log_file)
+         end
 BigBlueButton.logger = logger
 
 if File.exist?(donefile)
@@ -67,8 +76,17 @@ events = Nokogiri::XML(File.open("#{raw_archive_dir}/events.xml"))
 initial_timestamp = BigBlueButton::Events.first_event_timestamp(events)
 final_timestamp = BigBlueButton::Events.last_event_timestamp(events)
 duration = BigBlueButton::Events.get_recording_length(events)
-participants = BigBlueButton::Events.get_num_participants(events)
 metadata = events.at_xpath('/recording/metadata')
+
+layout_name = video_props['default_layout_name']
+if ! metadata['video-playback-layout-name'].nil?
+  value = metadata['video-playback-layout-name']
+  if video_props['layout'].has_key?(value)
+    layout_name = value
+  else
+    logger.warn "No definition for video playback layout #{value}, using default #{layout_name}"
+  end
+end
 
 logger.info 'Generating video events list'
 
@@ -188,12 +206,12 @@ end
 layout = \
   if have_webcams
     if have_presentation || have_deskshare
-      video_props['layout']
+      video_props['layout'][layout_name]['regular']
     else
-      video_props['nopresentation_layout']
+      video_props['layout'][layout_name]['nopresentation']
     end
   else
-    video_props['nowebcam_layout']
+    video_props['layout'][layout_name]['nowebcam']
   end
 
 layout.symbolize_keys!
@@ -217,62 +235,89 @@ if have_presentation
   )
 end
 
+video_edl = BigBlueButton::EDL::Video.sort(video_edl)
+
 logger.info 'Rendering video'
 video = BigBlueButton::EDL::Video.render(video_edl, layout, "#{process_dir}/video")
 
-logger.info "Encoding output files to #{video_props['formats'].length} formats"
-video_props['formats'].each_with_index do |format, i|
-  format.symbolize_keys!
-  logger.info "  #{format[:mimetype]}"
-  BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/video-#{i}", video_props['audio_offset'])
-end
+metadata_link = "#{props['playback_protocol']}://#{props['playback_host']}/playback/video/#{meeting_id}/"
+if metadata['video-playback-link-to-mp4'].to_s == "true"
+  I18n.available_locales = [:en]
+  # remove accents
+  sanitized_meeting_name = I18n.transliterate(metadata['meetingName'])
+  # replace any unwanted sequence of characters with an underscore (to be safe as filename)
+  sanitized_meeting_name = sanitized_meeting_name.gsub /[^a-z0-9\-]+/i, '_'
+  # include at the and 4 random characters to make it harder to guess
+  sanitized_filename = "#{sanitized_meeting_name}-#{SecureRandom.hex(2)}"
 
-logger.info('Generating closed captions')
-ret = BigBlueButton.exec_ret('utils/gen_webvtt', '-i', raw_archive_dir, '-o', process_dir)
-raise 'Generating closed caption files failed' if ret != 0
+  logger.info "Encoding output files to #{video_props['formats'].length} formats"
+  video_props['formats'].each_with_index do |format|
+    format.symbolize_keys!
+    logger.info "  #{format[:mimetype]}"
+    BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/#{sanitized_filename}", video_props['audio_offset'])
+  end
+  final_video_path = File.basename(Dir.glob("#{process_dir}/#{sanitized_filename}.*").first)
+  metadata_link = "#{props['playback_protocol']}://#{props['playback_host']}/video/#{meeting_id}/#{final_video_path}"
+else
+  logger.info "Encoding output files to #{video_props['formats'].length} formats"
+  video_props['formats'].each_with_index do |format, i|
+    format.symbolize_keys!
+    logger.info "  #{format[:mimetype]}"
+    BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/video-#{i}", video_props['audio_offset'])
+  end
 
-captions = JSON.parse(File.read("#{process_dir}/captions.json"))
+  logger.info('Generating closed captions')
+  ret = BigBlueButton.exec_ret('utils/gen_webvtt', '-i', raw_archive_dir, '-o', process_dir)
+  raise 'Generating closed caption files failed' if ret != 0
 
-# Generate the support files for chat events
-have_chat = false
-begin
-  logger.info 'Processing chat events'
-  chats = BigBlueButton::Events.get_chat_events(events, initial_timestamp, final_timestamp, props)
-  have_chat = true unless chats.empty?
+  captions = JSON.parse(File.read("#{process_dir}/captions.json"))
 
-  # Output the chat events to the popcorn events file
-  popcorn_events = Nokogiri::XML::Builder.new do |xml|
-    xml.popcorn do
-      chats.each do |chat|
-        chattimeline = {
-          in: (chat[:in] / 1000.0).round(1),
-          direction: 'down',
-          name: chat[:sender],
-          message: chat[:message]
-        }
-        chattimeline[:out] = (chat[:out] / 1000.0).round(1) unless chat[:out].nil?
-        xml.chattimeline(**chattimeline)
+  # Generate the support files for chat events
+  have_chat = false
+  begin
+    logger.info 'Processing chat events'
+    chats = BigBlueButton::Events.get_chat_events(events, initial_timestamp, final_timestamp, props)
+    have_chat = true unless chats.empty?
+
+    # Output the chat events to the popcorn events file
+    popcorn_events = Nokogiri::XML::Builder.new do |xml|
+      xml.popcorn do
+        chats.each do |chat|
+          chattimeline = {
+            in: (chat[:in] / 1000.0).round(1),
+            direction: 'down',
+            name: chat[:sender],
+            message: chat[:message]
+          }
+          chattimeline[:out] = (chat[:out] / 1000.0).round(1) unless chat[:out].nil?
+          xml.chattimeline(**chattimeline)
+        end
       end
     end
+    File.write("#{process_dir}/video.xml", popcorn_events.to_xml)
   end
-  File.write("#{process_dir}/video.xml", popcorn_events.to_xml)
-end
 
-# Publishing support files
+  # Publishing support files
 
-logger.info 'Generating index page'
-index_template = "#{playback_dir}/index.html.erb"
-index_erb = ERB.new(File.read(index_template))
-index_erb.filename = index_template
-File.write(
-  "#{process_dir}/index.html",
-  index_erb.result_with_hash(
-    captions: captions,
-    haveChat: have_chat,
-    meetingName: metadata['meetingName'],
-    video_props: video_props
+  logger.info 'Generating index page'
+  index_template = "#{playback_dir}/index.html.erb"
+  index_erb = ERB.new(File.read(index_template))
+  index_erb.filename = index_template
+  File.write(
+    "#{process_dir}/index.html",
+    index_erb.result_with_hash(
+      captions: captions,
+      haveChat: have_chat,
+      meetingName: metadata['meetingName'],
+      video_props: video_props
+    )
   )
-)
+
+  logger.info 'Copying css and js support files'
+  FileUtils.cp_r("#{playback_dir}/css", process_dir)
+  FileUtils.cp_r("#{playback_dir}/js", process_dir)
+  FileUtils.cp_r("#{playback_dir}/video-js", process_dir)
+end
 
 logger.info 'Generating metadata xml'
 metadata_xml = Nokogiri::XML::Builder.new do |xml|
@@ -282,10 +327,9 @@ metadata_xml = Nokogiri::XML::Builder.new do |xml|
     xml.published('true')
     xml.start_time(start_real_time)
     xml.end_time(start_real_time + final_timestamp - initial_timestamp)
-    xml.participants(participants)
     xml.playback do
       xml.format('video')
-      xml.link("#{props['playback_protocol']}://#{props['playback_host']}/playback/video/#{meeting_id}/")
+      xml.link(metadata_link)
       xml.duration(duration)
     end
     xml.meta do
@@ -297,10 +341,7 @@ metadata_xml = Nokogiri::XML::Builder.new do |xml|
 end
 File.write("#{process_dir}/metadata.xml", metadata_xml.to_xml)
 
-logger.info 'Copying css and js support files'
-FileUtils.cp_r("#{playback_dir}/css", process_dir)
-FileUtils.cp_r("#{playback_dir}/js", process_dir)
-FileUtils.cp_r("#{playback_dir}/video-js", process_dir)
+BigBlueButton.add_raw_size_to_metadata(process_dir, raw_archive_dir)
 
 logger.info 'Processing successfully completed, writing done file'
 
