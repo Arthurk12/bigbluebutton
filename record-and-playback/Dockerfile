@@ -34,9 +34,9 @@ RUN apt-get update \
  && mk-build-deps -i -r -t 'apt-get -y -o Debug::pkgProblemResolver=yes --no-install-recommends' \
  && gbp buildpackage --git-ignore-new --git-ignore-branch --no-sign
 
-FROM mconf/mconf-rec:proxy-s3-noauth-0.3.0-alpha.1-e715841 AS mconf-rec
+FROM mconf/mconf-rec:proxy-s3-noauth-0.3.7-889fa1d AS mconf-rec
 
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG en_US.UTF-8
