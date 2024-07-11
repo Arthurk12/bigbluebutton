@@ -3,11 +3,12 @@ import {
 } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
-import React, { useContext, useEffect } from 'react';
+import { onError } from '@apollo/client/link/error';
+import React, { useContext, useEffect, useRef } from 'react';
 import { LoadingContext } from '/imports/ui/components/common/loading-screen/loading-screen-HOC/component';
 import logger from '/imports/startup/client/logger';
-import { onError } from '@apollo/client/link/error';
 import apolloContextHolder from '../../core/graphql/apolloContextHolder/apolloContextHolder';
+import connectionStatus from '../../core/graphql/singletons/connectionStatus';
 import deviceInfo from '/imports/utils/deviceInfo';
 
 interface ConnectionManagerProps {
@@ -66,8 +67,20 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): Reac
   const [graphqlUrlApolloClient, setApolloClient] = React.useState<ApolloClient<NormalizedCacheObject> | null>(null);
   const [graphqlUrl, setGraphqlUrl] = React.useState<string>('');
   const loadingContextInfo = useContext(LoadingContext);
+  const numberOfAttempts = useRef(20);
+  const [errorCounts, setErrorCounts] = React.useState(0);
+  const activeSocket = useRef<WebSocket>();
+  const tsLastMessageRef = useRef<number>(0);
+  const tsLastPingMessageRef = useRef<number>(0);
+  const boundary = useRef(15_000);
+  const [terminalError, setTerminalError] = React.useState<string>('');
   useEffect(() => {
-    fetch(`https://${window.location.hostname}/bigbluebutton/api`, {
+    const pathMatch = window.location.pathname.match('^(.*)/html5client/join$');
+    if (pathMatch == null) {
+      throw new Error('Failed to match BBB client URI');
+    }
+    const serverPathPrefix = pathMatch[1];
+    fetch(`https://${window.location.hostname}${serverPathPrefix}/bigbluebutton/api`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -79,12 +92,45 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): Reac
       throw new Error('Error fetching GraphQL URL: '.concat(error.message || ''));
     });
     logger.info('Fetching GraphQL URL');
-    loadingContextInfo.setLoading(true, '1/4');
+    loadingContextInfo.setLoading(true, '1/5');
   }, []);
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      const tsNow = Date.now();
+
+      if (tsLastMessageRef.current !== 0 && tsLastPingMessageRef.current !== 0) {
+        if ((tsNow - tsLastMessageRef.current > boundary.current) && connectionStatus.getServerIsResponding()) {
+          connectionStatus.setServerIsResponding(false);
+        } else if ((tsNow - tsLastPingMessageRef.current > boundary.current) && connectionStatus.getPingIsComing()) {
+          connectionStatus.setPingIsComing(false);
+        }
+
+        if (tsNow - tsLastMessageRef.current < boundary.current && !connectionStatus.getServerIsResponding()) {
+          connectionStatus.setServerIsResponding(true);
+        } else if (tsNow - tsLastPingMessageRef.current < boundary.current && !connectionStatus.getPingIsComing()) {
+          connectionStatus.setPingIsComing(true);
+        }
+      }
+    }, 5_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (errorCounts === numberOfAttempts.current) {
+      throw new Error('Error connecting to server, retrying attempts exceeded');
+    }
+  }, [errorCounts]);
+
+  useEffect(() => {
+    if (terminalError) {
+      throw new Error(terminalError);
+    }
+  }, [terminalError]);
+
+  useEffect(() => {
     logger.info('Connecting to GraphQL server');
-    loadingContextInfo.setLoading(true, '2/4');
+    loadingContextInfo.setLoading(true, '2/5');
     if (graphqlUrl) {
       const urlParams = new URLSearchParams(window.location.search);
       const sessionToken = urlParams.get('sessionToken');
@@ -101,7 +147,26 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): Reac
       try {
         const subscription = createClient({
           url: graphqlUrl,
-          retryAttempts: 2,
+          retryAttempts: numberOfAttempts.current,
+          keepAlive: 99999999999,
+          retryWait: async () => {
+            return new Promise((res) => {
+              setTimeout(() => {
+                res();
+              }, 10_000);
+            });
+          },
+          shouldRetry: (error) => {
+            // @ts-ignore - error is not a string
+            if (error.code === 4403) {
+              loadingContextInfo.setLoading(false, '');
+              setTerminalError('Session token is invalid');
+              return false;
+            }
+
+            if (!apolloContextHolder.getShouldRetry()) return false;
+            return true;
+          },
           connectionParams: {
             headers: {
               'X-Session-Token': sessionToken,
@@ -114,8 +179,26 @@ const ConnectionManager: React.FC<ConnectionManagerProps> = ({ children }): Reac
             error: (error) => {
               logger.error(`Error: on subscription to server: ${error}`);
               loadingContextInfo.setLoading(false, '');
-              throw new Error(`Error: on subscription to server: ${JSON.stringify(error)}`);
+              connectionStatus.setConnectedStatus(false);
+              setErrorCounts((prev: number) => prev + 1);
             },
+            closed: () => {
+              connectionStatus.setConnectedStatus(false);
+            },
+            connected: (socket) => {
+              activeSocket.current = socket as WebSocket;
+              connectionStatus.setConnectedStatus(true);
+            },
+            connecting: () => {
+              connectionStatus.setConnectedStatus(false);
+            },
+            message: (message) => {
+              if (message.type === 'ping') {
+                tsLastPingMessageRef.current = Date.now();
+              }
+              tsLastMessageRef.current = Date.now();
+            },
+
           },
         });
         const graphWsLink = new GraphQLWsLink(

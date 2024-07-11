@@ -1,8 +1,11 @@
 package websrv
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/iMDT/bbb-graphql-middleware/internal/akka_apps"
 	"github.com/iMDT/bbb-graphql-middleware/internal/bbb_web"
 	"github.com/iMDT/bbb-graphql-middleware/internal/common"
 	"github.com/iMDT/bbb-graphql-middleware/internal/gql_actions"
@@ -60,13 +63,16 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	defer browserWsConn.Close(websocket.StatusInternalError, "the sky is falling")
 
 	var thisConnection = common.BrowserConnection{
-		Id:                    browserConnectionId,
-		Websocket:             browserWsConn,
-		BrowserRequestCookies: r.Cookies(),
-		ActiveSubscriptions:   make(map[string]common.GraphQlSubscription, 1),
-		Context:               browserConnectionContext,
-		ContextCancelFunc:     browserConnectionContextCancel,
-		ConnAckSentToBrowser:  false,
+		Id:                             browserConnectionId,
+		Websocket:                      browserWsConn,
+		BrowserRequestCookies:          r.Cookies(),
+		ActiveSubscriptions:            make(map[string]common.GraphQlSubscription, 1),
+		Context:                        browserConnectionContext,
+		ContextCancelFunc:              browserConnectionContextCancel,
+		ConnAckSentToBrowser:           false,
+		FromBrowserToHasuraChannel:     common.NewSafeChannelByte(bufferSize),
+		FromBrowserToGqlActionsChannel: common.NewSafeChannelByte(bufferSize),
+		FromHasuraToBrowserChannel:     common.NewSafeChannelByte(bufferSize),
 	}
 
 	BrowserConnectionsMutex.Lock()
@@ -80,7 +86,10 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 		if bcExists {
 			sessionTokenRemoved := BrowserConnections[browserConnectionId].SessionToken
 			delete(BrowserConnections, browserConnectionId)
-			go SendUserGraphqlConnectionClosedSysMsg(sessionTokenRemoved, browserConnectionId)
+
+			if sessionTokenRemoved != "" {
+				go SendUserGraphqlConnectionClosedSysMsg(sessionTokenRemoved, browserConnectionId)
+			}
 		}
 		BrowserConnectionsMutex.Unlock()
 
@@ -90,12 +99,6 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	// Log it
 	log.Infof("connection accepted")
 
-	// Create channels
-	fromBrowserToHasuraConnectionEstablishingChannel := common.NewSafeChannel(bufferSize)
-	fromBrowserToHasuraChannel := common.NewSafeChannel(bufferSize)
-	fromBrowserToGqlActionsChannel := common.NewSafeChannel(bufferSize)
-	fromHasuraToBrowserChannel := common.NewSafeChannel(bufferSize)
-
 	// Configure the wait group (to hold this routine execution until both are completed)
 	var wgAll sync.WaitGroup
 	wgAll.Add(2)
@@ -104,26 +107,18 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	var wgReader sync.WaitGroup
 	wgReader.Add(1)
 
-	// Reads from browser connection, writes into fromBrowserToHasuraChannel and fromBrowserToHasuraConnectionEstablishingChannel
-	go reader.BrowserConnectionReader(
-		browserConnectionId,
-		browserConnectionContext,
-		browserConnectionContextCancel,
-		browserWsConn,
-		fromBrowserToGqlActionsChannel,
-		fromBrowserToHasuraChannel,
-		fromBrowserToHasuraConnectionEstablishingChannel,
-		[]*sync.WaitGroup{&wgAll, &wgReader})
+	// Reads from browser connection, writes into fromBrowserToHasuraChannel
+	go reader.BrowserConnectionReader(&thisConnection, []*sync.WaitGroup{&wgAll, &wgReader})
 
 	go func() {
 		wgReader.Wait()
 		log.Debug("BrowserConnectionReader finished, closing Write Channel")
-		fromHasuraToBrowserChannel.Close()
+		thisConnection.FromHasuraToBrowserChannel.Close()
 		thisConnection.Disconnected = true
 	}()
 
-	//Obtain user session variables from bbb-web
-	if errorOnInitConnection := connectionInitHandler(&thisConnection, fromBrowserToHasuraConnectionEstablishingChannel); errorOnInitConnection != nil {
+	//Check authorization and obtain user session variables from bbb-web
+	if errorOnInitConnection := connectionInitHandler(&thisConnection); errorOnInitConnection != nil {
 		//If the server wishes to reject the connection it is recommended to close the socket with `4403: Forbidden`.
 		//https://github.com/enisdenjo/graphql-ws/blob/63881c3372a3564bf42040e3f572dd74e41b2e49/PROTOCOL.md?plain=1#L36
 		wsError := &websocket.CloseError{
@@ -151,10 +146,7 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 					BrowserConnectionsMutex.RUnlock()
 					if thisBrowserConnection != nil {
 						log.Debugf("created hasura client")
-						hasura.HasuraClient(
-							thisBrowserConnection,
-							fromBrowserToHasuraChannel,
-							fromHasuraToBrowserChannel)
+						hasura.HasuraClient(thisBrowserConnection)
 					}
 					time.Sleep(100 * time.Millisecond)
 				}
@@ -184,10 +176,7 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 						thisBrowserConnection.GraphqlActionsContext, thisBrowserConnection.GraphqlActionsContextCancel = context.WithCancel(browserConnectionContext)
 						BrowserConnectionsMutex.Unlock()
 
-						gql_actions.GraphqlActionsClient(
-							thisBrowserConnection,
-							fromBrowserToGqlActionsChannel,
-							fromHasuraToBrowserChannel)
+						gql_actions.GraphqlActionsClient(thisBrowserConnection)
 					}
 					time.Sleep(1000 * time.Millisecond)
 				}
@@ -196,7 +185,7 @@ func ConnectionHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// Reads from fromHasuraToBrowserChannel, writes to browser connection
-	go writer.BrowserConnectionWriter(browserConnectionId, browserConnectionContext, browserWsConn, fromHasuraToBrowserChannel, &wgAll)
+	go writer.BrowserConnectionWriter(&thisConnection, &wgAll)
 
 	// Wait until all routines are finished
 	wgAll.Wait()
@@ -217,7 +206,6 @@ func InvalidateSessionTokenConnections(sessionTokenToInvalidate string) {
 		wg.Add(1)
 		go func(bc *common.BrowserConnection) {
 			defer wg.Done()
-			go refreshUserSessionVariables(bc)
 			invalidateHasuraConnectionForSessionToken(bc, sessionTokenToInvalidate)
 		}(browserConnection)
 	}
@@ -225,42 +213,26 @@ func InvalidateSessionTokenConnections(sessionTokenToInvalidate string) {
 }
 
 func invalidateHasuraConnectionForSessionToken(bc *common.BrowserConnection, sessionToken string) {
+	BrowserConnectionsMutex.RLock()
+	defer BrowserConnectionsMutex.RUnlock()
+
 	if bc.HasuraConnection == nil {
 		return // If there's no Hasura connection, there's nothing to invalidate.
 	}
 
-	hasuraConnectionId := bc.HasuraConnection.Id
+	log.Debugf("Processing invalidate request for sessionToken %v (hasura connection %v)", sessionToken, bc.HasuraConnection.Id)
 
-	// Send message to stop receiving new messages from the browser.
-	bc.HasuraConnection.FreezeMsgFromBrowserChan.Send(true)
-	bc.GraphqlActionsContextCancel()
+	// Stop receiving new messages from the browser.
+	log.Debug("freezing channel fromBrowserToHasuraChannel")
+	bc.FromBrowserToHasuraChannel.FreezeChannel()
 
-	// Wait until there are no active mutations.
-	for iterationCount := 0; iterationCount < 20; iterationCount++ {
-		activeMutationFound := false
-		bc.ActiveSubscriptionsMutex.RLock()
-		for _, subscription := range bc.ActiveSubscriptions {
-			if subscription.Type == common.Mutation {
-				activeMutationFound = true
-				break
-			}
-		}
-		bc.ActiveSubscriptionsMutex.RUnlock()
-
-		if !activeMutationFound {
-			break // Exit the loop if no active mutations are found.
-		}
-		time.Sleep(100 * time.Millisecond) // Wait a bit before checking again.
-	}
-
-	log.Debugf("Processing invalidate request for sessionToken %v (hasura connection %v)", sessionToken, hasuraConnectionId)
+	//Update variables for Mutations (gql-actions requests)
+	go refreshUserSessionVariables(bc)
 
 	// Cancel the Hasura connection context to clean up resources.
 	if bc.HasuraConnection != nil && bc.HasuraConnection.ContextCancelFunc != nil {
 		bc.HasuraConnection.ContextCancelFunc()
 	}
-
-	log.Debugf("Processed invalidate request for sessionToken %v (hasura connection %v)", sessionToken, hasuraConnectionId)
 
 	// Send a reconnection confirmation message
 	go SendUserGraphqlReconnectionForcedEvtMsg(sessionToken)
@@ -268,18 +240,29 @@ func invalidateHasuraConnectionForSessionToken(bc *common.BrowserConnection, ses
 
 func refreshUserSessionVariables(browserConnection *common.BrowserConnection) error {
 	BrowserConnectionsMutex.RLock()
-	browserSessionToken := browserConnection.SessionToken
+	sessionToken := browserConnection.SessionToken
 	browserConnectionId := browserConnection.Id
-	browserConnectionCookies := browserConnection.BrowserRequestCookies
 	BrowserConnectionsMutex.RUnlock()
 
 	// Check authorization
-	sessionVariables, err := bbb_web.BBBWebClient(browserConnectionId, browserSessionToken, browserConnectionCookies)
+	sessionVariables, err := akka_apps.AkkaAppsGetSessionVariablesFrom(browserConnectionId, sessionToken)
 	if err != nil {
 		log.Error(err)
 		return fmt.Errorf("error on checking sessionToken authorization")
 	} else {
 		log.Trace("Session variables obtained successfully")
+	}
+
+	if _, exists := sessionVariables["x-hasura-role"]; !exists {
+		return fmt.Errorf("error on checking sessionToken authorization, X-Hasura-Role is missing")
+	}
+
+	if _, exists := sessionVariables["x-hasura-userid"]; !exists {
+		return fmt.Errorf("error on checking sessionToken authorization, X-Hasura-UserId is missing")
+	}
+
+	if _, exists := sessionVariables["x-hasura-meetingid"]; !exists {
+		return fmt.Errorf("error on checking sessionToken authorization, X-Hasura-MeetingId is missing")
 	}
 
 	BrowserConnectionsMutex.Lock()
@@ -289,10 +272,7 @@ func refreshUserSessionVariables(browserConnection *common.BrowserConnection) er
 	return nil
 }
 
-func connectionInitHandler(
-	browserConnection *common.BrowserConnection,
-	fromBrowserToHasuraConnectionEstablishingChannel *common.SafeChannel) error {
-
+func connectionInitHandler(browserConnection *common.BrowserConnection) error {
 	BrowserConnectionsMutex.RLock()
 	browserConnectionId := browserConnection.Id
 	browserConnectionCookies := browserConnection.BrowserRequestCookies
@@ -300,14 +280,18 @@ func connectionInitHandler(
 
 	// Intercept the fromBrowserMessage channel to get the sessionToken
 	for {
-		fromBrowserMessage, ok := fromBrowserToHasuraConnectionEstablishingChannel.Receive()
+		fromBrowserMessage, ok := browserConnection.FromBrowserToHasuraChannel.Receive()
 		if !ok {
 			//Received all messages. Channel is closed
 			return fmt.Errorf("error on receiving init connection")
 		}
-		var fromBrowserMessageAsMap = fromBrowserMessage.(map[string]interface{})
+		if bytes.Contains(fromBrowserMessage, []byte("\"connection_init\"")) {
+			var fromBrowserMessageAsMap map[string]interface{}
+			if err := json.Unmarshal(fromBrowserMessage, &fromBrowserMessageAsMap); err != nil {
+				log.Errorf("failed to unmarshal message: %v", err)
+				continue
+			}
 
-		if fromBrowserMessageAsMap["type"] == "connection_init" {
 			var payloadAsMap = fromBrowserMessageAsMap["payload"].(map[string]interface{})
 			var headersAsMap = payloadAsMap["headers"].(map[string]interface{})
 			var sessionToken, existsSessionToken = headersAsMap["X-Session-Token"].(string)
@@ -330,22 +314,50 @@ func connectionInitHandler(
 				return fmt.Errorf("X-ClientIsMobile header missing on init connection")
 			}
 
+			var meetingId, userId string
+			var errCheckAuthorization error
+
 			// Check authorization
-			sessionVariables, err := bbb_web.BBBWebClient(browserConnectionId, sessionToken, browserConnectionCookies)
-			if err != nil {
-				log.Error(err)
-				return fmt.Errorf("error on checking sessionToken authorization")
-			} else {
-				log.Trace("Session variables obtained successfully")
+			var numOfAttempts = 0
+			for {
+				meetingId, userId, errCheckAuthorization = bbb_web.BBBWebCheckAuthorization(browserConnectionId, sessionToken, browserConnectionCookies)
+				if errCheckAuthorization != nil {
+					log.Error(errCheckAuthorization)
+				}
+
+				if (errCheckAuthorization == nil && meetingId != "" && userId != "") || numOfAttempts > 5 {
+					break
+				}
+				numOfAttempts++
+				time.Sleep(100 * time.Millisecond)
 			}
+
+			if errCheckAuthorization != nil {
+				return fmt.Errorf("error on trying to check authorization")
+			}
+
+			if meetingId == "" {
+				return fmt.Errorf("error to obtain user meetingId from BBBWebCheckAuthorization")
+			}
+
+			if userId == "" {
+				return fmt.Errorf("error to obtain user userId from BBBWebCheckAuthorization")
+			}
+
+			log.Trace("Success on check authorization")
 
 			log.Debugf("[ConnectionInitHandler] intercepted Session Token %v and Client Session UUID %v", sessionToken, clientSessionUUID)
 			BrowserConnectionsMutex.Lock()
 			browserConnection.SessionToken = sessionToken
 			browserConnection.ClientSessionUUID = clientSessionUUID
-			browserConnection.BBBWebSessionVariables = sessionVariables
-			browserConnection.ConnectionInitMessage = fromBrowserMessageAsMap
+			browserConnection.MeetingId = meetingId
+			browserConnection.UserId = userId
+			browserConnection.ConnectionInitMessage = fromBrowserMessage
 			BrowserConnectionsMutex.Unlock()
+
+			if err := refreshUserSessionVariables(browserConnection); err != nil {
+				return fmt.Errorf("error on getting session variables")
+			}
 
 			go SendUserGraphqlConnectionEstablishedSysMsg(
 				sessionToken,
@@ -354,7 +366,7 @@ func connectionInitHandler(
 				strings.ToLower(clientIsMobile) == "true",
 				browserConnectionId,
 			)
-			fromBrowserToHasuraConnectionEstablishingChannel.Close()
+
 			break
 		}
 	}

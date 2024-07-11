@@ -1,20 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { withTracker } from 'meteor/react-meteor-data';
 import WakeLock from './component';
 import Service from './service';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import useUserChangedLocalSettings from '../../services/settings/hooks/useUserChangedLocalSettings';
 import useSettings from '../../services/settings/hooks/useSettings';
 import { SETTINGS } from '../../services/settings/enums';
+import { useStorageKey } from '../../services/storage/hooks';
 
 const propTypes = {
   areAudioModalsOpen: PropTypes.bool,
   autoJoin: PropTypes.bool.isRequired,
-};
-
-const defaultProps = {
-  areAudioModalsOpen: false,
 };
 
 function usePrevious(value) {
@@ -27,8 +23,11 @@ function usePrevious(value) {
 
 const WakeLockContainer = (props) => {
   if (!Service.isMobile()) return null;
-
-  const { areAudioModalsOpen, autoJoin } = props;
+  const APP_CONFIG = window.meetingClientSettings.public.app;
+  const { autoJoin } = props;
+  const inEchoTest = useStorageKey('inEchoTest');
+  const audioModalIsOpen = useStorageKey('audioModalIsOpen');
+  const areAudioModalsOpen = audioModalIsOpen || inEchoTest;
   const wereAudioModalsOpen = usePrevious(areAudioModalsOpen);
   const [endedAudioSetup, setEndedAudioSetup] = useState(false || !autoJoin);
   const setLocalSettings = useUserChangedLocalSettings();
@@ -44,21 +43,15 @@ const WakeLockContainer = (props) => {
     <WakeLock
       setLocalSettings={setLocalSettings}
       wakeLockSettings={wakeLockSettings}
+      request={Service.request}
+      release={Service.release}
+      autoJoin={getFromUserSettings('bbb_auto_join_audio', APP_CONFIG.autoJoin)}
+      areAudioModalsOpen={areAudioModalsOpen}
       {...props}
     />
   ) : null;
 };
 
 WakeLockContainer.propTypes = propTypes;
-WakeLockContainer.defaultProps = defaultProps;
 
-export default withTracker(() => {
-  const APP_CONFIG = window.meetingClientSettings.public.app;
-
-  return {
-    request: Service.request,
-    release: Service.release,
-    areAudioModalsOpen: Session.get('audioModalIsOpen') || Session.get('inEchoTest'),
-    autoJoin: getFromUserSettings('bbb_auto_join_audio', APP_CONFIG.autoJoin),
-  };
-})(WakeLockContainer);
+export default WakeLockContainer;
