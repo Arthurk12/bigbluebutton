@@ -82,8 +82,6 @@ class ReceivedJsonMsgHandlerActor(
         routeGenericMsg[GetGuestsWaitingApprovalReqMsg](envelope, jsonNode)
       case GuestsWaitingApprovedMsg.NAME =>
         routeGenericMsg[GuestsWaitingApprovedMsg](envelope, jsonNode)
-      case GuestWaitingLeftMsg.NAME =>
-        routeGenericMsg[GuestWaitingLeftMsg](envelope, jsonNode)
       case UpdatePositionInWaitingQueueReqMsg.NAME =>
         routeGenericMsg[UpdatePositionInWaitingQueueReqMsg](envelope, jsonNode)
       case SetGuestPolicyCmdMsg.NAME =>
@@ -114,6 +112,10 @@ class ReceivedJsonMsgHandlerActor(
         routeGenericMsg[SetUserSpeechLocaleReqMsg](envelope, jsonNode)
       case SetUserCaptionLocaleReqMsg.NAME =>
         routeGenericMsg[SetUserCaptionLocaleReqMsg](envelope, jsonNode)
+      case SetUserClientSettingsReqMsg.NAME =>
+        routeGenericMsg[SetUserClientSettingsReqMsg](envelope, jsonNode)
+      case SetUserEchoTestRunningReqMsg.NAME =>
+        routeGenericMsg[SetUserEchoTestRunningReqMsg](envelope, jsonNode)
       case SetUserSpeechOptionsReqMsg.NAME =>
         routeGenericMsg[SetUserSpeechOptionsReqMsg](envelope, jsonNode)
 
@@ -232,6 +234,8 @@ class ReceivedJsonMsgHandlerActor(
         routeGenericMsg[CreateBreakoutRoomsCmdMsg](envelope, jsonNode)
       case RequestBreakoutJoinURLReqMsg.NAME =>
         routeGenericMsg[RequestBreakoutJoinURLReqMsg](envelope, jsonNode)
+      case SetBreakoutRoomInviteDismissedReqMsg.NAME =>
+        routeGenericMsg[SetBreakoutRoomInviteDismissedReqMsg](envelope, jsonNode)
       case EndAllBreakoutRoomsMsg.NAME =>
         routeGenericMsg[EndAllBreakoutRoomsMsg](envelope, jsonNode)
       case TransferUserToMeetingRequestMsg.NAME =>
@@ -289,6 +293,8 @@ class ReceivedJsonMsgHandlerActor(
         routeGenericMsg[SetCurrentPresentationPubMsg](envelope, jsonNode)
       case SetCurrentPagePubMsg.NAME =>
         routeGenericMsg[SetCurrentPagePubMsg](envelope, jsonNode)
+      case SetPageInfiniteWhiteboardPubMsg.NAME =>
+        routeGenericMsg[SetPageInfiniteWhiteboardPubMsg](envelope, jsonNode)
       case ResizeAndMovePagePubMsg.NAME =>
         routeGenericMsg[ResizeAndMovePagePubMsg](envelope, jsonNode)
       case SlideResizedPubMsg.NAME =>
@@ -349,6 +355,8 @@ class ReceivedJsonMsgHandlerActor(
         routeGenericMsg[AddCaptionLocalePubMsg](envelope, jsonNode)
       case SendCaptionHistoryReqMsg.NAME =>
         routeGenericMsg[SendCaptionHistoryReqMsg](envelope, jsonNode)
+      case CaptionSubmitTranscriptPubMsg.NAME =>
+        routeGenericMsg[CaptionSubmitTranscriptPubMsg](envelope, jsonNode)
 
       // Chat
       case GetChatHistoryReqMsg.NAME =>
@@ -407,20 +415,32 @@ class ReceivedJsonMsgHandlerActor(
         routeGenericMsg[GetGroupChatsReqMsg](envelope, jsonNode)
       case SendGroupChatMessageMsg.NAME =>
         routeGenericMsg[SendGroupChatMessageMsg](envelope, jsonNode)
+      case SendGroupChatMessageFromApiSysPubMsg.NAME =>
+        routeGenericMsg[SendGroupChatMessageFromApiSysPubMsg](envelope, jsonNode)
       case GetGroupChatMsgsReqMsg.NAME =>
         routeGenericMsg[GetGroupChatMsgsReqMsg](envelope, jsonNode)
       case CreateGroupChatReqMsg.NAME =>
         routeGenericMsg[CreateGroupChatReqMsg](envelope, jsonNode)
+      case SetGroupChatLastSeenReqMsg.NAME =>
+        routeGenericMsg[SetGroupChatLastSeenReqMsg](envelope, jsonNode)
+      case SetGroupChatVisibleReqMsg.NAME =>
+        routeGenericMsg[SetGroupChatVisibleReqMsg](envelope, jsonNode)
 
       //Plugin
       case PluginDataChannelPushEntryMsg.NAME =>
         routeGenericMsg[PluginDataChannelPushEntryMsg](envelope, jsonNode)
+
+      case PluginDataChannelReplaceEntryMsg.NAME =>
+        routeGenericMsg[PluginDataChannelReplaceEntryMsg](envelope, jsonNode)
 
       case PluginDataChannelDeleteEntryMsg.NAME =>
         routeGenericMsg[PluginDataChannelDeleteEntryMsg](envelope, jsonNode)
 
       case PluginDataChannelResetMsg.NAME =>
         routeGenericMsg[PluginDataChannelResetMsg](envelope, jsonNode)
+
+      case PluginLearningAnalyticsDashboardSendGenericDataMsg.NAME =>
+        routeGenericMsg[PluginLearningAnalyticsDashboardSendGenericDataMsg](envelope, jsonNode)
 
       // ExternalVideo
       case StartExternalVideoPubMsg.NAME =>

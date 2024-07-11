@@ -7,8 +7,10 @@ import {
 } from '/imports/ui/components/layout/context';
 import DEFAULT_VALUES from '/imports/ui/components/layout/defaultValues';
 import { INITIAL_INPUT_STATE } from '/imports/ui/components/layout/initState';
-import { ACTIONS } from '/imports/ui/components/layout/enums';
+import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
 import { defaultsDeep } from '/imports/utils/array-utils';
+import Session from '/imports/ui/services/storage/in-memory';
+import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 
 const CamerasOnlyLayout = (props) => {
   const { bannerAreaHeight, isMobile, calculatesNavbarHeight } = props;
@@ -23,7 +25,8 @@ const CamerasOnlyLayout = (props) => {
 
   const input = layoutSelect((i) => i.input);
   const deviceType = layoutSelect((i) => i.deviceType);
-  const isRTL = layoutSelect((i) => i.isRTL);
+  const Settings = getSettingsSingletonInstance();
+  const { isRTL } = Settings.application;
   const fullscreen = layoutSelect((i) => i.fullscreen);
   const fontSize = layoutSelect((i) => i.fontSize);
   const currentPanelType = layoutSelect((i) => i.currentPanelType);
@@ -110,7 +113,6 @@ const CamerasOnlyLayout = (props) => {
       sidebarNavWidth.width,
       sidebarContentWidth.width,
     );
-    console.log({mediaAreaBounds})
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
     const sidebarSize = sidebarContentWidth.width + sidebarNavWidth.width;
@@ -297,7 +299,7 @@ const CamerasOnlyLayout = (props) => {
     });
 
     layoutContextDispatch({
-      type: ACTIONS.SET_GENERIC_COMPONENT_OUTPUT,
+      type: ACTIONS.SET_GENERIC_CONTENT_OUTPUT,
       value: {
         display: false,
         width: mediaBounds.width,
@@ -318,6 +320,21 @@ const CamerasOnlyLayout = (props) => {
         left: mediaBounds.left,
         right: isRTL ? mediaBounds.right : null,
       },
+    });
+
+    layoutContextDispatch({
+      type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+      value: false,
+    });
+
+    layoutContextDispatch({
+      type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+      value: false,
+    });
+
+    layoutContextDispatch({
+      type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+      value: PANELS.NONE,
     });
   };
 
@@ -365,8 +382,8 @@ const CamerasOnlyLayout = (props) => {
           externalVideo: {
             hasExternalVideo: false,
           },
-          genericComponent: {
-            genericComponentId: undefined,
+          genericMainContent: {
+            genericContentId: undefined,
           },
           screenShare: {
             hasScreenShare: false,
@@ -375,7 +392,7 @@ const CamerasOnlyLayout = (props) => {
         INITIAL_INPUT_STATE,
       ),
     });
-    Session.set('layoutReady', true);
+    Session.setItem('layoutReady', true);
     throttledCalculatesLayout();
   };
 

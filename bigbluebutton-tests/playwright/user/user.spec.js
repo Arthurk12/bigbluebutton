@@ -1,6 +1,5 @@
 const { devices } = require('@playwright/test');
 const { test } = require('../fixtures');
-const { Status } = require('./status');
 const { MultiUsers } = require('./multiusers');
 const { GuestPolicy } = require('./guestPolicy');
 const { LockViewers } = require('./lockViewers');
@@ -42,13 +41,6 @@ test.describe.parallel('User', () => {
   });
 
   test.describe.parallel('List', () => {
-    // https://docs.bigbluebutton.org/2.6/release-tests.html#set-status--raise-hand-automated
-    test('Change user status @ci', async ({ browser, page }) => {
-      const status = new Status(browser, page);
-      await status.init(true, true, { joinParameter: hidePresentationToast });
-      await status.changeUserStatus();
-    });
-
     test('User presence check (multiple users)', async ({ browser, context, page }) => {
       const multiusers = new MultiUsers(browser, context);
       await multiusers.initPages(page);
@@ -85,8 +77,7 @@ test.describe.parallel('User', () => {
 
     test('Give and remove whiteboard access @ci', async ({ browser, context, page }) => {
       const multiusers = new MultiUsers(browser, context);
-      await multiusers.initModPage(page);
-      await multiusers.initModPage2();
+      await multiusers.initPages(page);
       await multiusers.giveAndRemoveWhiteboardAccess();
     });
 
@@ -216,7 +207,7 @@ test.describe.parallel('User', () => {
         await lockViewers.lockSeeOtherViewersUserList();
       });
 
-      test('Lock see other viewers annotations', async ({ browser, context, page }) => {
+      test('Lock see other viewers annotations @flaky', async ({ browser, context, page }) => {
         const lockViewers = new LockViewers(browser, context);
         await lockViewers.initModPage(page, true, { joinParameter: hidePresentationToast });
         await lockViewers.initUserPage(true, context, { joinParameter: hidePresentationToast });

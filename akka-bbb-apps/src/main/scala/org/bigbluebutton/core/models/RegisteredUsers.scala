@@ -24,9 +24,12 @@ object RegisteredUsers {
       guestStatus,
       excludeFromDashboard,
       System.currentTimeMillis(),
-      0,
-      false,
-      false,
+      lastAuthTokenValidatedOn = 0,
+      graphqlConnected = false,
+      graphqlDisconnectedOn = 0,
+      joined = false,
+      ejected = false,
+      banned = false,
       enforceLayout,
       customParameters,
       loggedOut,
@@ -35,6 +38,14 @@ object RegisteredUsers {
 
   def findWithToken(token: String, users: RegisteredUsers): Option[RegisteredUser] = {
     users.toVector.find(u => u.authToken == token)
+  }
+
+  def findWithSessionToken(sessionToken: String, users: RegisteredUsers): Option[RegisteredUser] = {
+    users.toVector.find(u => u.sessionToken == sessionToken)
+  }
+
+  def findAll(users: RegisteredUsers): Vector[RegisteredUser] = {
+    users.toVector
   }
 
   def findWithUserId(id: String, users: RegisteredUsers): Option[RegisteredUser] = {
@@ -122,14 +133,16 @@ object RegisteredUsers {
       UserDAO.update(u)
       u
     } else {
-      users.delete(ejectedUser.id)
-//      UserDAO.softDelete(ejectedUser) it's being removed in User2x already
-      ejectedUser
+      val u = ejectedUser.modify(_.ejected).setTo(true)
+      users.save(u)
+
+      updateUserJoin(users, u, joined = false)
     }
   }
-  def eject(id: String, users: RegisteredUsers, ban: Boolean): Option[RegisteredUser] = {
+
+  def eject(userId: String, users: RegisteredUsers, ban: Boolean): Option[RegisteredUser] = {
     for {
-      ru <- findWithUserId(id, users)
+      ru <- findWithUserId(userId, users)
     } yield {
       banOrEjectUser(ru, users, ban)
     }
@@ -168,6 +181,23 @@ object RegisteredUsers {
 
   def updateUserLastAuthTokenValidated(users: RegisteredUsers, user: RegisteredUser): RegisteredUser = {
     val u = user.copy(lastAuthTokenValidatedOn = System.currentTimeMillis())
+    users.save(u)
+    u
+  }
+
+  def updateUserConnectedToGraphql(users: RegisteredUsers, user: RegisteredUser, graphqlConnected: Boolean): RegisteredUser = {
+    val u = user.copy(
+      graphqlConnected = graphqlConnected,
+      graphqlDisconnectedOn = {
+        if(graphqlConnected) {
+          0
+        } else if(!graphqlConnected && user.graphqlDisconnectedOn == 0) {
+          System.currentTimeMillis()
+        } else {
+          user.graphqlDisconnectedOn
+        }
+      }
+    )
     users.save(u)
     u
   }
@@ -216,7 +246,10 @@ case class RegisteredUser(
     excludeFromDashboard:     Boolean,
     registeredOn:             Long,
     lastAuthTokenValidatedOn: Long,
+    graphqlConnected:         Boolean,
+    graphqlDisconnectedOn:    Long,
     joined:                   Boolean,
+    ejected:                  Boolean,
     banned:                   Boolean,
     enforceLayout:            String,
     customParameters:         Map[String,String],
