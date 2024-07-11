@@ -1,0 +1,16 @@
+gcloud_bucket_name:
+gcloud_credentials_path_asr: /usr/local/bigbluebutton/core/scripts/transcribe/gcloud-asr.json
+gcloud_credentials_path_storage: /usr/local/bigbluebutton/core/scripts/transcribe/gcloud-storage.json
+
+gladia_key:
+# request timeout in seconds
+gladia_timeout: 600
+gladia_diarization: false
+gladia_summarization: true
+gladia_summarization_type: general
+
+language_code: pt-BR
+language_name: Português (Brasil)
+caption_duration: 5.0
+caption_paragraph_min_size: 50
+matcher: []

@@ -24,6 +24,7 @@ require 'yaml'
 
 opts = Optimist.options do
   opt :meeting_id, 'Meeting id to publish', type: String
+  opt :log_stdout, "Log to STDOUT", :type => :flag
   opt :stderr, 'Log output to stderr'
 end
 Optimist.dir :meeting_id, 'must be provided' unless opts[:meeting_id]
@@ -40,14 +41,19 @@ end
 props = YAML.safe_load(File.open(File.expand_path('../bigbluebutton.yml', __dir__)))
 video_props = YAML.safe_load(File.open(File.expand_path('../video.yml', __dir__)))
 
-recording_dir = props['recording_dir']
 process_dir = "#{props['recording_dir']}/process/video/#{meeting_id}"
 publish_dir = "#{video_props['publish_dir']}/#{meeting_id}"
 process_donefile = "#{props['recording_dir']}/status/processed/#{meeting_id}-video.done"
 donefile = "#{props['recording_dir']}/status/published/#{meeting_id}-video.done"
 logfile = "#{props['log_dir']}/video/publish-#{meeting_id}.log"
 
-logger = opts[:stderr] ? Logger.new($stderr) : Logger.new(logfile)
+logger = if opts[:log_stdout]
+           Logger.new(STDOUT)
+         elsif opts[:stderr]
+           Logger.new($stderr)
+         else
+           Logger.new(logfile)
+         end
 BigBlueButton.logger = logger
 
 unless File.exist?(process_donefile)
@@ -59,39 +65,46 @@ FileUtils.mkdir_p publish_dir
 
 logger.info 'Copying files to publish directory'
 
-# Copy the index html file
-FileUtils.cp("#{process_dir}/index.html", "#{publish_dir}/index.html")
+# if index.html exists, it means that the playback has been created to process_dir
+video_playback_link_to_mp4 = ! File.exist?("#{process_dir}/index.html")
 
-# The chat events file
-FileUtils.cp("#{process_dir}/video.xml", "#{publish_dir}/video.xml")
+if video_playback_link_to_mp4
+  # Copy over generated video files
+  video_props['formats'].each_with_index do |format|
+    FileUtils.cp(Dir.glob("#{process_dir}/*.#{format['extension']}").reject{ |f| File.basename(f) == "video.#{format['extension']}" },
+                 "#{publish_dir}/")
+  end
+else
+  # Copy the index html file
+  FileUtils.cp("#{process_dir}/index.html", "#{publish_dir}/index.html")
 
-# Copy over generated video files
-video_props['formats'].each_with_index do |format, i|
-  FileUtils.cp("#{process_dir}/video-#{i}.#{format['extension']}",
-               "#{publish_dir}/video-#{i}.#{format['extension']}")
-end
+  # The chat events file
+  FileUtils.cp("#{process_dir}/video.xml", "#{publish_dir}/video.xml")
 
-# Captions files
-captions = JSON.parse(File.read("#{process_dir}/captions.json"))
-FileUtils.cp("#{process_dir}/captions.json", "#{publish_dir}/captions.json")
-captions.each do |caption|
-  FileUtils.cp("#{process_dir}/caption_#{caption['locale']}.vtt",
-               "#{publish_dir}/caption_#{caption['locale']}.vtt")
+  # Copy over generated video files
+  video_props['formats'].each_with_index do |format, i|
+    FileUtils.cp("#{process_dir}/video-#{i}.#{format['extension']}",
+                 "#{publish_dir}/video-#{i}.#{format['extension']}")
+  end
+
+  # Captions files
+  captions = JSON.parse(File.read("#{process_dir}/captions.json"))
+  FileUtils.cp("#{process_dir}/captions.json", "#{publish_dir}/captions.json")
+  captions.each do |caption|
+    FileUtils.cp("#{process_dir}/caption_#{caption['locale']}.vtt",
+                 "#{publish_dir}/caption_#{caption['locale']}.vtt")
+  end
+
+  # Copy over css and js support files
+  FileUtils.cp_r("#{process_dir}/css", publish_dir)
+  FileUtils.cp_r("#{process_dir}/js", publish_dir)
+  FileUtils.cp_r("#{process_dir}/video-js", publish_dir)
 end
 
 # Copy over metadata xml file
 FileUtils.cp("#{process_dir}/metadata.xml", "#{publish_dir}/metadata.xml")
 
-# Get raw size of presentation files
-raw_dir = "#{recording_dir}/raw/#{meeting_id}"
-# After all the processing we'll add the published format and raw sizes to the metadata file
-BigBlueButton.add_raw_size_to_metadata(publish_dir, raw_dir)
 BigBlueButton.add_playback_size_to_metadata(publish_dir)
-
-# Copy over css and js support files
-FileUtils.cp_r("#{process_dir}/css", publish_dir)
-FileUtils.cp_r("#{process_dir}/js", publish_dir)
-FileUtils.cp_r("#{process_dir}/video-js", publish_dir)
 
 logger.info 'Cleaning up processed files'
 FileUtils.rm_r(Dir.glob("#{process_dir}/*"))

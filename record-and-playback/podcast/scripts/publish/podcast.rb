@@ -35,6 +35,7 @@ podcast_props = YAML::load(File.open('podcast.yml'))
 
 opts = Optimist::options do
   opt :meeting_id, "Meeting id to archive", :default => '58f4a6b3-cd07-444d-8564-59116cb53974', :type => String
+  opt :log_stdout, "Log to STDOUT", :type => :flag
 end
 
 meeting_id = opts[:meeting_id]
@@ -52,7 +53,11 @@ begin
 
     log_dir = bbb_props['log_dir']
 
-    logger = Logger.new("#{log_dir}/podcast/publish-#{meeting_id}.log", 'daily' )
+    logger = if opts[:log_stdout]
+               Logger.new(STDOUT)
+             else
+               Logger.new("#{log_dir}/podcast/publish-#{meeting_id}.log", 'daily' )
+             end
     BigBlueButton.logger = logger
 
     recording_dir = bbb_props['recording_dir']

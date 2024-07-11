@@ -27,14 +27,17 @@ require 'recordandplayback/generators/audio'
 require 'recordandplayback/generators/video'
 require 'recordandplayback/generators/audio_processor'
 require 'recordandplayback/generators/presentation'
+require 'custom_hash'
+require 'etherpad'
 require 'open4'
 require 'pp'
 require 'absolute_time'
 require 'logger'
 require 'find'
 require 'rubygems'
+require 'timeout'
+require 'uri'
 require 'net/http'
-require 'journald/logger'
 require 'shellwords'
 require 'English'
 
@@ -43,6 +46,14 @@ module BigBlueButton
   end
 
   class FileNotFoundException < RuntimeError
+  end
+
+  class AsyncProcess
+    attr_accessor :command
+    attr_accessor :pid
+    attr_accessor :stdin
+    attr_accessor :stdout
+    attr_accessor :stderr
   end
 
   class ExecutionStatus
@@ -83,8 +94,7 @@ module BigBlueButton
   # @return [Logger]
   def self.logger
     return @logger if @logger
-
-    logger = Journald::Logger.new('bbb-rap')
+    logger = Logger.new(STDOUT)
     logger.level = Logger::INFO
     @logger = logger
   end
@@ -95,6 +105,95 @@ module BigBlueButton
 
   def self.redis_publisher
     return @redis_publisher
+  end
+
+  def self.execute_async(command)
+    BigBlueButton.logger.info("Executing async: #{command}")
+    proc = AsyncProcess.new
+    proc.command = command
+    proc.pid, proc.stdin, proc.stdout, proc.stderr = Open4::popen4 proc.command
+    BigBlueButton.logger.info("Process just created with PID #{proc.pid}")
+    proc
+  end
+
+  # http://stackoverflow.com/a/3568291/1006288
+  def self.is_running?(proc)
+    begin
+      Process.getpgid( proc.pid )
+      true
+    rescue Errno::ESRCH
+      false
+    end
+  end
+
+  def self.kill(proc, signal = "TERM")
+    BigBlueButton.logger.info("Killing PID #{proc.pid} with signal #{signal}: #{proc.command}")
+
+    if not is_running?(proc)
+      BigBlueButton.logger.info "Trying to kill a process that isn't running, skipping"
+      return
+    end
+
+    proc.stdin.close unless proc.stdin.closed?
+
+    begin
+      Process.kill signal, proc.pid
+    rescue Exception => e
+      if e.message == "No such process"
+        BigBlueButton.logger.info "Trying to kill a process that doesn't exist anymore, skipping"
+      else
+        BigBlueButton.logger.error "Something went wrong while killing PID #{proc.pid}: #{e.to_s}"
+        raise e
+      end
+    end
+  end
+
+  def self.wait(proc, timeout_sec=30, fail_on_error=true)
+    BigBlueButton.logger.info("Waiting PID #{proc.pid} to die (max. #{timeout_sec} seconds): #{proc.command}")
+
+    if not is_running?(proc)
+      BigBlueButton.logger.info "Trying to wait a process that isn't running, skipping"
+      return
+    end
+
+    begin
+      Timeout::timeout(timeout_sec) {
+        pid_returned, status = Process.waitpid2 proc.pid
+
+        BigBlueButton.logger.info("Process status: #{status.to_s}")
+        BigBlueButton.logger.info("Process exited? #{status.exited?}")
+
+        out = proc.stdout.readlines
+        BigBlueButton.logger.info( "stdout:\n #{Array(out).join()} ") unless out.empty?
+
+        err = proc.stderr.readlines
+        BigBlueButton.logger.error( "stderr:\n #{Array(err).join()} ") unless err.empty?
+
+        if status.exited?
+          BigBlueButton.logger.info("Success?: #{status.success?}")
+          BigBlueButton.logger.info("Exit status: #{status.exitstatus}")
+          if status.success? == false and fail_on_error
+            raise "Execution failed"
+          end
+        end
+      }
+    rescue Timeout::Error
+      BigBlueButton.logger.info("PID #{proc.pid} didn't ended in #{timeout_sec} seconds")
+      if is_running?(proc)
+        BigBlueButton.logger.error "PID #{proc.pid} is still running, raising an exception"
+        raise
+      else
+        BigBlueButton.logger.info "PID #{proc.pid} is not running anymore, skipping"
+      end
+    rescue Exception => e
+      if e.message == "No child processes"
+        BigBlueButton.logger.info "Trying to wait a process that doesn't exist anymore, skipping"
+      else
+        BigBlueButton.logger.error "Something went wrong while waiting for PID #{proc.pid}: #{e.to_s}"
+        raise e
+      end
+    end
+    BigBlueButton.logger.debug "Returning from wait"
   end
 
   def self.execute(command, fail_on_error = true)
@@ -137,6 +236,10 @@ module BigBlueButton
     return PP.pp(hash, "")
   end
 
+  def self.isset(name)
+    ENV[name] && ENV[name] != '0' && ENV[name].strip != ''
+  end
+
   def self.monotonic_clock()
     return (AbsoluteTime.now * 1000).to_i
   end
@@ -159,15 +262,20 @@ module BigBlueButton
       uri = URI.parse(url)
     end
 
-    Net::HTTP.start(uri.host, uri.port) do |http|
-      request = Net::HTTP::Get.new uri.request_uri
-      http.request request do |response|
-        open output, 'w' do |io|
-          response.read_body do |chunk|
-            io.write chunk
+    if defined? uri.request_uri
+      Net::HTTP.start(uri.host, uri.port) do |http|
+        request = Net::HTTP::Get.new uri.request_uri
+        http.request request do |response|
+          open output, 'w' do |io|
+            response.read_body do |chunk|
+              io.write chunk
+            end
           end
         end
       end
+    else
+      command = "curl --location --output #{output} #{url}"
+      BigBlueButton.execute(command)
     end
   end
 
@@ -192,8 +300,9 @@ module BigBlueButton
     if File.exist? xml_filename
       doc = Nokogiri::XML(File.read(xml_filename)) {|x| x.noblanks}
 
-      node = doc.at_xpath("#{parent_xpath}/#{tag}")
-      node.remove if not node.nil?
+      doc.xpath("#{parent_xpath}/#{tag}").each do |node|
+        node.remove
+      end
 
       node = Nokogiri::XML::Node.new tag, doc
       node.content = content
@@ -223,6 +332,16 @@ module BigBlueButton
 
   def self.record_id_to_timestamp(r)
     r.split("-")[1].to_i / 1000
+  end
+
+  def self.get_metadata_from_recording(recording)
+    metadata = {}
+    if ! recording[:meta].nil?
+      metadata = recording[:meta]
+      # Guarantee a string value at meetingName
+      metadata[:meetingName] = metadata[:meetingName].to_s if ! metadata[:meetingName].nil?
+    end
+    metadata
   end
 
   def self.done_to_timestamp(r)

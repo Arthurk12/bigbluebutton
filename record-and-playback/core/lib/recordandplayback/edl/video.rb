@@ -26,13 +26,19 @@ module BigBlueButton
     module Video
       FFMPEG_WF_CODEC = 'libx264'
       FFMPEG_WF_ARGS = [
-        '-codec', FFMPEG_WF_CODEC.to_s, '-preset', 'fast', '-crf', '23',
+        '-codec', FFMPEG_WF_CODEC.to_s, '-preset', 'veryfast', '-crf', '30',
         '-x264opts', 'stitchable=1', '-force_key_frames', 'expr:gte(t,n_forced*10)', '-pix_fmt', 'yuv420p',
       ]
       WF_EXT = 'mp4'
 
+      def self.background_color
+        '#202020'
+        # debug pro tip: randomize background color
+        # "\##{Random.bytes(3).unpack1('H*')}"
+      end
+
       def self.dump(edl)
-        BigBlueButton.logger.debug "EDL Dump:"
+        BigBlueButton.logger.debug "EDL Dump (#{edl.length} entries):"
         edl.each do |entry|
           BigBlueButton.logger.debug "---"
           BigBlueButton.logger.debug "  Timestamp: #{entry[:timestamp]}"
@@ -40,7 +46,7 @@ module BigBlueButton
           entry[:areas].each do |name, videos|
             BigBlueButton.logger.debug "    #{name}"
             videos.each do |video|
-              BigBlueButton.logger.debug "      #{video[:filename]} at #{video[:timestamp]} (original duration: #{video[:original_duration]})"
+              BigBlueButton.logger.debug "      #{video[:filename]} at #{video[:timestamp]} (original duration: #{video[:original_duration]}, presenter? #{video[:presenter]}, floor timestamp: #{video[:floor_timestamp]}, name: #{video[:name]})"
             end
           end
         end
@@ -125,11 +131,9 @@ module BigBlueButton
             # Have to copy videos from the last entry into the new entry, updating timestamps
             last_entry[:areas].each do |area, videos|
               merged_entry[:areas][area] = videos.map do |video|
-                {
-                  :filename => video[:filename],
-                  :timestamp => video[:timestamp] + merged_entry[:timestamp] - last_entry[:timestamp],
-                  :original_duration => video[:original_duration]
-                }
+                video.merge({
+                  :timestamp => video[:timestamp] + merged_entry[:timestamp] - last_entry[:timestamp]
+                })
               end
             end
           end
@@ -156,7 +160,8 @@ module BigBlueButton
                 v[:filename] == video[:filename]
               end
               if !merged_video.nil?
-                merged_video[:timestamp] = video[:timestamp]
+                # it's no longer enough to just copy over timestamp, but need to bring all properties
+                merged_video.merge!(video)
               end
             end
           end
@@ -168,6 +173,21 @@ module BigBlueButton
         end
 
         merged_edl
+      end
+
+      def self.sort_webcam_area(webcam_entries)
+        webcam_entries.sort_by { |entry| [
+          entry[:presenter] ? 0 : 1,
+          -entry[:floor_timestamp],
+          entry[:join_timestamp]
+        ] }
+      end
+
+      def self.sort(edl)
+        BigBlueButton.logger.debug "EDL Sort"
+        edl.each do |edl_entry|
+          edl_entry[:areas][:webcam] = sort_webcam_area(edl_entry[:areas][:webcam])
+        end
       end
 
       # Edit the EDL to make sure that every cut has a minimum length to ensure processing will work properly
@@ -238,7 +258,10 @@ module BigBlueButton
           BigBlueButton.logger.debug "  #{videofile}"
           info = video_info(videofile)
           if !info[:video]
-            BigBlueButton.logger.warn "    This video file is corrupt! It will be removed from the output."
+            BigBlueButton.logger.warn "    This video file (#{File.basename(videofile)}) is corrupted! It will be removed from the output."
+            corrupt_videos << videofile
+          elsif info[:duration] == 0
+            BigBlueButton.logger.warn "    This video file (#{File.basename(videofile)}) has zero duration! It will be removed from the output."
             corrupt_videos << videofile
           else
             BigBlueButton.logger.debug "    width: #{info[:width]}, height: #{info[:height]}, duration: #{info[:duration]}, start_time: #{info[:start_time]}"
@@ -295,6 +318,19 @@ module BigBlueButton
           end
         end
 
+        # limit number of videos according to layout limit
+        for i in 0...(edl.length - 1)
+          cut = edl[i]
+          layout[:areas].each do |layout_area|
+            next if cut[:areas][layout_area[:name]].nil?
+
+            if ! layout_area[:limit].nil? and cut[:areas][layout_area[:name]].length > layout_area[:limit]
+              cut[:areas][layout_area[:name]] = cut[:areas][layout_area[:name]].slice(0, layout_area[:limit])
+            end
+          end
+        end
+
+        BigBlueButton.logger.info "Video EDL after pre-processing:"
         dump(edl)
 
         BigBlueButton.logger.info "Compositing cuts"
@@ -369,7 +405,15 @@ module BigBlueButton
           end
 
           # Convert the duration to milliseconds
-          info[:duration] = (info[:format][:duration].to_r * 1000).to_i
+          if !info[:format][:duration].nil? and
+              info[:format][:duration] != 'N/A'
+            info[:duration] = (info[:format][:duration].to_r * 1000).to_i
+          else
+            # For some reason, ffprobe has a hard time finding duration on some webm files, that's why a fallback is implemented
+            # which actually process the whole video and figure out its final duration
+            info[:duration] = self.fallback_video_duration(filename)
+            BigBlueButton.logger.info "No duration found for #{File.basename(filename)} using ffprobe. Duration from ffmpeg: #{info[:duration]}ms"
+          end
 
           info[:start_time] = (info[:format][:start_time].to_r * 1000).to_i
           info[:video][:start_time] = (info[:video][:start_time].to_r * 1000).to_i
@@ -379,12 +423,24 @@ module BigBlueButton
         {}
       end
 
+      def self.fallback_video_duration(filename)
+        output = `ffmpeg -i #{filename} -f null /dev/null 2>&1 | grep '^frame=' | sed 's/.* time=\\([^ ]*\\).*/\\1/g'`.strip
+        if /^\d+:\d+:\d+.\d+$/.match output
+          # process time in the format 00:00:24.60 (ffmpeg sexagesimal)
+          duration_a = output.scan(/(\d+)/).map{ |num| num[0] }
+
+          ( ( duration_a[0].to_i * 3600 + duration_a[1].to_i * 60 + duration_a[2].to_i + "0.#{duration_a[3]}".to_f ) * 1000 ).to_i
+        else
+          0
+        end
+      end
+
       def self.check_deskshare_timestamp_bug(filename)
         IO.popen([*FFPROBE, '-select_streams', 'v:0', '-show_frames', '-read_intervals', '%+#10', filename]) do |probe|
           info = JSON.parse(probe.read, symbolize_names: true)
           return false if !info
 
-          if !info[:frames]
+          if info[:frames].nil? || info[:frames].empty?
             return false
           end
 
@@ -427,7 +483,7 @@ module BigBlueButton
         ffmpeg_inputs = [
           {
             format: 'lavfi',
-            filename: "color=c=white:s=#{layout[:width]}x#{layout[:height]}:r=#{layout[:framerate]}"
+            filename: "color=c=#{background_color}:s=#{layout[:width]}x#{layout[:height]}:r=#{layout[:framerate]}"
           }
         ]
         ffmpeg_input_pipes = {}
@@ -440,28 +496,35 @@ module BigBlueButton
           BigBlueButton.logger.debug "  Laying out #{video_count} videos in #{layout_area[:name]}"
           next if video_count == 0
 
-          tile_offset_x = layout_area[:x]
-          tile_offset_y = layout_area[:y]
+          tile_offset_x = layout_area[:x] # not used
+          tile_offset_y = layout_area[:y] # not used
+          border = layout_area[:border] || 0
 
           tiles_h = 0
           tiles_v = 0
           tile_width = 0
           tile_height = 0
           total_area = 0
+          max_video_width = 0
+          max_video_height = 0
 
           # Do an exhaustive search to maximize video areas
           for tmp_tiles_v in 1..video_count
             tmp_tiles_h = (video_count / tmp_tiles_v.to_f).ceil
-            tmp_tile_width = (2 * (layout_area[:width].to_f / tmp_tiles_h / 2).floor).to_i
-            tmp_tile_height = (2 * (layout_area[:height].to_f / tmp_tiles_v / 2).floor).to_i
+            tmp_tile_width = (2 * (layout_area[:width].to_f / tmp_tiles_h / 2).floor).to_i - border * 2
+            tmp_tile_height = (2 * (layout_area[:height].to_f / tmp_tiles_v / 2).floor).to_i - border * 2
             next if tmp_tile_width <= 0 or tmp_tile_height <= 0
 
             tmp_total_area = 0
+            tmp_max_video_width = 0
+            tmp_max_video_height = 0
             area.each do |video|
               video_width = videoinfo[video[:filename]][:aspect_ratio].numerator
               video_height = videoinfo[video[:filename]][:aspect_ratio].denominator
               scale_width, scale_height = aspect_scale(video_width, video_height, tmp_tile_width, tmp_tile_height)
               tmp_total_area += scale_width * scale_height
+              tmp_max_video_width = [ tmp_max_video_width, scale_width ].max
+              tmp_max_video_height = [ tmp_max_video_height, scale_height ].max
             end
 
             if tmp_total_area > total_area
@@ -470,8 +533,21 @@ module BigBlueButton
               tile_width = tmp_tile_width
               tile_height = tmp_tile_height
               total_area = tmp_total_area
+              max_video_width = tmp_max_video_width
+              max_video_height = tmp_max_video_height
             end
           end
+
+          tile_width = max_video_width + border * 2
+
+          if layout_area[:name].to_s == "deskshare" or layout_area[:name].to_s == "presentation"
+            tile_height = layout_area[:height]
+          else
+            tile_height = max_video_height + border * 2
+          end
+
+          tiles_pad_x = ( ( layout_area[:width] - tile_width * tiles_h ).to_f / 2 ).floor.to_i
+          tiles_pad_y = ( ( layout_area[:height] - tile_height * tiles_v ).to_f / 2 ).floor.to_i
 
           tile_x = 0
           tile_y = 0
@@ -532,7 +608,7 @@ module BigBlueButton
             if seek >= this_videoinfo[:duration]
               ffmpeg_inputs << {
                 format: 'lavfi',
-                filename: "color=c=white:s=#{tile_width}x#{tile_height}:r=#{layout[:framerate]}"
+                filename: "color=c=#{background_color}:s=#{tile_width}x#{tile_height}:r=#{layout[:framerate]}"
               }
               ffmpeg_filter << "[#{input_index}]null[#{pad_name}];"
               next
@@ -568,8 +644,8 @@ module BigBlueButton
             # Pre-filtering: scaling, padding, and extending.
             ffmpeg_preprocess_filter = String.new
             ffmpeg_preprocess_filter << '[0:v:0]'
-            ffmpeg_preprocess_filter << "scale=w=#{tile_width}:h=#{tile_height}:force_original_aspect_ratio=decrease,"
-            ffmpeg_preprocess_filter << "setsar=1,pad=w=#{tile_width}:h=#{tile_height}:x=-1:y=-1:color=white,"
+            ffmpeg_preprocess_filter << "scale=w=#{tile_width - border * 2}:h=#{tile_height - border * 2}:force_original_aspect_ratio=decrease,"
+            ffmpeg_preprocess_filter << "setsar=1,pad=w=#{tile_width}:h=#{tile_height}:x=-1:y=-1:color=#{background_color},"
             # The trim command combines its arguments - end at the timestamp but only if at least one frame has been output.
             ffmpeg_preprocess_filter << "trim=end=#{ms_to_s(out_time)}:end_frame=1"
             ffmpeg_preprocess_filter << '[out]'
@@ -622,7 +698,7 @@ module BigBlueButton
             if this_tiles_h > 1
               ffmpeg_filter << "hstack=inputs=#{this_tiles_h},"
             end
-            ffmpeg_filter << "pad=w=#{layout_area[:width]}:h=#{tile_height}:color=white"
+            ffmpeg_filter << "pad=w=#{layout_area[:width]}:h=#{tile_height}:color=#{background_color}"
             ffmpeg_filter << "[#{layout_area[:name]}_y#{tile_y}];"
           end
 
@@ -633,9 +709,9 @@ module BigBlueButton
           if tiles_v > 1
             ffmpeg_filter << "vstack=inputs=#{tiles_v},"
           end
-          ffmpeg_filter << "pad=w=#{layout_area[:width]}:h=#{layout_area[:height]}:color=white"
+          ffmpeg_filter << "pad=w=#{layout_area[:width]}:h=#{layout_area[:height]}:color=#{background_color}"
           ffmpeg_filter << "[#{layout_area[:name]}];"
-          ffmpeg_filter << "[#{layout_area[:name]}_in][#{layout_area[:name]}]overlay=x=#{layout_area[:x]}:y=#{layout_area[:y]}"
+          ffmpeg_filter << "[#{layout_area[:name]}_in][#{layout_area[:name]}]overlay=x=#{layout_area[:x] + tiles_pad_x}:y=#{layout_area[:y] + tiles_pad_y}"
         end
 
         ffmpeg_filter << ",trim=end=#{ms_to_s(duration)}"

@@ -45,7 +45,7 @@ def archive_events(meeting_id, redis_host, redis_port, redis_password, raw_archi
   end
 end
 
-def archive_notes(meeting_id, notes_endpoint, notes_formats, raw_archive_dir)
+def archive_notes(meeting_id, notes_api, notes_formats, raw_archive_dir)
   BigBlueButton.logger.info("Archiving notes for #{meeting_id}")
   events = Nokogiri::XML(File.open("#{raw_archive_dir}/#{meeting_id}/events.xml"))
   notes_id = BigBlueButton::Events.get_notes_id(events)
@@ -53,30 +53,19 @@ def archive_notes(meeting_id, notes_endpoint, notes_formats, raw_archive_dir)
   notes_dir = "#{raw_archive_dir}/#{meeting_id}/notes"
   FileUtils.mkdir_p(notes_dir)
 
-  tmp_note = "#{notes_dir}/tmp_note.txt"
-  base_path_notes = CGI.escape notes_id
-  if base_path_notes != "undefined"
-    BigBlueButton.try_download("#{notes_endpoint}/#{base_path_notes}/export/txt", tmp_note)
-  end
-  if File.exist? tmp_note
-    # If the notes are empty, do not archive them
-    blank = false
-    content = File.open(tmp_note).read
-    if content.strip.empty?
-      blank = true
+  if notes_api.pad_exists? notes_id
+    tmp_note = "#{notes_dir}/tmp_note.txt"
+    notes_api.export_pad(notes_id, tmp_note, "etherpad", "archive")
+    if notes_api.is_pad_file_empty? tmp_note
+      BigBlueButton.logger.info("Empty notes for #{meeting_id}")
+    else
+      notes_formats.each do |format|
+        notes_api.export_pad(notes_id, "#{notes_dir}/notes.#{format}", format, "archive")
+      end
     end
     FileUtils.rm_f(tmp_note)
-    if blank
-      BigBlueButton.logger.info("Empty notes for #{meeting_id}")
-      return
-    end
   else
     BigBlueButton.logger.info("Notes were not used in #{meeting_id}")
-    return
-  end
-
-  notes_formats.each do |format|
-    BigBlueButton.try_download("#{notes_endpoint}/#{CGI.escape notes_id}/export/#{format}", "#{notes_dir}/notes.#{format}")
   end
 end
 
@@ -162,6 +151,8 @@ def archive_has_recording_marks?(meeting_id, raw_archive_dir, break_timestamp)
 
   doc = Nokogiri::XML(File.open("#{raw_archive_dir}/#{meeting_id}/events.xml"))
 
+  return false if ! BigBlueButton::Events.has_events?(doc)
+
   # Find the start and stop timestamps for the current recording segment
   start_timestamp = BigBlueButton::Events.get_segment_start_timestamp(
           doc, break_timestamp)
@@ -208,10 +199,13 @@ audio_dir = props['raw_audio_src']
 recording_dir = props['recording_dir']
 raw_archive_dir = "#{recording_dir}/raw"
 deskshare_dir = props['raw_deskshare_src']
+upload_dir = props['raw_upload_src']
+screenshare_dir = props['raw_screenshare_src']
 redis_host = props['redis_host']
 redis_port = props['redis_port']
 redis_password = props['redis_password']
 presentation_dir = props['raw_presentation_src']
+video_dir = props['raw_video_src']
 kurento_video_dir = props['kurento_video_src']
 kurento_screenshare_dir = props['kurento_screenshare_src']
 mediasoup_video_dir = props['mediasoup_video_src']
@@ -220,6 +214,7 @@ webrtc_recorder_video_dir = props['webrtc_recorder_video_src']
 webrtc_recorder_screenshare_dir = props['webrtc_recorder_screenshare_src']
 log_dir = props['log_dir']
 notes_endpoint = props['notes_endpoint']
+notes_apikey = props['notes_apikey']
 notes_formats = props['notes_formats']
 
 # Determine the filenames for the done and fail files
@@ -239,7 +234,8 @@ archive_events(meeting_id, redis_host, redis_port, redis_password, raw_archive_d
 # FreeSWITCH Audio files
 archive_audio(meeting_id, audio_dir, raw_archive_dir)
 # Etherpad notes
-archive_notes(meeting_id, notes_endpoint, notes_formats, raw_archive_dir)
+notes_api = Etherpad::Api.new(notes_endpoint, notes_apikey)
+archive_notes(meeting_id, notes_api, notes_formats, raw_archive_dir)
 # Presentation files
 archive_directory("#{presentation_dir}/#{meeting_id}/#{meeting_id}", "#{target_dir}/presentation")
 # Kurento media
@@ -251,6 +247,8 @@ archive_directory("#{mediasoup_video_dir}/#{meeting_id}", "#{target_dir}/video/#
 # bbb-webrtc-recorder media
 remux_and_archive("#{webrtc_recorder_screenshare_dir}/#{meeting_id}", "#{target_dir}/deskshare")
 remux_and_archive("#{webrtc_recorder_video_dir}/#{meeting_id}", "#{target_dir}/video/#{meeting_id}")
+# Uploaded files
+archive_directory("#{upload_dir}/#{meeting_id}", "#{target_dir}/upload")
 
 # If this was the last (or only) segment in a recording, delete the original media files
 if break_timestamp.nil?
@@ -266,6 +264,8 @@ if break_timestamp.nil?
   # bbb-webrtc-recorder media
   FileUtils.rm_rf("#{webrtc_recorder_screenshare_dir}/#{meeting_id}")
   FileUtils.rm_rf("#{webrtc_recorder_video_dir}/#{meeting_id}")
+  # Uploaded files
+  FileUtils.rm_rf("#{upload_dir}/#{meeting_id}")
 end
 
 if not archive_has_recording_marks?(meeting_id, raw_archive_dir, break_timestamp)

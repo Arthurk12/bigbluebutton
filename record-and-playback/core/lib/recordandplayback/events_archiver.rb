@@ -32,12 +32,12 @@ module BigBlueButton
   # Class to wrap Redis so we can mock
   # for testing
   class RedisWrapper
-    def initialize(host, port, password)
-      @host, @port, @password = host, port, password
+    def initialize(host, port, password, ssl = false)
+      @host, @port, @password, @ssl = host, port, password, ssl
       if password.nil?
-        @redis = Redis.new(:host => @host, :port => @port)
+        @redis = Redis.new(:host => @host, :port => @port, :ssl => @ssl)
       else
-        @redis = Redis.new(:host => @host, :port => @port, :password => @password)
+        @redis = Redis.new(:host => @host, :port => @port, :password => @password, :ssl => @ssl)
       end
     end
 
@@ -140,16 +140,17 @@ module BigBlueButton
 
     def put_message(message_type, meeting_id, additional_payload = {})
       events_xml = "#{$raw_recording_dir}/#{meeting_id}/events.xml"
-      if File.exist?(events_xml)
-        additional_payload.merge!({
-          "external_meeting_id" => BigBlueButton::Events.get_external_meeting_id(events_xml)
-        })
-      end
-
-      msg = build_message build_header(message_type), additional_payload.merge({
+      payload = {
         "record_id" => meeting_id,
         "meeting_id" => meeting_id
-      })
+      }
+      if File.exist?(events_xml)
+        payload["external_meeting_id"] = BigBlueButton::Events.get_external_meeting_id(events_xml)
+        payload["record_id"] = BigBlueButton::Events.get_record_id(events_xml) || meeting_id
+        payload["meeting_id"] = BigBlueButton::Events.get_internal_meeting_id(events_xml) || meeting_id
+      end
+
+      msg = build_message build_header(message_type), additional_payload.merge(payload)
       @redis.publish RECORDINGS_CHANNEL, msg.to_json
 
       if $store_recording_status
@@ -222,6 +223,10 @@ module BigBlueButton
 
     def put_post_publish_ended(workflow, meeting_id, additional_payload = {})
       put_message_workflow "post_publish_ended", workflow, meeting_id, additional_payload
+    end
+
+    def put_custom_message(name, meeting_id, additional_payload = {})
+      put_message name, meeting_id, additional_payload
     end
   end
 
