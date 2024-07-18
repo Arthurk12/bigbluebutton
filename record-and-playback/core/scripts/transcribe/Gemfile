@@ -1,0 +1,11 @@
+source "https://rubygems.org"
+
+gem "absolute_time"
+gem "builder"
+gem "google-cloud-speech"
+gem "google-cloud-storage"
+gem "loofah"
+gem "nokogiri"
+gem "open4"
+gem "optimist"
+gem "redis"

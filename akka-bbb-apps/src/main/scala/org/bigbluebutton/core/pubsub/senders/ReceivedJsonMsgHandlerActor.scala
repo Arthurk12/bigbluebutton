@@ -478,6 +478,12 @@ class ReceivedJsonMsgHandlerActor(
       case CheckGraphqlMiddlewareAlivePongSysMsg.NAME =>
         route[CheckGraphqlMiddlewareAlivePongSysMsg](meetingManagerChannel, envelope, jsonNode)
 
+      // SIP endpoints (with video)
+      case SipEndpointCamStartMsg.NAME =>
+        routeGenericMsg[SipEndpointCamStartMsg](envelope, jsonNode)
+      case SipEndpointCamStopMsg.NAME =>
+        routeGenericMsg[SipEndpointCamStopMsg](envelope, jsonNode)
+
       case _ =>
         log.debug("Cannot route envelope name " + envelope.name)
       // do nothing
