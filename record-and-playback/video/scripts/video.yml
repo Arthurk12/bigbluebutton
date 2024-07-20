@@ -4,56 +4,113 @@ playback_dir: /usr/local/bigbluebutton/core/playback/video
 # audio_offset = 1000 means that the audio will be delayed by 1000ms
 audio_offset: 0
 
+default_layout_name: pretty
 layout:
-  width: 1280
-  height: 720
-  framerate: 24
-  areas:
-    - name: presentation
-      x: 0
-      y: 0
-      width: 960
-      height: 720
-    - name: webcam
-      x: 960
-      y: 0
-      width: 320
-      height: 720
-    - name: deskshare
-      x: 0
-      y: 0
-      width: 960
-      height: 720
-      pad: true
-nopresentation_layout:
-  width: 1280
-  height: 720
-  framerate: 24
-  areas:
-    - name: webcam
-      x: 0
-      y: 0
+  default:
+    regular:
       width: 1280
       height: 720
-nowebcam_layout:
-  width: 1280
-  height: 720
-  framerate: 24
-  areas:
-    - name: presentation
-      x: 0
-      y: 0
+      framerate: 24
+      areas:
+        - name: presentation
+          x: 0
+          y: 0
+          width: 960
+          height: 720
+        - name: webcam
+          x: 960
+          y: 0
+          width: 320
+          height: 720
+        - name: deskshare
+          x: 0
+          y: 0
+          width: 960
+          height: 720
+          pad: true
+    nopresentation:
       width: 1280
       height: 720
-    - name: deskshare
-      x: 0
-      y: 0
+      framerate: 24
+      areas:
+        - name: webcam
+          x: 0
+          y: 0
+          width: 1280
+          height: 720
+    nowebcam:
       width: 1280
       height: 720
-      pad: true
+      framerate: 24
+      areas:
+        - name: presentation
+          x: 0
+          y: 0
+          width: 1280
+          height: 720
+        - name: deskshare
+          x: 0
+          y: 0
+          width: 1280
+          height: 720
+          pad: true
+  pretty:
+    regular:
+      width: 1280
+      height: 720
+      framerate: 15
+      areas:
+        - name: presentation
+          x: 314
+          y: 0
+          width: 966
+          height: 720
+          border: 30
+        - name: webcam
+          x: 0
+          y: 0
+          width: 314
+          height: 720
+          limit: 3
+          border: 10
+        - name: deskshare
+          x: 314
+          y: 0
+          width: 966
+          height: 720
+          border: 30
+    nopresentation:
+      width: 1280
+      height: 720
+      framerate: 15
+      areas:
+        - name: webcam
+          x: 0
+          y: 0
+          width: 1280
+          height: 720
+          limit: 4
+          border: 10
+    nowebcam:
+      width: 1280
+      height: 720
+      framerate: 15
+      areas:
+        - name: presentation
+          x: 0
+          y: 0
+          width: 1280
+          height: 720
+          border: 30
+        - name: deskshare
+          x: 0
+          y: 0
+          width: 1280
+          height: 720
+          border: 30
 formats:
   - mimetype: 'video/mp4'
-    extension: m4v
+    extension: mp4
     parameters:
       - [ '-c:v', 'copy', # Use working format codec defined in core/lib/recordandplayback/edl/video.rb
           '-c:a', 'aac', '-b:a', '128K',
@@ -79,3 +136,5 @@ formats:
   #        '-force_key_frames', 'expr:gte(t,n_forced*10)',
   #        '-c:a', 'libopus', '-b:a', '64K',
   #        '-f', 'webm' ]
+
+footer: Recorded with <a href="http://bigbluebutton.org">BigBlueButton</a>.

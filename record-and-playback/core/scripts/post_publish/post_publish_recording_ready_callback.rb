@@ -23,7 +23,6 @@
 require "optimist"
 require 'net/http'
 require "jwt"
-require "java_properties"
 require File.expand_path('../../../lib/recordandplayback', __FILE__)
 
 logger = Logger.new("/var/log/bigbluebutton/post_publish.log", 'weekly' )
@@ -35,6 +34,11 @@ opts = Optimist::options do
   opt :format, "Playback format name", :type => String
 end
 meeting_id = opts[:meeting_id]
+
+# This script lives in scripts/post_publish
+# while properties.yaml lives in scripts/
+props = YAML.safe_load(File.open('../../core/scripts/bigbluebutton.yml'))
+override_recording_ready_callback_url = props['override_recording_ready_callback_url']
 
 bbb_web_properties = "/etc/bigbluebutton/bbb-web.properties"
 events_xml = "/var/bigbluebutton/recording/raw/#{meeting_id}/events.xml"
@@ -62,6 +66,10 @@ def get_callback_url(events_xml)
   callback_url
 end
 
+def load_properties(p)
+  Hash[File.read(p, :encoding => "ISO-8859-1:UTF-8").scan(/(.+?)=(.+)/).select{ |v| v[0].start_with?(/[a-zA-Z]/) } .map{ |v| [v[0].to_sym, v[1]] }]
+end
+
 #
 # Main code
 #
@@ -73,14 +81,14 @@ begin
   unless callback_url.nil?
     BigBlueButton.logger.info("Making callback for recording ready notification")
 
-    props = JavaProperties::Properties.new(bbb_web_properties)
+    props = load_properties(bbb_web_properties)
     secret = props[:securitySalt]
     external_meeting_id = BigBlueButton::Events.get_external_meeting_id(events_xml)
 
     payload = { meeting_id: external_meeting_id, record_id: meeting_id }
     payload_encoded = JWT.encode(payload, secret)
 
-    uri = URI.parse(callback_url)
+    uri = URI.parse(override_recording_ready_callback_url.nil? ? callback_url : override_recording_ready_callback_url)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = (uri.scheme == 'https')
 

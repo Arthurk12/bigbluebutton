@@ -54,6 +54,73 @@ def check_events_xml(raw_dir,meeting_id)
   bad_doc = Nokogiri::XML(File.open(filepath)) { |config| config.options = Nokogiri::XML::ParseOptions::STRICT }
 end
 
+# Check if ogg file has corrupted bytes at the beginning and remove them
+# Valid files start with "Ogg"
+def checkAndFixOggCorruptedInitialBytes(file)
+  tail = ['tail', '-c']
+  # open file as binary, read X bytes and immediately closes
+  oggIndex = File.open(file, 'rb') { |io| io.read(2048) }.index("Ogg")
+  if oggIndex && oggIndex > 0
+    # file does not start with Ogg, remove first oggIndex+1 bytes
+    BigBlueButton.logger.info("#{oggIndex+1} Corrupted bytes found before Ogg string, fixing...")
+    tail_cmd = [*tail]
+    tail_cmd += ["+#{oggIndex+1}", file]
+    output = "fixed_#{file}"
+    ret = BigBlueButton.exec_redirect_ret(output,*tail_cmd)
+    if ret != 0
+      BigBlueButton.logger.warn("Failed to fix initial bytes of #{file}")
+      FileUtils.rm_f(output)
+      return -1
+    end
+    BigBlueButton.logger.info("Fixed bytes, cleaning up original file")
+    # keep original ogg file, so we have the possibility to inspect it later on
+    FileUtils.mv(file, "#{file}.orig")
+    FileUtils.mv(output, file)
+    return 0
+  else
+    return 1
+  end
+end
+
+def remux_files(directory)
+  ffmpeg = ['ffmpeg', '-y', '-v', 'warning', '-nostats', '-max_error_rate', '1.0']
+  if File.directory?(directory)
+    FileUtils.cd(directory) do
+
+      BigBlueButton.logger.info("Remuxing audio files to fix corrupted streams")
+      Dir.glob("*.opus").each do |audio|
+        BigBlueButton.logger.info("Remuxing #{audio}")
+        ffmpeg_cmd = [*ffmpeg]
+        output = "remuxed_#{audio}"
+        ffmpeg_cmd += ['-i', audio, '-c', 'copy', '-map', '0', output]
+        ret = BigBlueButton.exec_ret(*ffmpeg_cmd)
+        if ret != 0
+          if File.size(audio) < 1000
+            BigBlueButton.logger.warn("File size is less than 1000 bytes, probably empty file, will be ignored #{audio}")
+            next
+          end
+          fixOggRet = checkAndFixOggCorruptedInitialBytes(audio)
+          if fixOggRet == 0
+            # file had corrupted initial bytes and is now fixed, remux again
+            ret = BigBlueButton.exec_ret(*ffmpeg_cmd)
+            if ret != 0
+              FileUtils.rm_f(output)
+              raise Exception, "Failed to remux #{audio} after fixing invalid bytes"
+            end
+          else
+            FileUtils.rm_f(output)
+            raise Exception, "Failed to remux #{audio}"
+          end
+        end
+
+        BigBlueButton.logger.info("Remuxed, cleaning up original file")
+        FileUtils.rm_f(audio)
+        FileUtils.mv(output, audio)
+      end
+    end
+  end
+end
+
 # Determine the filenames for the done and fail files
 if !break_timestamp.nil?
   done_base = "#{meeting_id}-#{break_timestamp}"
@@ -72,6 +139,9 @@ begin
 
   logger.info("Checking events.xml")
   check_events_xml(raw_archive_dir,meeting_id)
+
+  logger.info("Repairing audio files")
+  remux_files("#{raw_archive_dir}/#{meeting_id}/audio")
 
   if break_timestamp.nil?
     # Either this recording isn't segmented, or we are working on the last

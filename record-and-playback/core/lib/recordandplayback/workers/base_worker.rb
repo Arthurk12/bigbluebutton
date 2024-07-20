@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with BigBlueButton.  If not, see <http://www.gnu.org/licenses/>.
 
+require 'active_support/time'
+require 'resque/job_history_server'
+# this require MUST come after active_support because of Hash.from_xml
 require 'recordandplayback'
 require 'rubygems'
 require 'yaml'
@@ -37,6 +40,8 @@ module BigBlueButton
     class WorkerNoRecordHalt < WorkerHalt; end
 
     class BaseWorker
+      include ::Resque::Plugins::JobHistory
+
       @queue = 'rap:base'
 
       def self.perform(*args)
@@ -90,7 +95,7 @@ module BigBlueButton
 
       def run_script(script, *args)
         step_start_time = BigBlueButton.monotonic_clock
-        ret = BigBlueButton.exec_ret('ruby', script, *args)
+        ret = BigBlueButton.exec_ret('bundle', 'exec', 'ruby', script, *args)
         step_stop_time = BigBlueButton.monotonic_clock
         step_time = step_stop_time - step_start_time
         [ret, step_time]
@@ -119,10 +124,14 @@ module BigBlueButton
       end
 
       def schedule_next_step
+        schedule_next_step_helper(@meeting_id)
+      end
+
+      def schedule_next_step_helper(meeting_id)
         @logger.info("Scheduling next step for #{@step_name}")
 
         opts = {
-          'meeting_id': @meeting_id,
+          'meeting_id': meeting_id,
           'single_step': false,
         }
 

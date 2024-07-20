@@ -31,7 +31,6 @@ require 'yaml'
 require 'builder'
 require 'fastimage' # require fastimage to get the image size of the slides (gem install fastimage)
 require 'json'
-require "active_support"
 
 # This script lives in scripts/archive/steps while properties.yaml lives in scripts/
 bbb_props = BigBlueButton.read_props
@@ -402,7 +401,7 @@ def build_tldraw_shape(image_shapes, slide, shape)
     timestamp: shape_in,
     undo: (shape[:undo].nil? ? -1 : shape[:undo]),
     shape_data: shape[:shape_data]
-  } 
+  }
 
   image_shapes.push(tldraw_shape)
 end
@@ -493,7 +492,7 @@ def svg_render_image(svg, slide, shapes, tldraw, tldraw_shapes)
     end
 
     svg << canvas unless canvas.element_children.empty?
-  else 
+  else
     image_shapes = []
 
     shapes.each do |shape|
@@ -513,7 +512,7 @@ def panzoom_viewbox(panzoom, tldraw)
   if tldraw
     x = panzoom[:x_offset]
     y = panzoom[:y_offset]
-  else 
+  else
     x = (-panzoom[:x_offset] * MAGIC_MYSTERY_NUMBER / 100.0 * panzoom[:width]).round(5)
     y = (-panzoom[:y_offset] * MAGIC_MYSTERY_NUMBER / 100.0 * panzoom[:height]).round(5)
   end
@@ -881,7 +880,7 @@ def process_presentation(package_dir)
   # Current pan/zoom state
   current_x_offset = current_y_offset = 0.0
   current_width_ratio = current_height_ratio = 100.0
-  current_x_camera = current_y_camera = current_zoom = 0.0  
+  current_x_camera = current_y_camera = current_zoom = 0.0
   # Current cursor status
   cursor_x = cursor_y = -1.0
   cursor_visible = false
@@ -1146,6 +1145,63 @@ def process_deskshare_events(events)
   end
 end
 
+def getQuestionAnswer(event)
+  answer = ""
+  if not event.at_xpath("answerText").nil?
+    answer = event.at_xpath("answerText").text
+  end
+
+  answer
+end
+
+def getQuestionId(event)
+  id = ""
+  if not event.at_xpath("questionId").nil?
+    id = event.at_xpath("questionId").text
+  end
+
+  id
+end
+
+def getQuestionText(events, answered_question_event)
+  answered_question_id = getQuestionId(answered_question_event)
+
+  text = ""
+  events.xpath("//event[@eventname='QuestionCreatedEvent']").each do |event|
+    question_id = getQuestionId(event)
+
+    if question_id.eql?(answered_question_id)
+      text = event.at_xpath("text").text
+      break
+    end
+  end
+
+  text
+end
+
+def processQuestionEvents(events, package_dir)
+  BigBlueButton.logger.info("Processing question events")
+
+  answered_questions = []
+  @rec_events.each do |re|
+    events.xpath("//event[@eventname='QuestionAnsweredEvent']").each do |event|
+      if (event[:timestamp].to_i >= re[:start_timestamp] and event[:timestamp].to_i <= re[:stop_timestamp])
+        answered_questions << {
+          :timestamp => (translate_timestamp(event[:timestamp]) / 1000).to_i,
+          :text => getQuestionText(events, event),
+          :answer => getQuestionAnswer(event),
+        }
+      end
+    end
+  end
+
+  if not answered_questions.empty?
+    File.open("#{package_dir}/questions.json", "w") do |f|
+      f.puts(answered_questions.to_json)
+    end
+  end
+end
+
 def get_poll_question(event)
   event.at_xpath('question')&.text || ''
 end
@@ -1239,12 +1295,61 @@ def process_external_video_events(_events, package_dir)
 
       external_videos << {
         timestamp: timestamp,
+        stop_timestamp: (translate_timestamp(event[:stop_timestamp]) / 1000).to_i,
         external_video_url: event[:external_video_url],
+        is_audio: event[:is_audio],
+        is_local: event[:is_local],
       }
     end
   end
 
   generate_json_file(package_dir, 'external_videos.json', external_videos)
+end
+
+def process_talking_events(_events, package_dir)
+  BigBlueButton.logger.info('Processing Talking events')
+
+  # Retrieve talking events
+  talking_events = BigBlueButton::Events.get_talking_events(@doc)
+
+  final_talking_events = {}
+  @rec_events.each do |re|
+    talking_events.each_key do |participant|
+      BigBlueButton.logger.info("Processing rec event #{re} and talking events of participant #{participant}")
+      talking_events[participant][:events].each do |event|
+        start_timestamp = event[:start]
+        stop_timestamp = event[:stop]
+
+        re_start_timestamp = re[:start_timestamp]
+        re_stop_timestamp = re[:stop_timestamp]
+        next unless ((start_timestamp >= re_start_timestamp) && (start_timestamp <= re_stop_timestamp)) ||
+                    ((start_timestamp < re_start_timestamp) && (stop_timestamp >= re_start_timestamp))
+
+        final_participant = final_talking_events[participant]
+        if final_participant.nil?
+          final_talking_events[participant] = {
+            :userName => talking_events[participant][:userName],
+            :events => [],
+          }
+        end
+
+        start_timestamp = (translate_timestamp(start_timestamp) / 1000)
+
+        if event[:stop].nil?
+          stop_timestamp = (translate_timestamp(re_stop_timestamp) / 1000)
+        else
+          stop_timestamp = (translate_timestamp(event[:stop]) / 1000)
+        end
+
+        final_talking_events[participant][:events] << {
+          start: start_timestamp,
+          stop: stop_timestamp
+        }
+      end
+    end
+  end
+
+  generate_json_file(package_dir, 'talking.json', final_talking_events)
 end
 
 def generate_done_or_fail_file(success)
@@ -1274,6 +1379,7 @@ end
 
 opts = Optimist.options do
   opt :meeting_id, 'Meeting id to archive', default: '58f4a6b3-cd07-444d-8564-59116cb53974', type: String
+  opt :log_stdout, "Log to STDOUT", :type => :flag
 end
 
 @meeting_id = opts[:meeting_id]
@@ -1284,7 +1390,7 @@ match = /(.*)-(.*)/.match @meeting_id
 begin
   if @playback == 'presentation'
     log_dir = bbb_props['log_dir']
-    logger = Logger.new("#{log_dir}/presentation/publish-#{@meeting_id}.log", 'daily')
+    logger = opts[:log_stdout] ? Logger.new(STDOUT) : Logger.new("#{log_dir}/presentation/publish-#{@meeting_id}.log", 'daily' )
     BigBlueButton.logger = logger
 
     BigBlueButton.logger.info('Setting recording dir')
@@ -1347,7 +1453,7 @@ begin
         notes = "#{@process_dir}/notes/notes.html"
         FileUtils.cp(notes, package_dir) if File.exist?(notes)
 
-        processing_time = File.read("#{@process_dir}/processing_time")
+        processing_time = File.read("#{@process_dir}/processing_time") rescue 0
 
         @doc = Nokogiri::XML(File.read("#{@process_dir}/events.xml"))
 
@@ -1428,9 +1534,13 @@ begin
 
         process_deskshare_events(@doc)
 
+        processQuestionEvents(@doc, package_dir)
+
         process_poll_events(@doc, package_dir)
 
         process_external_video_events(@doc, package_dir)
+
+        process_talking_events(@doc, package_dir)
 
         # Write deskshare.xml to file
         File.open("#{package_dir}/#{@deskshare_xml_filename}", 'w') { |f| f.puts @deskshare_xml.target! }

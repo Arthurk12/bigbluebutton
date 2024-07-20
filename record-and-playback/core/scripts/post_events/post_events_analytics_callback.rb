@@ -29,7 +29,6 @@
 
 require '../../core/lib/recordandplayback'
 require 'bbbevents'
-require "java_properties"
 require "jwt"
 require 'net/http'
 require 'optparse'
@@ -65,6 +64,7 @@ recording_dir = props['recording_dir']
 events_dir = props['events_dir']
 meeting_events_dir = "#{events_dir}/#{meeting_id}"
 process_dir = "#{recording_dir}/process/events/#{meeting_id}"
+override_analytics_callback_url = props['override_analytics_callback_url']
 
 def send_data(analytics_url, secret, payload)
   # Setup a token that expires in 24hrs
@@ -119,9 +119,8 @@ def format_analytics_data!(data)
     hs.delete("meeting_id")
   }
 
-  # Convert CamelCase keys to snake_keys. This is done in bbbevents gem
-  # but we do it here too anyways.
-  tmp_metadata.deep_transform_keys! do |key|
+  # Convert CamelCase keys to snake_keys
+  tmp_metadata.transform_keys! do |key|
     k = key.to_s.underscore rescue key
     k.to_sym rescue key
   end
@@ -131,6 +130,10 @@ def format_analytics_data!(data)
   attendees.each { |attendee|
     attendee.delete("id")
   }
+end
+
+def load_properties(p)
+  Hash[File.read(p, :encoding => "ISO-8859-1:UTF-8").scan(/(.+?)=(.+)/).select{ |v| v[0].start_with?(/[a-zA-Z]/) } .map{ |v| [v[0].to_sym, v[1]] }]
 end
 
 #
@@ -155,11 +158,11 @@ begin
     filepathOverride = "/etc/bigbluebutton/bbb-web.properties"
     hasOverride = File.file?(filepathOverride)
 
-    bbb_props = JavaProperties::Properties.new("/usr/share/bbb-web/WEB-INF/classes/bigbluebutton.properties")
-    
-    # If the file does exists: 
+    bbb_props = load_properties("/usr/share/bbb-web/WEB-INF/classes/bigbluebutton.properties")
+
+    # If the file does exists:
     if (hasOverride)
-      bbbOverrideProps = JavaProperties::Properties.new(filepathOverride)
+      bbbOverrideProps = load_properties(filepathOverride)
       # Override the props
       bbbOverrideProps.each do |key, prop|
         bbb_props[key]=prop
@@ -190,16 +193,9 @@ begin
       data: data
     }
 
-    # Convert CamelCase keys to snake_keys for the whole payload.
-    # This is a sledgehammer to force keys to be consistent.
-    payload.deep_transform_keys! do |key|
-      k = key.to_s.underscore rescue key
-      k.to_sym rescue key
-    end
-
     BigBlueButton.logger.info(payload.to_json)
 
-    send_data(analytics_callback_url, secret, payload)
+    send_data(override_analytics_callback_url.nil? ? analytics_callback_url : override_analytics_callback_url, secret, payload)
   end
 
 rescue => e
