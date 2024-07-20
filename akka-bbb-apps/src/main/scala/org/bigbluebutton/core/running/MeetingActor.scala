@@ -449,9 +449,6 @@ class MeetingActor(
       case m: RecordAndClearPreviousMarkersCmdMsg =>
         state = usersApp.handleRecordAndClearPreviousMarkersCmdMsg(m, state)
         updateUserLastActivity(m.body.setBy)
-      case m: ChangeUserEmojiCmdMsg =>
-        handleChangeUserEmojiCmdMsg(m)
-        updateUserLastActivity(m.header.userId)
       case m: ChangeUserReactionEmojiReqMsg =>
         usersApp.handleChangeUserReactionEmojiReqMsg(m)
         updateUserLastActivity(m.header.userId)
@@ -460,9 +457,6 @@ class MeetingActor(
         updateUserLastActivity(m.header.userId)
       case m: ChangeUserAwayReqMsg =>
         usersApp.handleChangeUserAwayReqMsg(m)
-        updateUserLastActivity(m.header.userId)
-      case m: ClearAllUsersEmojiCmdMsg =>
-        handleClearAllUsersEmojiCmdMsg(m)
         updateUserLastActivity(m.header.userId)
       case m: ClearAllUsersReactionCmdMsg =>
         handleClearAllUsersReactionCmdMsg(m)
