@@ -92,23 +92,41 @@ def get_userName_id_mapping(json_data)
   ids_mapping
 end
 
-def find_users_by_timestamp(json_data, timestamp)
-  matching_users = []
+def intersection_length(start1, end1, start2, end2)
+  # Determine the start and end of the overlapping interval
+  overlap_start = [start1, start2].max
+  overlap_end = [end1, end2].min
+
+  # Calculate the intersection length
+  overlap_end > overlap_start ? overlap_end - overlap_start : 0
+end
+
+def find_users_by_interval(json_data, start_timestamp, end_timestamp)
+  matching_users_and_times = []
 
   json_data.each do |key, value|
     user_name = value["userName"]
     events = value["events"]
 
     events.each do |event|
-      if event["start"] <= timestamp && timestamp <= event["stop"]
-        if !matching_users.include?(user_name)
-          matching_users << user_name
+      intersection_time = intersection_length(start_timestamp, end_timestamp, event["start"], event["stop"])
+      if intersection_time > 0
+        user_entry = matching_users_and_times.find { |entry| entry[0] == user_name }
+        if !user_entry
+          matching_users_and_times << [user_name, intersection_time]
+        else
+          # new intersecation for the same user, increment time
+          user_entry[1] += intersection_time
         end
       end
     end
   end
 
-  matching_users.empty? ? nil : matching_users.join(', ')
+  # Order by matched intersection time in descending order
+  sorted = matching_users_and_times.sort_by { |_, time| -time }
+  sorted_names = sorted.map { |name, time| name }
+
+  matching_users_and_times.empty? ? nil : sorted_names.join(', ')
 end
 
 if File.exists? async_file
@@ -174,12 +192,19 @@ else
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true
 
+    talking_info = JSON.parse(File.read("#{published_dir}/talking.json"))
+
     request = Net::HTTP::Post.new(url)
     request['Content-Type'] = 'application/json'
     request['x-gladia-key'] = gladia_key
     request.body = JSON.dump({
       "audio_url" => audio_url,
       "diarization" => gladia_diarization,
+      "diarization_config" => {
+        "number_of_speakers" => talking_info.count,
+        "min_speakers" => talking_info.count - 1, 
+        "max_speakers" => talking_info.count,
+      },
       "subtitles" => !gladia_diarization,
       "subtitles_config" => {
         "formats" => ["vtt"]
@@ -243,7 +268,7 @@ end
 
 results = transcription_status['result'] 
 BigBlueButton.logger.info("Transciption successfull, saving Gladia resutls...")
-File.open("#{speech_dir}/gladia.out", 'w') { |file| file.write(response.body) }
+File.open("#{speech_dir}/gladia.json", 'w') { |file| file.write(results.to_json) }
 
 if ! results.empty?
   gladia_out_vtt = ""
@@ -261,17 +286,26 @@ if ! results.empty?
 
     results['transcription']['utterances'].each do |paragraph|
       time = "#{Time.at(paragraph['start']).utc.strftime("%T.%L")} --> #{Time.at(paragraph['end']).utc.strftime("%T.%L")}"
-      talking_users = find_users_by_timestamp(talking_info, (paragraph['end']+paragraph['start'])/2)
+      talking_users = find_users_by_interval(talking_info, paragraph['start'], paragraph['end'] )
       speaker = paragraph['speaker']
-      if !talking_users.nil? and talking_users.split(',').size > 1 and !speaker_mapping[speaker].nil?
-        # use gladia speaker as backup to decide when we have more than one speaker
-        talking_users = speaker_mapping[speaker]
+      if !talking_users.nil? and talking_users.split(',').size > 1
+        # when we have more than one speaker, try to match with gladia if available
+        gladia_speaker = speaker_mapping[speaker]
+        if talking_users.split(", ").include?(gladia_speaker)
+          talking_users = gladia_speaker
+        else
+          # otherwise, use the user with most intersection time
+          talking_users = talking_users.split(", ")[0]
+        end
       end
       if !talking_users.nil? and talking_users != last_speakers
         gladia_out_vtt += "NOTE MCONF_CUE_META {\"voice\":\"#{talking_users}\"}\n\n"
       end
-      if !speaker_mapping[speaker] and !talking_users.nil? and talking_users.split(',').size == 1
-        speaker_mapping[speaker] = talking_users
+      if !speaker_mapping[speaker] and !talking_users.nil?
+        most_talking_user = talking_users.split(", ")[0]
+        if speaker_mapping.key(most_talking_user).nil?
+          speaker_mapping[speaker] = most_talking_user
+        end
       end
       # see if we have the talker from before
       if talking_users.nil? and !speaker_mapping[speaker].nil?
