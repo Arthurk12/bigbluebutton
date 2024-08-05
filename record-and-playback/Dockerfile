@@ -14,9 +14,9 @@ FROM ubuntu:focal AS mp4-builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBFULLNAME="mconf-rec"
 ENV DEBEMAIL="felipe@mconf.com"
-ENV UBUNTU_CODENAME=focal
-ENV UBUNTU_VERSION=20.04
-ENV VERSION=4.0.4
+ENV UBUNTU_CODENAME=jammy
+ENV UBUNTU_VERSION=22.04
+ENV VERSION=5.0.0-beta.1
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
