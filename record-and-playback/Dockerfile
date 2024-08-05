@@ -103,6 +103,12 @@ RUN apt-get update \
   gir1.2-poppler-0.18 \
   python3-packaging \
   python3-sortedcollections \
+# needed to generate svg
+  cairosvg \
+  libmagickcore-6.q16-6-extra \
+  librsvg2-common \
+  potrace \
+  python3-cairosvg \
 # Set the locale
  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
  && locale-gen \
