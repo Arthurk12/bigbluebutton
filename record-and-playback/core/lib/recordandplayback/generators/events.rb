@@ -893,11 +893,19 @@ module BigBlueButton
       BigBlueButton.logger.info "Getting external video events"
       external_videos_events = []
       events_xml.xpath("recording/event[@eventname='StartExternalVideoRecordEvent']").each do |event|
+        is_audio_node = event.at_xpath("isAudio")
+        if is_audio_node.nil?
+          BigBlueButton.logger.warn("Missing attribute isAudio on event StartExternalVideoRecordEvent")
+        end
+        is_local_node = event.at_xpath("isLocal")
+        if is_local_node.nil?
+          BigBlueButton.logger.warn("Missing attribute isLocal on event StartExternalVideoRecordEvent")
+        end
         s = {
           :timestamp => event['timestamp'].to_i,
           :external_video_url => event.at_xpath("externalVideoUrl").text,
-          :is_audio => event.at_xpath("isAudio").text,
-          :is_local => event.at_xpath("isLocal").text,
+          :is_audio => is_audio_node.nil? ? false : is_audio_node.text,
+          :is_local => is_local_node.nil? ? false : is_local_node.text,
         }
         external_videos_events << s
       end
