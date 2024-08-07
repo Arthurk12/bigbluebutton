@@ -14,9 +14,9 @@ FROM ubuntu:focal AS mp4-builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBFULLNAME="mconf-rec"
 ENV DEBEMAIL="felipe@mconf.com"
-ENV UBUNTU_CODENAME=focal
-ENV UBUNTU_VERSION=20.04
-ENV VERSION=4.0.4
+ENV UBUNTU_CODENAME=jammy
+ENV UBUNTU_VERSION=22.04
+ENV VERSION=5.0.0-beta.1
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -103,6 +103,12 @@ RUN apt-get update \
   gir1.2-poppler-0.18 \
   python3-packaging \
   python3-sortedcollections \
+# needed to generate svg
+  cairosvg \
+  libmagickcore-6.q16-6-extra \
+  librsvg2-common \
+  potrace \
+  python3-cairosvg \
 # Set the locale
  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
  && locale-gen \
