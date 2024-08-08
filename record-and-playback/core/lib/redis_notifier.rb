@@ -25,7 +25,7 @@ class RedisNotifier
     @logger = logger
   end
 
-  def archive_ended(record_id, internal_meeting_id, external_meeting_id, duration)
+  def sanity_ended(record_id, internal_meeting_id, external_meeting_id)
     # do nothing
   end
 

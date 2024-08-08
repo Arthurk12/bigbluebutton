@@ -137,12 +137,9 @@ class RecordingBuilder
     @internal_meeting_id = BigBlueButton::Events.get_internal_meeting_id(events_xml)
 
     xml_doc = Nokogiri::XML(File.open(events_xml)) { |x| x.noblanks }
-    duration = BigBlueButton::Events.get_recording_length(xml_doc)
-    if duration == 0
-      duration = BigBlueButton::Events.last_event_timestamp(xml_doc) - BigBlueButton::Events.first_event_timestamp(xml_doc)
-    end
 
-    broadcast(:archive_ended, record_id, @internal_meeting_id, @external_meeting_id, duration)
+    # notify aggr if entry in the recordings table doesn't exist
+    broadcast(:sanity_ended, record_id, @internal_meeting_id, @external_meeting_id)
 
     step_succeeded = process(recording_dir, record_id, process_type)
     raise "Failed to process #{process_type}, record_id=#{record_id}" if ! step_succeeded
