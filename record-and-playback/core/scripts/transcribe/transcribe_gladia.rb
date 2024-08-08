@@ -40,11 +40,9 @@ meeting_id = opts[:meeting_id]
 log_dir = "/var/log/bigbluebutton/transcribe"
 FileUtils.mkdir_p log_dir
 
-if ! opts[:log_stdout]
-  logger = Logger.new("#{log_dir}/#{meeting_id}.log")
-  logger.level = Logger::INFO
-  BigBlueButton.logger = logger
-end
+logger = opts[:log_stdout] ? Logger.new(STDOUT) : Logger.new("#{log_dir}/#{meeting_id}.log")
+logger.level = Logger::INFO
+BigBlueButton.logger = logger
 
 props = YAML::load(File.open(File.expand_path('../transcribe.yml', __FILE__)))
 if BigBlueButton.isset("MCONF_REC_CUSTOM_TRANSCRIBE_YML_B64")
@@ -81,7 +79,7 @@ def get_result(result_url, gladia_key)
   request = Net::HTTP::Get.new(url)
   request['x-gladia-key'] = gladia_key
   response = http.request(request)
-  return JSON.parse(response.read_body)  
+  return JSON.parse(response.read_body)
 end
 
 def get_userName_id_mapping(json_data)
@@ -136,6 +134,8 @@ else
   # Do not generate transcription if the metadata check doesn't match
   match = false
   props['matcher'].each do |item|
+    BigBlueButton.logger.info("Testing if #{item['xpath']}=#{item['value']}")
+
     node = metadata.at_xpath(item['xpath'])
 
     if ! node.nil? && node.text == item['value']
@@ -143,7 +143,10 @@ else
       break
     end
   end
-  exit 0 if ! ( match or opts[:force] )
+  if ! ( match or opts[:force] )
+    BigBlueButton.logger.info("No match found")
+    exit 0
+  end
 
   BigBlueButton.logger.info("Generating #{language_code} transcription for #{meeting_id}")
 
@@ -175,7 +178,7 @@ else
     http = Net::HTTP.new(url.host, url.port)
     http.use_ssl = true
     http.read_timeout = gladia_timeout
-    
+
     request = Net::HTTP::Post.new(url)
     request['Content-Type'] = 'multipart/form-data'
     request['x-gladia-key'] = gladia_key
@@ -218,7 +221,7 @@ else
     BigBlueButton.logger.info("Transcribing #{audio_url} using gladia api with key #{gladia_key}")
 
     response = http.request(request)
-    
+
     BigBlueButton.logger.info("Transcription response: #{response.read_body}")
 
     result_url = JSON.parse(response.read_body)['result_url']
@@ -266,7 +269,7 @@ if transcription_status['status'] == 'error'
   exit 1
 end
 
-results = transcription_status['result'] 
+results = transcription_status['result']
 BigBlueButton.logger.info("Transciption successfull, saving Gladia resutls...")
 File.open("#{speech_dir}/gladia.json", 'w') { |file| file.write(results.to_json) }
 
