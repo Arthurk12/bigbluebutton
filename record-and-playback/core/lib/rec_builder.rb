@@ -147,12 +147,22 @@ class RecordingBuilder
     raise "Failed to publish #{process_type}, record_id=#{record_id}" if ! step_succeeded
 
     # TODO improve this, so transcription is copied to all formats
-    if ENV["MCONF_REC_WORKER_TRANSCRIBE_ENABLED"] == "true" and process_type == "presentation"
+    if process_type == "presentation" and should_transcribe?(target_dir)
+      broadcast(:transcription_started, record_id, @internal_meeting_id, @external_meeting_id)
+      step_start_time = BigBlueButton.monotonic_clock
+
+      ret = nil
       if ENV["MCONF_REC_WORKER_LOG_STDOUT"] == "1"
         ret = BigBlueButton.exec_ret("ruby", "transcribe/transcribe.rb", "-m", record_id, "--log-stdout")
       else
         ret = BigBlueButton.exec_ret("ruby", "transcribe/transcribe.rb", "-m", record_id)
       end
+      step_succeeded = (ret == 0)
+
+      step_stop_time = BigBlueButton.monotonic_clock
+      step_time = step_stop_time - step_start_time
+
+      broadcast(:transcription_ended, record_id, @internal_meeting_id, @external_meeting_id, step_succeeded, step_time)
     end
 
     if isset("MCONF_REC_WORKER_AWS_S3_BUCKET_COMPLETE_NAME")
@@ -166,7 +176,51 @@ class RecordingBuilder
 
   private
 
+  def should_transcribe?(target_dir)
+    # check if env enable transcribe
+    if ENV["MCONF_REC_WORKER_TRANSCRIBE_ENABLED"] != "true"
+      BigBlueButton.logger.info("Do not transcribe because MCONF_REC_WORKER_TRANSCRIBE_ENABLED=false")
+      return false
+    end
+
+    # check if metadata.xml exists
+    metadata_xml = "#{target_dir}/metadata.xml"
+    metadata = Nokogiri::XML(File.open(metadata_xml)) { |x| x.noblanks }
+    if ! File.exists?(metadata_xml)
+      BigBlueButton.logger.info("Do not transcribe because metadata was not found")
+      return false
+    end
+
+    # merge env with transcribe.yml
+    props_file = File.expand_path('../../scripts/transcribe/transcribe.yml', __FILE__)
+    if ! File.exists?(props_file)
+      BigBlueButton.logger.info("Do not transcribe because transcribe.yml was not found")
+      return false
+    end
+    props = YAML::load(File.open(props_file))
+    if BigBlueButton.isset("MCONF_REC_CUSTOM_TRANSCRIBE_YML_B64")
+      override_props = YAML::load(Base64.decode64(ENV["MCONF_REC_CUSTOM_TRANSCRIBE_YML_B64"]))
+      props.merge!(override_props)
+    end
+
+    # test matcher
+    props['matcher'].each do |item|
+      BigBlueButton.logger.info("Testing if #{item['xpath']}=#{item['value']}")
+
+      node = metadata.at_xpath(item['xpath'])
+
+      if ! node.nil? && node.text == item['value']
+        return true
+      end
+    end
+    BigBlueButton.logger.info("Do not transcribe because no match was found")
+    return false
+  end
+
   def tag_raw(record_id)
+    # OCI doesn't support tagging
+    return if ENV['MCONF_REC_WORKER_AWS_S3_TAGGING_SUPPORTED'] == "false"
+
     # only tag raw if the published content was pushed to s3
     if isset("MCONF_REC_WORKER_AWS_S3_BUCKET_COMPLETE_NAME")
       publisher, bucket_upload = load_publisher("MCONF_REC_WORKER_AWS_S3_BUCKET_UPLOAD")

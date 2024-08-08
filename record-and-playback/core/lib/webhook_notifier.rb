@@ -96,6 +96,50 @@ class WebhookNotifier
     post(event)
   end
 
+  def transcription_started(record_id, internal_meeting_id, external_meeting_id)
+    id = 'rap-transcription-started'
+    event = {
+      "data" => {
+        "type" => "event",
+        "id" => id,
+        "attributes" => {
+          "meeting" => {
+            "internal-meeting-id" => internal_meeting_id,
+            "external-meeting-id" => external_meeting_id
+          },
+          "record-id" => record_id
+        },
+        "event" => {
+          "ts" => Time.now.to_i
+        }
+      }
+    }
+    post(event)
+  end
+
+  def transcription_ended(record_id, internal_meeting_id, external_meeting_id, step_succeeded, step_time)
+    id = 'rap-transcription-ended'
+    event = {
+      "data" => {
+        "type" => "event",
+        "id" => id,
+        "attributes" => {
+          "meeting" => {
+            "internal-meeting-id" => internal_meeting_id,
+            "external-meeting-id" => external_meeting_id
+          },
+          "record-id" => record_id,
+          "success" => step_succeeded,
+          "step-time" => step_time
+        },
+        "event" => {
+          "ts" => Time.now.to_i
+        }
+      }
+    }
+    post(event)
+  end
+
   private
 
   def get_base_event(id, record_id, internal_meeting_id, external_meeting_id, workflow)

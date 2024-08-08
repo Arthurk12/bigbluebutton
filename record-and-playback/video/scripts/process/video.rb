@@ -241,7 +241,14 @@ logger.info 'Rendering video'
 video = BigBlueButton::EDL::Video.render(video_edl, layout, "#{process_dir}/video")
 
 metadata_link = "#{props['playback_protocol']}://#{props['playback_host']}/playback/video/#{meeting_id}/"
-if metadata['video-playback-link-to-mp4'].to_s == "true"
+link_mp4 = false
+if BigBlueButton.isset("MCONF_REC_WORKER_FORMAT_VIDEO_PLAYBACK_LINK_TO_MP4")
+  link_mp4 = ENV["MCONF_REC_WORKER_FORMAT_VIDEO_PLAYBACK_LINK_TO_MP4"] == "true"
+end
+if ! metadata['video-playback-link-to-mp4'].nil?
+  link_mp4 = metadata['video-playback-link-to-mp4'].to_s == "true"
+end
+if link_mp4
   I18n.available_locales = [:en]
   # remove accents
   sanitized_meeting_name = I18n.transliterate(metadata['meetingName'])
