@@ -47,6 +47,8 @@ trait SystemConfiguration {
   lazy val dialInApprovalAudioPath = Try(config.getString("voiceConf.dialInApprovalAudioPath")).getOrElse("ivr/ivr-please_hold_while_party_contacted.wav")
   lazy val dialInEnforceGuestPolicy = Try(config.getBoolean("voiceConf.dialInEnforceGuestPolicy")).getOrElse(true)
   lazy val toggleListenOnlyAfterMuteTimer = Try(config.getInt("voiceConf.toggleListenOnlyAfterMuteTimer")).getOrElse(4)
+  lazy val transparentListenOnlyThreshold = Try(config.getInt("voiceConf.transparentListenOnlyThreshold")).getOrElse(0)
+  lazy val muteOnStartThreshold = Try(config.getInt("voiceConf.muteOnStartThreshold")).getOrElse(0)
 
   lazy val recordingChapterBreakLengthInMinutes = Try(config.getInt("recording.chapterBreakLengthInMinutes")).getOrElse(0)
 
@@ -83,7 +85,7 @@ trait SystemConfiguration {
   lazy val analyticsIncludeChat = Try(config.getBoolean("analytics.includeChat")).getOrElse(true)
 
   lazy val clientSettingsPath = Try(config.getString("client.clientSettingsFilePath")).getOrElse(
-    "/usr/share/meteor/bundle/programs/server/assets/app/config/settings.yml"
+    "/var/bigbluebutton/html5-client/private/config/settings.yml"
   )
   lazy val clientSettingsPathOverride = Try(config.getString("client.clientSettingsOverrideFilePath")).getOrElse(
     "/etc/bigbluebutton/bbb-html5.yml"
