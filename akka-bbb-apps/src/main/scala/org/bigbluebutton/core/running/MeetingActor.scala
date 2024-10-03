@@ -265,6 +265,7 @@ class MeetingActor(
     // Handling RegisterUserReqMsg as it is forwarded from BBBActor and
     // its type is not BbbCommonEnvCoreMsg
     case m: RegisterUserReqMsg                    => usersApp.handleRegisterUserReqMsg(m)
+    case m: RegisterUserSessionTokenReqMsg        => usersApp.handleRegisterUserSessionTokenReqMsg(m)
 
     //API Msgs
     case m: GetUserApiMsg                         => usersApp.handleGetUserApiMsg(m, sender)
@@ -710,6 +711,12 @@ class MeetingActor(
         updateUserLastActivity(m.body.msg.sender.id)
       case m: SendGroupChatMessageFromApiSysPubMsg =>
         state = groupChatApp.handle(m, state, liveMeeting, msgBus)
+      case m: EditGroupChatMessageReqMsg =>
+        state = groupChatApp.handle(m, state, liveMeeting, msgBus)
+        updateUserLastActivity(m.header.userId)
+      case m: DeleteGroupChatMessageReqMsg =>
+        state = groupChatApp.handle(m, state, liveMeeting, msgBus)
+        updateUserLastActivity(m.header.userId)
 
       // Plugin
       case m: PluginDataChannelPushEntryMsg    => pluginHdlrs.handle(m, state, liveMeeting)
@@ -722,6 +729,9 @@ class MeetingActor(
         webcamApp2x.handle(m, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
       case m: UserBroadcastCamStopMsg =>
+        webcamApp2x.handle(m, liveMeeting, msgBus)
+        updateUserLastActivity(m.header.userId)
+      case m: SetCamShowAsContentReqMsg =>
         webcamApp2x.handle(m, liveMeeting, msgBus)
         updateUserLastActivity(m.header.userId)
       case m: GetCamBroadcastPermissionReqMsg  => webcamApp2x.handle(m, liveMeeting, msgBus)
