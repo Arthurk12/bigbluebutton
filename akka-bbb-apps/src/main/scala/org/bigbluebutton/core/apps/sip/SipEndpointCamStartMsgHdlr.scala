@@ -23,7 +23,12 @@ trait SipEndpointCamStartMsgHdlr {
         liveMeeting.props.meetingProp.intId,
         msg.header.userId
       )
-      val body = UserBroadcastCamStartedEvtMsgBody(msg.header.userId, msg.body.streamId)
+      val body = UserBroadcastCamStartedEvtMsgBody(
+        msg.header.userId,
+        msg.body.streamId,
+        "camera",
+        false,
+      )
       val event = UserBroadcastCamStartedEvtMsg(header, body)
       val msgEvent = BbbCommonEnvCoreMsg(envelope, event)
 
@@ -36,6 +41,9 @@ trait SipEndpointCamStartMsgHdlr {
       val webcamStream = new WebcamStream(
         msg.body.streamId,
         msg.header.userId,
+        "camera",
+        false,
+        false,
         Set.empty
       )
 
