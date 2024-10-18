@@ -202,7 +202,10 @@ public class MeetingService implements MessageListener {
 
       UserSessionBasicData removedUser = new UserSessionBasicData();
       removedUser.meetingId = us.meetingID;
+      removedUser.extMeetingId = us.externMeetingID;
       removedUser.userId = us.internalUserId;
+      removedUser.extUserId = us.externUserID;
+      removedUser.userFullName = us.fullname;
       removedUser.sessionToken = us.authToken;
       removedUser.role = us.role;
       removedSessions.put(token, removedUser);
@@ -367,7 +370,8 @@ public class MeetingService implements MessageListener {
   public String replaceMetaParametersIntoManifestTemplate(String manifestContent, Map<String, String> metadata)
           throws NoSuchFieldException {
     // Pattern to match ${variable} in the input string
-    Pattern pattern = Pattern.compile("\\$\\{(\\w+)}");
+    Pattern pattern = Pattern.compile("\\$\\{([\\w\\-]+)\\}");
+
     Matcher matcher = pattern.matcher(manifestContent);
 
     StringBuilder result = new StringBuilder();
