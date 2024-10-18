@@ -971,9 +971,7 @@ class VideoPreview extends Component {
     
     if (cameraAsContent) return;
 
-    const CAMERA_PROFILES = window.meetingClientSettings.public.kurento.cameraProfiles || [];
-    // Filtered, without hidden profiles
-    const PREVIEW_CAMERA_PROFILES = CAMERA_PROFILES.filter(p => !p.hidden);
+    const PREVIEW_CAMERA_PROFILES = PreviewService.handleHiddenCameraProfiles();
 
     return (
       <>
