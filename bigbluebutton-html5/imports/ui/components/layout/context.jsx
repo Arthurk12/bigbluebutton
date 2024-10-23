@@ -205,6 +205,24 @@ const reducer = (state, action) => {
       };
     }
 
+    // NOTIFICATION TOASTS
+    case ACTIONS.SET_HIDE_NOTIFICATION_TOASTS: {
+      const { notificationsBar } = state.input;
+      if (notificationsBar.hideNotificationToasts === action.value) {
+        return state;
+      }
+      return {
+        ...state,
+        input: {
+          ...state.input,
+          notificationsBar: {
+            ...notificationsBar,
+            hideNotificationToasts: action.value,
+          },
+        },
+      };
+    }
+
     // NAV BAR
 
     case ACTIONS.SET_HAS_NAVBAR: {
@@ -855,6 +873,9 @@ const reducer = (state, action) => {
       if (presentation.isOpen === action.value) {
         return state;
       }
+      const { presentationAreaContentActions } = state;
+      presentationAreaContentActions[presentationAreaContentActions.length - 1]
+        .value.open = action.value;
       return {
         ...state,
         input: {
@@ -864,6 +885,7 @@ const reducer = (state, action) => {
             isOpen: action.value,
           },
         },
+        presentationAreaContentActions,
       };
     }
     case ACTIONS.SET_PRESENTATION_SLIDES_LENGTH: {
@@ -1314,7 +1336,7 @@ const reducer = (state, action) => {
             ) {
               indexes.push(index);
             }
-          } else if (p.value.content === action.value.content && p.value.open) {
+          } else if (p.value.content === action.value.content) {
             indexes.push(index);
           }
           return indexes;
