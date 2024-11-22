@@ -96,6 +96,10 @@ const colorHeading = `var(--color-heading, ${colorGrayDark})`;
 const palettePlaceholderText = 'var(--palette-placeholder-text, #787675)';
 const pollAnnotationGray = 'var(--poll-annotation-gray, #333333)';
 
+const appsGalleryOutlineColor = 'var(--apps-gallery-outline, #DCE4EC)';
+const unpinnedAppIconColor = 'var(--apps-unpinned-icon-color, #A5B2C7)';
+const appsPanelTextColor = 'var(--apps-panel-text-color, #393C48)';
+
 const toolbarButtonBorderColor = `var(--toolbar-button-border-color, ${colorGrayLighter})`;
 const toolbarListColor = `var(--toolbar-list-color, ${colorGray})`;
 const toolbarButtonBg = `var(--toolbar-button-bg, ${btnDefaultBg})`;
@@ -142,6 +146,7 @@ export {
   colorBlueLightest,
   colorBlueLightestChannel,
   colorBlueLighterChannel,
+  colorBlueAux,
   colorPrimary,
   colorDanger,
   colorDangerDark,
@@ -201,6 +206,9 @@ export {
   colorHeading,
   palettePlaceholderText,
   pollAnnotationGray,
+  appsGalleryOutlineColor,
+  unpinnedAppIconColor,
+  appsPanelTextColor,
   toolbarButtonBorderColor,
   toolbarListColor,
   toolbarButtonBg,

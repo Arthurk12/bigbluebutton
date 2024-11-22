@@ -86,11 +86,14 @@ const PresentationFocusLayout = (props) => {
           externalVideo, genericMainContent, screenShare,
         } = prevInput;
         const { sidebarContentPanel } = sidebarContent;
+        const { registeredApps, pinnedApps } = sidebarNavigation;
         return defaultsDeep(
           {
             sidebarNavigation: {
               isOpen:
                 sidebarNavigation.isOpen || sidebarContentPanel !== PANELS.NONE || false,
+              registeredApps,
+              pinnedApps,
             },
             sidebarContent: {
               isOpen: sidebarContentPanel !== PANELS.NONE,
