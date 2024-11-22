@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colorWhite, colorPrimary, colorGrayLighter } from '/imports/ui/stylesheets/styled-components/palette';
+import { colorWhite, colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
 import { 
   contentSidebarPadding,
@@ -72,11 +72,4 @@ const ChatMessages = styled.div`
   user-select: text;
 `;
 
-const Separator = styled.hr`
-  margin: 1rem auto;
-  width: 100%;
-  border: 0;
-  border-top: 1px solid ${colorGrayLighter};
-`;
-
-export default { Chat, ChatMessages, ChatContent, Separator };
+export default { Chat, ChatMessages, ChatContent };

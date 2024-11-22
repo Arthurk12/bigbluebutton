@@ -117,7 +117,6 @@ const Chat: React.FC<ChatProps> = ({ isRTL, publicUnreadMessages, privateUnreadM
   return (
     <Styled.Chat isRTL={isRTL} isChrome={isChrome}>
       <ChatHeader />
-      <Styled.Separator />
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px' }}>
         <Button
           variant={showMessages ? 'contained' : 'outlined'}
