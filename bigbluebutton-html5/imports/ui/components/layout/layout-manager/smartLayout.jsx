@@ -80,12 +80,15 @@ const SmartLayout = (props) => {
           sidebarNavigation, sidebarContent, presentation, cameraDock,
           externalVideo, genericMainContent, screenShare, sharedNotes,
         } = prevInput;
+        const { registeredApps, pinnedApps } = sidebarNavigation;
         const { sidebarContentPanel } = sidebarContent;
         return defaultsDeep(
           {
             sidebarNavigation: {
               isOpen:
                 sidebarNavigation.isOpen || sidebarContentPanel !== PANELS.NONE || false,
+              registeredApps,
+              pinnedApps,
             },
             sidebarContent: {
               isOpen: sidebarContentPanel !== PANELS.NONE,
