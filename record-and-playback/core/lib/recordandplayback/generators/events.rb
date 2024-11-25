@@ -319,7 +319,7 @@ module BigBlueButton
       webcamsOnlyForModerator = false
 
       additional_events = []
-      events.dup.xpath('/recording/event[(@module="PARTICIPANT" and (@eventname="AssignPresenterEvent" or @eventname="ParticipantJoinEvent" or @eventname="ParticipantStatusChangeEvent")) or (@module="VOICE" and (@eventname="AudioFloorChangedEvent")) or @eventname="WebcamsOnlyForModeratorEvent" or @eventname="MeetingConfigurationEvent"]').each do |event|
+      events.dup.xpath('/recording/event[(@module="PARTICIPANT" and (@eventname="AssignPresenterEvent" or @eventname="ParticipantJoinEvent" or @eventname="ParticipantStatusChangeEvent")) or (@module="VOICE" and (@eventname="AudioFloorChangedEvent" or @eventname="ParticipantJoinedEvent")) or @eventname="WebcamsOnlyForModeratorEvent" or @eventname="MeetingConfigurationEvent"]').each do |event|
         additional_events << event
       end
 
@@ -341,7 +341,12 @@ module BigBlueButton
         # Add the video to the EDL
         case event['eventname']
         when 'StartWebcamShareEvent', 'StartWebRTCShareEvent'
-          user_id = event.at_xpath('userId').text
+          node = event.at_xpath('userId')
+          user_id = if node.nil?
+            /\w+-(?<user_id>[^-]*)-\d+\.\w+/.match(File.basename(filename))[:user_id]
+          else
+            node.text
+          end
           videos[filename] = { :timestamp => timestamp }
 
           if is_in_forbidden_period && !self.is_user_moderator(user_id, list_user_info)
@@ -356,13 +361,19 @@ module BigBlueButton
             }
           end
         when 'StopWebcamShareEvent', 'StopWebRTCShareEvent'
-          user_id = event.at_xpath('userId').text
+          node = event.at_xpath('userId')
+          user_id = if node.nil?
+            /\w+-(?<user_id>[^-]*)-\d+\.\w+/.match(File.basename(filename))[:user_id]
+          else
+            node.text
+          end
 
           if is_in_forbidden_period && !self.is_user_moderator(user_id, list_user_info)
             inactive_videos.delete_if { |h| h[:filename] == filename }
           end
           active_videos.delete_if { |h| h[:filename] == filename }
         when 'ParticipantJoinEvent'
+          # event['module'] == "PARTICIPANT"
           user_id = event.at_xpath('userId').text
           list_user_info[user_id] = {
             :name => event.at_xpath('name').text,
@@ -371,6 +382,17 @@ module BigBlueButton
             :join_timestamp => timestamp,
             :floor_timestamp => 0
           }
+        when 'ParticipantJoinedEvent'
+          # event['module'] == "VOICE"
+          user_id = event.at_xpath('participant').text
+          list_user_info[user_id] = {
+            :name => event.at_xpath('callername').text,
+            :role => "VIEWER",
+            :presenter => false,
+            :join_timestamp => timestamp,
+            :floor_timestamp => 0
+          } if list_user_info[user_id].nil?
+          # this is focused for SIP, regular participants will hit the ParticipantJoinEvent event
         when "ParticipantStatusChangeEvent"
           user_id = event.at_xpath('userId').text
           if event.at_xpath('status').text == "role"
@@ -757,6 +779,12 @@ module BigBlueButton
         internal_id = event.at_xpath('./userId')&.content
         user_name = event.at_xpath('./name')&.content
         map[internal_id] = user_name
+      end
+
+      events.xpath('/recording/event[@module="VOICE" and @eventname="ParticipantJoinedEvent"]').each do |event|
+        internal_id = event.at_xpath('./participant')&.content
+        user_name = event.at_xpath('./callername')&.content
+        map[internal_id] = user_name if map[internal_id].nil?
       end
 
       map

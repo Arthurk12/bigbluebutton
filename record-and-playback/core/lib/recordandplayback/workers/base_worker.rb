@@ -17,9 +17,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with BigBlueButton.  If not, see <http://www.gnu.org/licenses/>.
 
-require 'active_support/time'
-require 'resque/job_history_server'
-# this require MUST come after active_support because of Hash.from_xml
 require 'recordandplayback'
 require 'rubygems'
 require 'yaml'
@@ -40,8 +37,6 @@ module BigBlueButton
     class WorkerNoRecordHalt < WorkerHalt; end
 
     class BaseWorker
-      include ::Resque::Plugins::JobHistory
-
       @queue = 'rap:base'
 
       def self.perform(*args)
