@@ -2,7 +2,6 @@ import styled, { css } from 'styled-components';
 
 import {
   userIndicatorsOffset,
-  smPaddingX,
   smPaddingY,
   lgPadding,
   $3xlPadding,

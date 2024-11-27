@@ -21,11 +21,11 @@ import LAST_SEEN_MUTATION from './queries';
 import {
   MessageList,
   UnreadButton,
+  Wrapper,
+  ListBox,
 } from './styles';
 import useReactiveRef from '/imports/ui/hooks/useReactiveRef';
 import useStickyScroll from '/imports/ui/hooks/useStickyScroll';
-import ChatReplyIntention from '../chat-reply-intention/component';
-import ChatEditingWarning from '../chat-editing-warning/component';
 import KEY_CODES from '/imports/utils/keyCodes';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
@@ -56,7 +56,6 @@ interface ChatListProps {
   totalUnread: number;
   totalPages: number;
   chatId: string;
-  isRTL: boolean;
   setMessageAsSeenMutation: (
     data: {
       variables: {
@@ -175,7 +174,6 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   chatId,
   setMessageAsSeenMutation,
   totalUnread,
-  isRTL,
 }) => {
   const intl = useIntl();
   // I used a ref here because I don't want to re-render the component when the last sender changes
@@ -449,7 +447,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   }, []);
 
   return (
-    <>
+    <Wrapper>
       {
         [
           <MessageList
@@ -462,11 +460,9 @@ const ChatMessageList: React.FC<ChatListProps> = ({
               setScrollToTailEventHandler();
             }}
             data-test="chatMessages"
-            isRTL={isRTL}
             ref={updateRefs}
-            $hasMessageToolbar={hasMessageToolbar}
           >
-            <div
+            <ListBox
               role="listbox"
               ref={messageListRef}
               tabIndex={hasMessageToolbar ? 0 : -1}
@@ -517,7 +513,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
                   />
                 );
               })}
-            </div>
+            </ListBox>
             <div
               ref={endSentinelRefProxy}
               style={{
@@ -529,17 +525,14 @@ const ChatMessageList: React.FC<ChatListProps> = ({
             />
           </MessageList>,
           renderUnreadNotification,
-          <ChatReplyIntention key="chatReplyIntention" />,
-          <ChatEditingWarning key="chatEditingWarning" />,
         ]
       }
-    </>
+    </Wrapper>
   );
 };
 
 const ChatMessageListContainer: React.FC = () => {
   const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
-  const isRTL = layoutSelect((i: Layout) => i.isRTL);
 
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
   const PUBLIC_CHAT_KEY = CHAT_CONFIG.public_id;
@@ -566,7 +559,6 @@ const ChatMessageListContainer: React.FC = () => {
       chatId={chatId}
       setMessageAsSeenMutation={setMessageAsSeenMutation}
       totalUnread={currentChat?.totalUnread || 0}
-      isRTL={isRTL}
     />
   );
 };

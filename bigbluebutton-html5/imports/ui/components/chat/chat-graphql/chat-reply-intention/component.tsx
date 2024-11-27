@@ -46,6 +46,8 @@ const ChatReplyIntention = () => {
   const hidden = !username || !message;
   const messageChunks = message ? message.split('\n') : null;
 
+  if (hidden) return null;
+
   return (
     <Styled.Container
       $hidden={hidden}
