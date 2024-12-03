@@ -4,10 +4,9 @@ import { AppsGalleryProps } from './types';
 import Icon from '/imports/ui/components/common/icon/component';
 import { layoutDispatch, layoutSelect } from '/imports/ui/components/layout/context';
 import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
-import Header from '/imports/ui/components/common/control-header/component';
 import { Layout } from '/imports/ui/components/layout/layoutTypes';
 import Styled from './styles';
-import TooManypinnedAppsModal from './modal/component';
+import TooManyPinnedAppsModal from './modal/component';
 
 const intlMessages = defineMessages({
   appsGalleryTitle: {
@@ -109,14 +108,14 @@ const AppsGallery: React.FC<AppsGalleryProps> = ({ registeredApps, pinnedApps })
   ), [registeredApps, pinnedApps]);
 
   return (
-    <Styled.Content>
+    <Styled.PanelContent>
       { error && (
-        <TooManypinnedAppsModal
+        <TooManyPinnedAppsModal
           setError={setError}
           pinnedAppsNumber={pinnedApps.length}
         />
       )}
-      <Header
+      <Styled.HeaderContainer
         isRTL={isRTL}
         data-test="appsGalleryTitle"
         title={title}
@@ -155,7 +154,7 @@ const AppsGallery: React.FC<AppsGalleryProps> = ({ registeredApps, pinnedApps })
           {renderedUnpinnedApps}
         </Styled.UnpinnedAppsWrapper>
       </Styled.Wrapper>
-    </Styled.Content>
+    </Styled.PanelContent>
   );
 };
 

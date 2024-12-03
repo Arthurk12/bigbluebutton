@@ -21,6 +21,7 @@ export const PopupContentBox = styled.div`
   margin-top: 0;
   margin-bottom: 1rem;
   z-index: 10;
+  margin-top: 2rem;
 `;
 
 export const PopupContentHeader = styled.div`
