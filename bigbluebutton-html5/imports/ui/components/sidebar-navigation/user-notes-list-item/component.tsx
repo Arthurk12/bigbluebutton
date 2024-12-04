@@ -146,7 +146,6 @@ const UserNotesGraphql: React.FC<UserNotesGraphqlProps> = (props) => {
           <Icon iconName="shared_notes" />
         </Styled.ListItem>
       </TooltipContainer>
-
     );
   };
 

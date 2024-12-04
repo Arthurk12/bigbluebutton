@@ -106,13 +106,23 @@ const SidebarContent = (props: SidebarContentProps) => {
         top,
         left,
         right,
-        zIndex,
+        zIndex: '2',
         width,
         height,
       }}
       handleStyles={{
-        left: { height: '100vh' },
-        right: { height: '100vh' },
+        left: {
+          width: '4px',
+          height: '100vh',
+          left: '-2px',
+          cursor: 'ew-resize',
+        },
+        right: {
+          width: '12px',
+          height: '100vh',
+          right: '-12px',
+          cursor: 'ew-resize',
+        },
       }}
     >
       <Styled.SidebarContentPanel isRTL={isRTL} isChrome={isChrome}>

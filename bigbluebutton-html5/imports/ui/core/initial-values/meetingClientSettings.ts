@@ -1,3 +1,4 @@
+import { AudioPresets } from 'livekit-client';
 import { MeetingClientSettings } from '../../Types/meetingClientSettings';
 
 export const meetingClientSettingsInitialValues: MeetingClientSettings = {
@@ -623,16 +624,6 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
       audio: {
         defaultFullAudioBridge: 'fullaudio',
         defaultListenOnlyBridge: 'fullaudio',
-        bridges: [
-          {
-            name: 'sipjs',
-            path: 'bridge/sip',
-          },
-          {
-            name: 'fullaudio',
-            path: 'bridge/sfu-audio-bridge',
-          },
-        ],
         retryThroughRelay: false,
         allowAudioJoinCancel: true,
       },
@@ -675,6 +666,28 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
       muteAudioOutputWhenAway: false,
       screenshare: {
         showButtonForNonPresenters: false,
+      },
+      livekit: {
+        url: `wss://${window.location.hostname}/livekit`,
+        audio: {
+          publishOptions: {
+            audioPreset: AudioPresets.speech,
+            dtx: true,
+            red: false,
+            forceStereo: false,
+          },
+          unpublishOnMute: false,
+        },
+        camera: {
+          publishOptions: {
+            videoCodec: 'vp8',
+          },
+        },
+        screenshare: {
+          publishOptions: {
+            videoCodec: 'vp8',
+          },
+        },
       },
     },
     stats: {
@@ -810,6 +823,7 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
       pointerDiameter: 5,
       maxStickyNoteLength: 1000,
       maxNumberOfAnnotations: 300,
+      maxNumberOfActiveUsers: 25,
       allowInfiniteWhiteboard: false,
       allowInfiniteWhiteboardInBreakouts: false,
       annotations: {
@@ -836,6 +850,7 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
           'note',
           'rectangle',
           'more',
+          'actions',
         ],
         multiUserTools: [
           'select',
@@ -847,6 +862,7 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
           'note',
           'rectangle',
           'more',
+          'actions',
         ],
       },
     },

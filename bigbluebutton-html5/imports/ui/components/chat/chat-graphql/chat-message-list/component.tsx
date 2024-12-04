@@ -190,6 +190,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   const [lastMessageCreatedAt, setLastMessageCreatedAt] = useState<string>('');
   const [followingTail, setFollowingTail] = React.useState(true);
   const [selectedMessage, setSelectedMessage] = React.useState<HTMLElement | null>(null);
+  const [showStartSentinel, setShowStartSentinel] = React.useState(false);
   const {
     childRefProxy: endSentinelRefProxy,
     intersecting: isEndSentinelVisible,
@@ -459,18 +460,16 @@ const ChatMessageList: React.FC<ChatListProps> = ({
             onTouchEnd={() => {
               setScrollToTailEventHandler();
             }}
+            onScroll={(e) => {
+              if (e.target instanceof HTMLDivElement) {
+                const userScrolledUp = Math.ceil(e.target.scrollTop + e.target.clientHeight) < e.target.scrollHeight;
+                setShowStartSentinel(userScrolledUp);
+              }
+            }}
             data-test="chatMessages"
             ref={updateRefs}
           >
-            <ListBox
-              role="listbox"
-              ref={messageListRef}
-              tabIndex={hasMessageToolbar ? 0 : -1}
-              onKeyDown={rove}
-              onBlur={() => {
-                setSelectedMessage(null);
-              }}
-            >
+            {showStartSentinel && (
               <div
                 ref={startSentinelRefProxy}
                 style={{
@@ -480,7 +479,17 @@ const ChatMessageList: React.FC<ChatListProps> = ({
                 tabIndex={-1}
                 aria-hidden
               />
-              <ChatPopupContainer hasMessageToolbar={hasMessageToolbar} />
+            )}
+            <ListBox
+              role="listbox"
+              ref={messageListRef}
+              tabIndex={hasMessageToolbar ? 0 : -1}
+              onKeyDown={rove}
+              onBlur={() => {
+                setSelectedMessage(null);
+              }}
+            >
+              <ChatPopupContainer />
               {Array.from({ length: pagesToLoad }, (_v, k) => k + (firstPageToLoad)).map((page) => {
                 return (
                   <ChatListPage
