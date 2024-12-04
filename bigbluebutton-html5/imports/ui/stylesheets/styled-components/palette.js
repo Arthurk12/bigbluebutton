@@ -83,6 +83,7 @@ const btnMutedColor = `var(--btn-muted-color, ${colorMuted})`;
 const btnMutedBg = `var(--btn-muted-bg, ${colorMutedBackground})`;
 
 const toolbarButtonColor = `var(--toolbar-button-color, ${btnDefaultColor})`;
+const toolbarButtonColorDisabled = `var(--toolbar-button-color, ${colorGrayLight})`;
 const userThumbnailBorder = `var(--user-thumbnail-border, ${colorGrayLight})`;
 const loaderBg = `var(--loader-bg, ${colorGrayDark})`;
 const loaderBullet = `var(--loader-bullet, ${colorWhite})`;
@@ -194,6 +195,7 @@ export {
   btnMutedColor,
   btnMutedBg,
   toolbarButtonColor,
+  toolbarButtonColorDisabled,
   userThumbnailBorder,
   loaderBg,
   loaderBullet,
