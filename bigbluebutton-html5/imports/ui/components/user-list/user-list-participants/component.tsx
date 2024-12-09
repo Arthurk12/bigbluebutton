@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-
 import { UI_DATA_LISTENER_SUBSCRIBED } from 'bigbluebutton-html-plugin-sdk/dist/cjs/ui-data-hooks/consts';
 import { UserListUiDataPayloads } from 'bigbluebutton-html-plugin-sdk/dist/cjs/ui-data-hooks/user-list/types';
 import * as PluginSdk from 'bigbluebutton-html-plugin-sdk';
@@ -110,8 +109,9 @@ const UserListParticipants: React.FC<UserListParticipantsProps> = ({
       // @ts-ignore
         onKeyDown={rove}
         tabIndex={0}
+        ref={userListRef}
       >
-        <Styled.VirtualizedList ref={userListRef}>
+        <Styled.VirtualizedList>
           {
             Array.from({ length: amountOfPages }).map((_, i) => {
               const isLastItem = amountOfPages === (i + 1);
