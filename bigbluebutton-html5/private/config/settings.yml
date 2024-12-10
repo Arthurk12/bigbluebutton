@@ -791,10 +791,10 @@ public:
         native: '😐'
       - id: 'slightly_frowning_face'
         native: '🙁'
-      - id: '+1'
-        native: '👍'
       - id: '-1'
         native: '👎'
+      - id: '+1'
+        native: '👍'
       - id: 'clap'
         native: '👏'
   notes:
