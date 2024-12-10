@@ -25,6 +25,9 @@ const propTypes = {
   shouldShowCloseButton: PropTypes.bool,
   overlayClassName: PropTypes.string,
   modalisOpen: PropTypes.bool,
+  width: PropTypes.string,
+  height: PropTypes.string,
+  padding: PropTypes.string,
 };
 
 const defaultProps = {
@@ -99,6 +102,9 @@ class ModalSimple extends Component {
       headerPosition,
       'data-test': dataTest,
       children,
+      width,
+      height,
+      padding,
       ...otherProps
     } = this.props;
 
@@ -110,6 +116,9 @@ class ModalSimple extends Component {
         onRequestClose={this.handleRequestClose}
         contentLabel={title || contentLabel}
         dataTest={dataTest}
+        width={width}
+        height={height}
+        padding={padding}
         {...otherProps}
       >
         <FocusTrap active={modalisOpen} focusTrapOptions={{ initialFocus: false }}>
