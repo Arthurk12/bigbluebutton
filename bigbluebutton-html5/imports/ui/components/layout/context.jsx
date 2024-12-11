@@ -412,21 +412,10 @@ const reducer = (state, action) => {
         panel,
         name,
         icon,
-        contentFunction = null,
+        contentFunction = undefined,
       } = action.value;
       const { sidebarNavigation } = state.input;
       const { registeredApps } = sidebarNavigation;
-      if (panel in registeredApps) {
-        logger.warn({
-          logCode: 'overriding_registered_app',
-          extraInfo: {
-            panel,
-            name,
-            icon,
-            contentFunction,
-          },
-        }, `Layout Context: Attempting to register an app "${panel}" that already exists. Overriding the previous instance.`);
-      }
       return {
         ...state,
         input: {
@@ -479,6 +468,8 @@ const reducer = (state, action) => {
       };
     }
     case ACTIONS.SET_SIDEBAR_NAVIGATION_PIN_APP: {
+      const APP_CONFIG = window.meetingClientSettings.public.app;
+      const MAX_PINNED_APPS_GALLERY = APP_CONFIG.appsGallery.maxPinnedApps;
       const { panel: appKey, pin } = action.value;
       const { sidebarNavigation } = state.input;
       const { pinnedApps, registeredApps } = sidebarNavigation;
@@ -488,6 +479,9 @@ const reducer = (state, action) => {
 
       if (!isAppRegistered) return state;
       if ((pin && isAppPinned) || (!pin && !isAppPinned)) {
+        return state;
+      }
+      if (pinnedApps.length === MAX_PINNED_APPS_GALLERY) {
         return state;
       }
 
