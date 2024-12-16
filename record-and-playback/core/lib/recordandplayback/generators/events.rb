@@ -1021,7 +1021,11 @@ module BigBlueButton
               events << { start: event['timestamp'].to_i }
             end
           else
-            last_event[:stop] = event['timestamp'].to_i
+            if events.any? && last_event[:stop].nil?
+              last_event[:stop] = event['timestamp'].to_i
+            else
+              BigBlueButton.logger.info "Ignoring #{event_name} for #{participant} at timestamp #{event['timestamp'].to_i} because previous event has already a stop"
+            end
           end
         when 'ParticipantMutedEvent'
           muted = event.at_xpath("muted").text == 'true'
