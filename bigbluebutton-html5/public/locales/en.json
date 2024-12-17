@@ -702,7 +702,7 @@
     "app.talkingIndicator.moreThanMaxIndicatorsTalking": "{0}+ are talking",
     "app.talkingIndicator.moreThanMaxIndicatorsWereTalking": "{0}+ were talking",
     "app.talkingIndicator.wasTalking": "{0} stopped talking",
-    "app.actionsBar.actionsDropdown.actionsLabel": "Actions",
+    "app.actionsBar.actionsDropdown.actionsLabel": "Media Area",
     "app.actionsBar.actionsDropdown.activateTimerStopwatchLabel": "Activate timer/stopwatch",
     "app.actionsBar.actionsDropdown.deactivateTimerStopwatchLabel": "Deactivate timer/stopwatch",
     "app.actionsBar.actionsDropdown.presentationLabel": "Upload/Manage presentations",
