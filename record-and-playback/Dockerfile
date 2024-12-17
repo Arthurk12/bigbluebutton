@@ -16,7 +16,7 @@ ENV DEBFULLNAME="mconf-rec"
 ENV DEBEMAIL="felipe@mconf.com"
 ENV UBUNTU_CODENAME=jammy
 ENV UBUNTU_VERSION=22.04
-ENV VERSION=5.0.0-beta.1
+ENV VERSION=5.0.0-beta.2
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
