@@ -206,6 +206,12 @@ module BigBlueButton
               BigBlueButton.logger.warn("This is most likely a bug of recording the SIP video twice, so it's going to be ignored")
               next
             else
+              event_filename = event.at_xpath('filename').text
+              if ! events_copy.xpath("/recording/event[@module='bbb-webrtc-sfu' and @eventname='StartWebRTCShareEvent' and @timestamp>#{timestamp} and ./filename='#{event_filename}']").empty?
+                BigBlueButton.logger.warn("There's an upcoming StartWebRTCShareEvent for video #{File.basename(filename)}, so it's going to be ignored")
+                next
+              end
+
               BigBlueButton.logger.warn("Adding artificial start event considering file duration of #{duration_from_file}ms")
               # duplicate event to add artificial start event
               start_event = event.dup
