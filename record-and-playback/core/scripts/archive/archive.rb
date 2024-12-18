@@ -212,6 +212,7 @@ mediasoup_video_dir = props['mediasoup_video_src']
 mediasoup_screenshare_dir = props['mediasoup_screenshare_src']
 webrtc_recorder_video_dir = props['webrtc_recorder_video_src']
 webrtc_recorder_screenshare_dir = props['webrtc_recorder_screenshare_src']
+webrtc_recorder_audio_dir = props['webrtc_recorder_audio_src']
 log_dir = props['log_dir']
 notes_endpoint = props['notes_endpoint']
 notes_apikey = props['notes_apikey']
@@ -247,6 +248,7 @@ archive_directory("#{mediasoup_video_dir}/#{meeting_id}", "#{target_dir}/video/#
 # bbb-webrtc-recorder media
 remux_and_archive("#{webrtc_recorder_screenshare_dir}/#{meeting_id}", "#{target_dir}/deskshare")
 remux_and_archive("#{webrtc_recorder_video_dir}/#{meeting_id}", "#{target_dir}/video/#{meeting_id}")
+archive_directory("#{webrtc_recorder_audio_dir}/#{meeting_id}", "#{target_dir}/audio")
 # Uploaded files
 archive_directory("#{upload_dir}/#{meeting_id}", "#{target_dir}/upload")
 
@@ -264,6 +266,7 @@ if break_timestamp.nil?
   # bbb-webrtc-recorder media
   FileUtils.rm_rf("#{webrtc_recorder_screenshare_dir}/#{meeting_id}")
   FileUtils.rm_rf("#{webrtc_recorder_video_dir}/#{meeting_id}")
+  FileUtils.rm_rf("#{webrtc_recorder_audio_dir}/#{meeting_id}")
   # Uploaded files
   FileUtils.rm_rf("#{upload_dir}/#{meeting_id}")
 end
