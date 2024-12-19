@@ -23,6 +23,7 @@ import {
 import { USER_SET_TALKING } from '/imports/ui/components/livekit/mutations';
 import { useIceServers } from '/imports/ui/components/livekit/hooks';
 import LKAutoplayModalContainer from '/imports/ui/components/livekit/autoplay-modal/container';
+import AudioGroupsPH from '/imports/ui/components/livekit/audio-groups/component';
 
 interface BBBLiveKitRoomProps {
   url?: string;
@@ -138,6 +139,7 @@ const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
       <LiveKitObserver room={liveKitRoom} url={url} usingAudio={usingAudio} />
       {withAudioPlayback && <LKAutoplayModalContainer />}
       {withAudioPlayback && <RoomAudioRenderer />}
+      {usingAudio && <AudioGroupsPH />}
     </LiveKitRoom>
   );
 };
