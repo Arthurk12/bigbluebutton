@@ -24,6 +24,7 @@ import { USER_SET_TALKING } from '/imports/ui/components/livekit/mutations';
 import { useIceServers } from '/imports/ui/components/livekit/hooks';
 import LKAutoplayModalContainer from '/imports/ui/components/livekit/autoplay-modal/container';
 import AudioGroupsPH from '/imports/ui/components/livekit/audio-groups/component';
+import SelectiveSubscription from '/imports/ui/components/livekit/selective-subscription/component';
 
 interface BBBLiveKitRoomProps {
   url?: string;
@@ -31,6 +32,7 @@ interface BBBLiveKitRoomProps {
   bbbSessionToken: string;
   usingAudio: boolean;
   usingScreenShare: boolean;
+  withSelectiveSubscription: boolean;
 }
 
 interface ObserverProps {
@@ -81,6 +83,7 @@ const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
   bbbSessionToken,
   usingAudio,
   usingScreenShare,
+  withSelectiveSubscription,
 }) => {
   const {
     iceServers,
@@ -140,6 +143,7 @@ const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
       {withAudioPlayback && <LKAutoplayModalContainer />}
       {withAudioPlayback && <RoomAudioRenderer />}
       {usingAudio && <AudioGroupsPH />}
+      {usingAudio && withSelectiveSubscription && <SelectiveSubscription />}
     </LiveKitRoom>
   );
 };
@@ -151,6 +155,7 @@ const BBBLiveKitRoomContainer: React.FC = () => {
   const [meetingSettings] = useMeetingSettings();
   const url = meetingSettings.public.media?.livekit?.url
     || `wss://${window.location.hostname}/livekit`;
+  const withSelectiveSubscription = meetingSettings.public.media?.livekit?.selectiveSubscription;
   const { data: bridges } = useMeeting((m) => ({
     cameraBridge: m.cameraBridge,
     screenShareBridge: m.screenShareBridge,
@@ -169,6 +174,7 @@ const BBBLiveKitRoomContainer: React.FC = () => {
       bbbSessionToken={Auth.sessionToken as string}
       usingAudio={bridges?.audioBridge === 'livekit'}
       usingScreenShare={bridges?.screenShareBridge === 'livekit'}
+      withSelectiveSubscription={withSelectiveSubscription}
     />
   );
 };

@@ -1,3 +1,5 @@
+// @ts-nocheck
+// eslint-ignore no-underscore-dangle
 import React, { useEffect } from 'react';
 import { useMutation } from '@apollo/client';
 import {
@@ -7,12 +9,6 @@ import {
   AUDIO_GROUP_LEAVE,
   AUDIO_GROUP_UPDATE_PARTICIPANT,
 } from './mutations';
-import {
-  useAudioGroups,
-  useAudioGroupsQuery,
-  useMyAudioGroups,
-  useAudioGroupUsers,
-} from './hooks';
 
 const AudioGroupsPH: React.FC = () => {
   const [createAudioGroup] = useMutation(AUDIO_GROUP_CREATE);
@@ -27,10 +23,6 @@ const AudioGroupsPH: React.FC = () => {
     window._joinAudioGroup = joinAudioGroup;
     window._leaveAudioGroup = leaveAudioGroup;
     window._updateAudioGroupParticipant = updateAudioGroupParticipant;
-    window._useAudioGroups = useAudioGroups;
-    window._useAudioGroupsQuery = useAudioGroupsQuery;
-    window._useMyAudioGroups = useMyAudioGroups;
-    window._useAudioGroupUsers = useAudioGroupUsers;
 
     return () => {
       delete window._createAudioGroup;
@@ -38,9 +30,6 @@ const AudioGroupsPH: React.FC = () => {
       delete window._joinAudioGroup;
       delete window._leaveAudioGroup;
       delete window._updateAudioGroupParticipant;
-      delete window._useAudioGroups;
-      delete window._useMyAudioGroups;
-      delete window._useAudioGroupUsers;
     };
   }, []);
 
