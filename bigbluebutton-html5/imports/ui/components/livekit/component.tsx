@@ -155,7 +155,7 @@ const BBBLiveKitRoomContainer: React.FC = () => {
   const [meetingSettings] = useMeetingSettings();
   const url = meetingSettings.public.media?.livekit?.url
     || `wss://${window.location.hostname}/livekit`;
-  const withSelectiveSubscription = meetingSettings.public.media?.livekit?.selectiveSubscription;
+  const withSelectiveSubscription = meetingSettings.public.media?.livekit?.selectiveSubscription || false;
   const { data: bridges } = useMeeting((m) => ({
     cameraBridge: m.cameraBridge,
     screenShareBridge: m.screenShareBridge,
