@@ -308,6 +308,7 @@ class AudioManager {
     this.loadBridges(bridges, userData);
     this.transparentListenOnlySupported = this.supportsTransparentListenOnly();
     this.audioEventHandler = audioEventHandler;
+    this.observeVoiceActivity();
     this.initialized = true;
   }
 
@@ -319,6 +320,9 @@ class AudioManager {
    *                      the bridge.
    */
   loadBridges(bridges, userData) {
+    // Bridges can only be loaded once
+    if (this.fullAudioBridge && this.listenOnlyBridge) return;
+
     const { fullAudioBridge, listenOnlyBridge } = bridges;
 
     let FullAudioBridge = SFUAudioBridge;
@@ -365,7 +369,13 @@ class AudioManager {
     }
 
     this.fullAudioBridge = new FullAudioBridge(userData);
-    this.listenOnlyBridge = new ListenOnlyBridge(userData);
+
+    if (fullAudioBridge === listenOnlyBridge) {
+      this.listenOnlyBridge = this.fullAudioBridge;
+    } else {
+      this.listenOnlyBridge = new ListenOnlyBridge(userData);
+    }
+
     // Initialize device IDs in configured bridges
     this.fullAudioBridge.inputDeviceId = this.inputDeviceId;
     this.fullAudioBridge.outputDeviceId = this.outputDeviceId;
@@ -610,7 +620,6 @@ class AudioManager {
     this.isConnecting = true;
     this.isMuted = true;
     this.error = false;
-    this.observeVoiceActivity();
     // Ensure the local mute state (this.isMuted) is aligned with the initial
     // placeholder value before joining audio.
     // Currently, the server sets the placeholder mute state to *true*, and this
@@ -729,7 +738,6 @@ class AudioManager {
         isListenOnly: this.isListenOnly,
       });
     }
-    Session.setItem('audioModalIsOpen', false);
   }
 
   onTransferStart() {
