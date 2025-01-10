@@ -234,6 +234,8 @@ const CreateBreakoutRoom: React.FC<CreateBreakoutRoomProps> = ({
   const intl = useIntl();
   const layoutContextDispatch = layoutDispatch();
 
+  const initialNumberOfRooms = runningRooms.length > 0 ? runningRooms.length : MIN_BREAKOUT_ROOMS;
+
   const [numberOfRoomsIsValid, setNumberOfRoomsIsValid] = React.useState(true);
   const [durationIsValid, setDurationIsValid] = React.useState(true);
   const [freeJoin, setFreeJoin] = React.useState(false);
@@ -242,7 +244,7 @@ const CreateBreakoutRoom: React.FC<CreateBreakoutRoomProps> = ({
   const [leastOneUserIsValid, setLeastOneUserIsValid] = React.useState(false);
   const [captureNotes, setCaptureNotes] = React.useState(false);
   const [inviteMods, setInviteMods] = React.useState(false);
-  const [numberOfRooms, setNumberOfRooms] = React.useState(MIN_BREAKOUT_ROOMS);
+  const [numberOfRooms, setNumberOfRooms] = React.useState(initialNumberOfRooms);
   const [durationTime, setDurationTime] = React.useState(DEFAULT_BREAKOUT_TIME);
   const isImportPresentationWithAnnotationsEnabled = useIsImportPresentationWithAnnotationsFromBreakoutRoomsEnabled();
   const isImportSharedNotesEnabled = useIsImportSharedNotesFromBreakoutRoomsEnabled();
