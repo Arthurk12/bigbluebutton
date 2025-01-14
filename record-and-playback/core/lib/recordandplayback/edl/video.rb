@@ -260,6 +260,7 @@ module BigBlueButton
           if !info[:video]
             BigBlueButton.logger.warn "    This video file (#{File.basename(videofile)}) is corrupted! It will be removed from the output."
             corrupt_videos << videofile
+            next
           elsif info[:duration] == 0
             BigBlueButton.logger.warn "    This video file (#{File.basename(videofile)}) has zero duration! It will be removed from the output."
             corrupt_videos << videofile

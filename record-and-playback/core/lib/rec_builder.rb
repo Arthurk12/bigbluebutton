@@ -77,6 +77,8 @@ class RecordingBuilder
     ENV['MCONF_REC_WORKER_FORMAT'].split(',').each{ |format| perform_helper(record_id, format) }
 
     tag_raw(record_id) if @downloaded_raw
+
+    true
   end
 
   def perform_helper(record_id, process_type)
@@ -146,6 +148,10 @@ class RecordingBuilder
     step_succeeded = publish(recording_dir, record_id, process_type)
     raise "Failed to publish #{process_type}, record_id=#{record_id}" if ! step_succeeded
 
+    transcription_obj = {
+      :enabled => false
+    }
+
     # TODO improve this, so transcription is copied to all formats
     if process_type == "presentation" and should_transcribe?(target_dir)
       broadcast(:transcription_started, record_id, @internal_meeting_id, @external_meeting_id)
@@ -162,7 +168,13 @@ class RecordingBuilder
       step_stop_time = BigBlueButton.monotonic_clock
       step_time = step_stop_time - step_start_time
 
-      broadcast(:transcription_ended, record_id, @internal_meeting_id, @external_meeting_id, step_succeeded, step_time)
+      transcription_obj = {
+        :enabled => true,
+        :step_succeeded => step_succeeded,
+        :step_time => step_time
+      }
+
+      # delay transcription_ended until the files are uploaded to the complete bucket
     end
 
     if isset("MCONF_REC_WORKER_AWS_S3_BUCKET_COMPLETE_NAME")
@@ -171,6 +183,11 @@ class RecordingBuilder
 
       success = publisher.publish(record_id, published_dir, bucket_complete, [ process_type ])
       raise "Failed to upload format #{process_type} to bucket, record_id=#{record_id}" if ! success
+    end
+
+    # only triggers transcription_ended after uploading the files to complete bucket
+    if transcription_obj[:enabled]
+      broadcast(:transcription_ended, record_id, @internal_meeting_id, @external_meeting_id, transcription_obj[:step_succeeded], transcription_obj[:step_time])
     end
   end
 

@@ -16,7 +16,8 @@ ENV DEBFULLNAME="mconf-rec"
 ENV DEBEMAIL="felipe@mconf.com"
 ENV UBUNTU_CODENAME=jammy
 ENV UBUNTU_VERSION=22.04
-ENV VERSION=5.0.0-beta.1
+# https://github.com/bigbluebutton/bbb-presentation-video/tags
+ENV VERSION=5.0.0-beta.2
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -113,21 +114,20 @@ RUN apt-get update \
  && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
  && locale-gen \
  && gem install bundler --version 2.3.23 \
- && echo "deb http://ubuntu.bigbluebutton.org/bionic-23 bigbluebutton-bionic main" \
-    | tee /etc/apt/sources.list.d/bigbluebutton.list \
- && wget --quiet http://ubuntu.bigbluebutton.org/repo/bigbluebutton.asc -O- | apt-key add - \
+ && curl -fsSL "https://ubuntu.bigbluebutton.org/repo/bigbluebutton.asc" | tee /etc/apt/keyrings/bigbluebutton.asc \
+ && echo "deb [signed-by=/etc/apt/keyrings/bigbluebutton.asc] https://ubuntu.bigbluebutton.org/jammy-300 bigbluebutton-jammy main" > /etc/apt/sources.list.d/bigbluebutton.list \
  && apt-get update \
  && apt-get install --no-install-recommends -y bbb-mkclean \
  && wget --quiet https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 -O /usr/local/bin/yq \
  && chmod +x /usr/local/bin/yq \
- && wget --quiet http://ftp.br.debian.org/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.8_all.deb \
- && dpkg -i ttf-mscorefonts-installer_3.8_all.deb || true \
+ && wget http://ftp.us.debian.org/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.8.1_all.deb \
+ && dpkg -i ttf-mscorefonts-installer_*.deb || true \
+ && rm -v ttf-mscorefonts-installer_*.deb \
  && wget --quiet https://github.com/bigbluebutton/perfect-freehand-python/releases/download/1.2.0/python3-perfect-freehand_1.2.0_all.deb -P /tmp/bbb-presentation-video/ \
  && dpkg -i /tmp/bbb-presentation-video/*.deb || true \
- && rm -r /tmp/bbb-presentation-video \
+ && rm -rv /tmp/bbb-presentation-video \
  && apt-get -f --no-install-recommends -y install \
  && fc-cache -f \
- && rm ttf-mscorefonts-installer_3.8_all.deb \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir -p ~/.fonts \
  && wget --quiet -O ~/.fonts/NotoColorEmoji.ttf https://github.com/googlefonts/noto-emoji/blob/main/fonts/NotoColorEmoji.ttf?raw=true \

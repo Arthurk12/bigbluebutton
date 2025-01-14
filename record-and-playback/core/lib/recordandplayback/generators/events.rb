@@ -206,6 +206,12 @@ module BigBlueButton
               BigBlueButton.logger.warn("This is most likely a bug of recording the SIP video twice, so it's going to be ignored")
               next
             else
+              event_filename = event.at_xpath('filename').text
+              if ! events_copy.xpath("/recording/event[@module='bbb-webrtc-sfu' and @eventname='StartWebRTCShareEvent' and @timestamp>#{timestamp} and ./filename='#{event_filename}']").empty?
+                BigBlueButton.logger.warn("There's an upcoming StartWebRTCShareEvent for video #{File.basename(filename)}, so it's going to be ignored")
+                next
+              end
+
               BigBlueButton.logger.warn("Adding artificial start event considering file duration of #{duration_from_file}ms")
               # duplicate event to add artificial start event
               start_event = event.dup
@@ -319,7 +325,7 @@ module BigBlueButton
       webcamsOnlyForModerator = false
 
       additional_events = []
-      events.dup.xpath('/recording/event[(@module="PARTICIPANT" and (@eventname="AssignPresenterEvent" or @eventname="ParticipantJoinEvent" or @eventname="ParticipantStatusChangeEvent")) or (@module="VOICE" and (@eventname="AudioFloorChangedEvent")) or @eventname="WebcamsOnlyForModeratorEvent" or @eventname="MeetingConfigurationEvent"]').each do |event|
+      events.dup.xpath('/recording/event[(@module="PARTICIPANT" and (@eventname="AssignPresenterEvent" or @eventname="ParticipantJoinEvent" or @eventname="ParticipantStatusChangeEvent")) or (@module="VOICE" and (@eventname="AudioFloorChangedEvent" or @eventname="ParticipantJoinedEvent")) or @eventname="WebcamsOnlyForModeratorEvent" or @eventname="MeetingConfigurationEvent"]').each do |event|
         additional_events << event
       end
 
@@ -341,7 +347,12 @@ module BigBlueButton
         # Add the video to the EDL
         case event['eventname']
         when 'StartWebcamShareEvent', 'StartWebRTCShareEvent'
-          user_id = event.at_xpath('userId').text
+          node = event.at_xpath('userId')
+          user_id = if node.nil?
+            /\w+-(?<user_id>[^-]*)-\d+\.\w+/.match(File.basename(filename))[:user_id]
+          else
+            node.text
+          end
           videos[filename] = { :timestamp => timestamp }
 
           if is_in_forbidden_period && !self.is_user_moderator(user_id, list_user_info)
@@ -356,13 +367,19 @@ module BigBlueButton
             }
           end
         when 'StopWebcamShareEvent', 'StopWebRTCShareEvent'
-          user_id = event.at_xpath('userId').text
+          node = event.at_xpath('userId')
+          user_id = if node.nil?
+            /\w+-(?<user_id>[^-]*)-\d+\.\w+/.match(File.basename(filename))[:user_id]
+          else
+            node.text
+          end
 
           if is_in_forbidden_period && !self.is_user_moderator(user_id, list_user_info)
             inactive_videos.delete_if { |h| h[:filename] == filename }
           end
           active_videos.delete_if { |h| h[:filename] == filename }
         when 'ParticipantJoinEvent'
+          # event['module'] == "PARTICIPANT"
           user_id = event.at_xpath('userId').text
           list_user_info[user_id] = {
             :name => event.at_xpath('name').text,
@@ -371,6 +388,17 @@ module BigBlueButton
             :join_timestamp => timestamp,
             :floor_timestamp => 0
           }
+        when 'ParticipantJoinedEvent'
+          # event['module'] == "VOICE"
+          user_id = event.at_xpath('participant').text
+          list_user_info[user_id] = {
+            :name => event.at_xpath('callername').text,
+            :role => "VIEWER",
+            :presenter => false,
+            :join_timestamp => timestamp,
+            :floor_timestamp => 0
+          } if list_user_info[user_id].nil?
+          # this is focused for SIP, regular participants will hit the ParticipantJoinEvent event
         when "ParticipantStatusChangeEvent"
           user_id = event.at_xpath('userId').text
           if event.at_xpath('status').text == "role"
@@ -759,6 +787,12 @@ module BigBlueButton
         map[internal_id] = user_name
       end
 
+      events.xpath('/recording/event[@module="VOICE" and @eventname="ParticipantJoinedEvent"]').each do |event|
+        internal_id = event.at_xpath('./participant')&.content
+        user_name = event.at_xpath('./callername')&.content
+        map[internal_id] = user_name if map[internal_id].nil?
+      end
+
       map
     end
 
@@ -993,7 +1027,11 @@ module BigBlueButton
               events << { start: event['timestamp'].to_i }
             end
           else
-            last_event[:stop] = event['timestamp'].to_i
+            if events.any? && last_event[:stop].nil?
+              last_event[:stop] = event['timestamp'].to_i
+            else
+              BigBlueButton.logger.info "Ignoring #{event_name} for #{participant} at timestamp #{event['timestamp'].to_i} because previous event has already a stop"
+            end
           end
         when 'ParticipantMutedEvent'
           muted = event.at_xpath("muted").text == 'true'
