@@ -631,6 +631,15 @@ module BigBlueButton
             timestamp: edl_entry[:audio][:timestamp] + offset
           }
         end
+        if edl_entry[:audios]
+          new_entry[:audios] = []
+          edl_entry[:audios].each do |audio|
+            new_entry[:audios] << {
+              filename: audio[:filename],
+              timestamp: audio[:timestamp] + offset
+            }
+          end
+        end
         if edl_entry[:original_duration]
           new_entry[:original_duration] = edl_entry[:original_duration]
         end
