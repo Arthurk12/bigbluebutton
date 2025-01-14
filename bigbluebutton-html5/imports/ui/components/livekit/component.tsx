@@ -83,6 +83,8 @@ const LiveKitObserver = ({
   }, [isSpeaking, isMuted]);
 
   useEffect(() => {
+    if (!usingAudio) return;
+
     // If the user is connected to LiveKit and server-side audio state is present,
     // but audio-manager is not connected, run the onAudioJoin callback to mark
     // it as connected. Reasoning: there's no option not to connect to audio
