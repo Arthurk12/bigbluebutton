@@ -1469,6 +1469,17 @@ begin
           copy_media_files_helper('deskshare', video_files, package_dir)
         end
 
+        audio_group_files = Dir.glob("#{@process_dir}/audio_group*.ogg")
+        if audio_group_files.empty?
+          BigBlueButton.logger.info("No audio group files found")
+        else
+          BigBlueButton.logger.info('Copying audio group files')
+          if File.exist?("#{@process_dir}/audio_groups.json")
+            FileUtils.cp("#{@process_dir}/audio_groups.json", package_dir)
+          end
+          copy_media_files_helper('audio_groups', audio_group_files, package_dir)
+        end
+
         if File.exist?("#{@process_dir}/captions.json")
           BigBlueButton.logger.info('Copying caption files')
 
