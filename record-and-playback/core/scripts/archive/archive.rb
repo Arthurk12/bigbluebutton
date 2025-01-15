@@ -248,9 +248,9 @@ archive_directory("#{mediasoup_video_dir}/#{meeting_id}", "#{target_dir}/video/#
 # bbb-webrtc-recorder media
 remux_and_archive("#{webrtc_recorder_screenshare_dir}/#{meeting_id}", "#{target_dir}/deskshare")
 remux_and_archive("#{webrtc_recorder_video_dir}/#{meeting_id}", "#{target_dir}/video/#{meeting_id}")
-archive_directory("#{webrtc_recorder_audio_dir}/#{meeting_id}", "#{target_dir}/audio")
+remux_and_archive("#{webrtc_recorder_audio_dir}/#{meeting_id}", "#{target_dir}/audio")
 # Uploaded files
-archive_directory("#{upload_dir}/#{meeting_id}", "#{target_dir}/upload")
+remux_and_archive("#{upload_dir}/#{meeting_id}", "#{target_dir}/upload")
 
 # If this was the last (or only) segment in a recording, delete the original media files
 if break_timestamp.nil?

@@ -31,6 +31,8 @@ module BigBlueButton
     def self.create_audio_edl(events, archive_dir)
       audio_edl = []
       audio_dir = "#{archive_dir}/audio"
+      audios = {}
+      active_audios = []
 
       initial_timestamp = BigBlueButton::Events.first_event_timestamp(events)
       final_timestamp = BigBlueButton::Events.last_event_timestamp(events)
@@ -42,7 +44,7 @@ module BigBlueButton
       }
 
       # Add events for recording start/stop
-      events.xpath('/recording/event[@module="VOICE"]').each do |event|
+      events.xpath('/recording/event[@module="VOICE" or @module="bbb-webrtc-sfu"]').each do |event|
         timestamp = event['timestamp'].to_i - initial_timestamp
         case event['eventname']
         when 'StartRecordingEvent'
@@ -62,6 +64,37 @@ module BigBlueButton
               :audio => nil
             }
           end
+        when 'AudioTrackPublishedEvent'
+          filename = event.at_xpath('filename').text
+          filename = "#{audio_dir}/#{File.basename(filename)}"
+          audios[filename] = { :timestamp => timestamp }
+          active_audios << filename
+          edl_entry = {
+            :timestamp => timestamp,
+            :audios => []
+          }
+          active_audios.each do |filename|
+            edl_entry[:audios] << {
+              :filename => filename,
+              :timestamp => timestamp - audios[filename][:timestamp]
+            }
+          end
+          audio_edl << edl_entry
+        when 'AudioTrackUnpublishedEvent'
+          filename = event.at_xpath('filename').text
+          filename = "#{audio_dir}/#{File.basename(filename)}"
+          active_audios.delete(filename)
+          edl_entry = {
+            :timestamp => timestamp,
+            :audios => []
+          }
+          active_audios.each do |filename|
+            edl_entry[:audios] << {
+              :filename => filename,
+              :timestamp => timestamp - audios[filename][:timestamp]
+            }
+          end
+          audio_edl << edl_entry
         end
       end
 
