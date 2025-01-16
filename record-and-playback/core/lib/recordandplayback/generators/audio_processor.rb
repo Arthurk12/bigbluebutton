@@ -103,8 +103,12 @@ module BigBlueButton
 
       audio_groups_edl = BigBlueButton::AudioEvents.create_audio_group_edls(
                       events, archive_dir)
-
       results = {}
+      if audio_groups_edl.empty?
+        BigBlueButton.logger.info("No audio groups to process.")
+        return results
+      end
+
       audio_groups_edl.each do |group_id, audio_edl|
           BigBlueButton.logger.info("Printing edl of group #{group_id}")
           BigBlueButton::EDL::Audio.dump(audio_edl)

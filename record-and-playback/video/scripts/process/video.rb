@@ -29,6 +29,20 @@ require 'cgi'
 require 'i18n'
 require 'securerandom'
 
+LANGUAGE_MAP = {
+  "en" => "eng",  # English
+  "fr" => "fra",  # French
+  "pt" => "por",  # Portuguese
+  "es" => "spa",  # Spanish
+  "de" => "deu",  # German
+  "it" => "ita",  # Italian
+  "ru" => "rus",  # Russian
+  "ja" => "jpn",  # Japanese
+  "ko" => "kor",  # Korean
+  "zh" => "zho",  # Chinese (sometimes 'chi' also used, but 'zho' is standard)
+  "ar" => "ara",  # Arabic
+}
+
 opts = Optimist.options do
   opt :meeting_id, 'Meeting id to process', type: String
   opt :log_stdout, "Log to STDOUT", :type => :flag
@@ -182,6 +196,11 @@ BigBlueButton::EDL::Audio.dump(audio_edl)
 logger.info 'Rendering audio'
 audio = BigBlueButton::EDL::Audio.render(audio_edl, "#{process_dir}/audio")
 
+logger.info 'Rendering audio groups'
+audio_groups = BigBlueButton::AudioProcessor.process_audio_groups(raw_archive_dir, "#{process_dir}/audio_group")
+# convert language to code to ISO 639-2 so ffmpeg can understand it in the metadata
+audio_groups.transform_keys! { |key| LANGUAGE_MAP[key.split('|').last[0,2]] }
+
 if BigBlueButton::Events.screenshare_has_audio?(events, "#{raw_archive_dir}/deskshare")
   logger.info('Generating audio events list for deskshare')
   deskshare_audio_edl = BigBlueButton::AudioEvents.create_deskshare_audio_edl(events, "#{raw_archive_dir}/deskshare")
@@ -261,7 +280,7 @@ if link_mp4
   video_props['formats'].each_with_index do |format|
     format.symbolize_keys!
     logger.info "  #{format[:mimetype]}"
-    BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/#{sanitized_filename}", video_props['audio_offset'])
+    BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/#{sanitized_filename}", video_props['audio_offset'], audio_groups)
   end
   final_video_path = File.basename(Dir.glob("#{process_dir}/#{sanitized_filename}.*").first)
   metadata_link = "#{props['playback_protocol']}://#{props['playback_host']}/video/#{meeting_id}/#{final_video_path}"
@@ -270,7 +289,7 @@ else
   video_props['formats'].each_with_index do |format, i|
     format.symbolize_keys!
     logger.info "  #{format[:mimetype]}"
-    BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/video-#{i}", video_props['audio_offset'])
+    BigBlueButton::EDL.encode(audio, video, format, "#{process_dir}/video-#{i}", video_props['audio_offset'], audio_groups)
   end
 
   logger.info('Generating closed captions')

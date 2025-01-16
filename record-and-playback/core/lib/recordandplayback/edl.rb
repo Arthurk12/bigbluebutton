@@ -26,7 +26,7 @@ module BigBlueButton
     FFMPEG = ['ffmpeg', '-y', '-v', 'warning', '-nostats', '-max_error_rate', '1.0']
     FFPROBE = ['ffprobe', '-v', 'warning', '-print_format', 'json', '-show_format', '-show_streams']
 
-    def self.encode(audio, video, format, output_basename, audio_offset = 0)
+    def self.encode(audio, video, format, output_basename, audio_offset = 0, additional_audio_languages = {})
       output = "#{output_basename}.#{format[:extension]}"
       lastoutput = nil
       format[:parameters].each_with_index do |pass, i|
@@ -43,6 +43,32 @@ module BigBlueButton
             ffmpeg_cmd += ['-ignore_length', '1']
           end
           ffmpeg_cmd += ['-i', audio]
+        end
+        if additional_audio_languages && !additional_audio_languages.empty?
+          metadata_args = []
+          # Mark the main audio as the default track
+          metadata_args += [
+            "-disposition:a:0", "default"
+          ]
+          map_args = [
+            '-map', '0:v:0',
+            '-map', '1:a:0',
+          ]
+          audio_index = 1
+          additional_audio_languages.each do |language, audio_file|
+            if audio_offset != 0
+              ffmpeg_cmd += ['-itsoffset', ms_to_s(audio_offset)]
+            end
+            ffmpeg_cmd += ['-i', audio_file]
+            map_args += ['-map', "#{audio_index}:a:0"]
+            # Set language metadata
+            metadata_args += [
+              "-metadata:s:a:#{audio_index}", "language=#{language}",
+              "-disposition:a:#{audio_index}", "0"  # not default
+            ]
+            audio_index += 1
+          end
+          ffmpeg_cmd += map_args + metadata_args
         end
         ffmpeg_cmd += [*pass, '-passlogfile', output_basename, lastoutput]
         Dir.chdir(File.dirname(output)) do
