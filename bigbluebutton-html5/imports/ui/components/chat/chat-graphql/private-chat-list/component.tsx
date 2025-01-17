@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import Styled from './styles';
-import PrivateChatListItem from '/imports/ui/components/chat/chat-graphql/user-messages/private-chat-list/chat-list-item/component';
+import PrivateChatListItem from './chat-list-item/component';
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
@@ -45,9 +45,9 @@ const PrivateChatList: React.FC<ChatListProps> = ({ chats }) => {
       ref={messageListRef}
       onKeyDown={(e:React.KeyboardEvent<HTMLDivElement>) => rove(e)}
     >
-        <TransitionGroup>
-          {getActiveChats(chats, chatNodeRef)}
-        </TransitionGroup>
+      <TransitionGroup>
+        {getActiveChats(chats, chatNodeRef)}
+      </TransitionGroup>
     </Styled.ScrollableList>
   );
 };
