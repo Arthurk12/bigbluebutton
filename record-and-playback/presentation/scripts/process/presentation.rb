@@ -84,6 +84,11 @@ unless FileTest.directory?(target_dir)
     BigBlueButton.logger.info('Created inital metadata.xml')
 
     BigBlueButton::AudioProcessor.process(raw_archive_dir, "#{target_dir}/audio")
+    results = BigBlueButton::AudioProcessor.process_audio_groups(raw_archive_dir, "#{target_dir}/audio_group")
+    File.open("#{target_dir}/audio_groups.json", 'w') do |f|
+      f.write(JSON.pretty_generate(results))
+    end
+
     events_xml = "#{raw_archive_dir}/events.xml"
 
     # TODO: Don't copy events.xml to target directory
