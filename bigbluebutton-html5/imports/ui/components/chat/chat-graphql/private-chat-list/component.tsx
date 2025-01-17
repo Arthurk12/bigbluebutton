@@ -9,9 +9,14 @@ import roveBuilder from '/imports/ui/core/utils/keyboardRove';
 
 interface ChatListProps {
   chats: Chat[],
+  privateChatSelectedCallback: () => void;
 }
 
-const getActiveChats = (chats: Chat[], chatNodeRef: React.Ref<HTMLButtonElement>) => chats.map((chat, idx) => (
+const getActiveChats = (
+  chats: Chat[],
+  chatNodeRef: React.Ref<HTMLButtonElement>,
+  privateChatSelectedCallback: () => void,
+) => chats.map((chat, idx) => (
   <CSSTransition
     classNames="transition"
     appear
@@ -26,12 +31,13 @@ const getActiveChats = (chats: Chat[], chatNodeRef: React.Ref<HTMLButtonElement>
         chat={chat}
         chatNodeRef={chatNodeRef}
         index={idx}
+        privateChatSelectedCallback={privateChatSelectedCallback}
       />
     </Styled.ListTransition>
   </CSSTransition>
 ));
 
-const PrivateChatList: React.FC<ChatListProps> = ({ chats }) => {
+const PrivateChatList: React.FC<ChatListProps> = ({ chats, privateChatSelectedCallback }) => {
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const messageItemsRef = React.useRef<HTMLDivElement | null>(null);
   const chatNodeRef = React.useRef<HTMLButtonElement | null>(null);
@@ -46,18 +52,22 @@ const PrivateChatList: React.FC<ChatListProps> = ({ chats }) => {
       onKeyDown={(e:React.KeyboardEvent<HTMLDivElement>) => rove(e)}
     >
       <TransitionGroup>
-        {getActiveChats(chats, chatNodeRef)}
+        {getActiveChats(chats, chatNodeRef, privateChatSelectedCallback)}
       </TransitionGroup>
     </Styled.ScrollableList>
   );
 };
 
-const PrivateChatListContainer: React.FC = () => {
+interface PrivateChatListContainerProps {
+  privateChatSelectedCallback: () => void;
+}
+
+const PrivateChatListContainer: React.FC<PrivateChatListContainerProps> = ({ privateChatSelectedCallback }) => {
   const { data } = useChat((chat) => chat) as GraphqlDataHookSubscriptionResponse<Chat[]>;
   const chats = (data || []).filter((chat) => !chat.public && chat.totalMessages !== 0);
 
   return (
-    <PrivateChatList chats={chats} />
+    <PrivateChatList chats={chats} privateChatSelectedCallback={privateChatSelectedCallback} />
   );
 };
 
