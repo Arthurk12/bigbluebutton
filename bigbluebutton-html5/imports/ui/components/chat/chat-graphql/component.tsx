@@ -7,7 +7,7 @@ import { layoutSelect, layoutSelectInput } from '../../layout/context';
 import { Input, Layout } from '../../layout/layoutTypes';
 import Styled from './styles';
 import ChatMessageListContainer from './chat-message-list/component';
-import PrivateChatListContainer from '/imports/ui/components/chat/chat-graphql/user-messages/private-chat-list/component';
+import PrivateChatListContainer from './private-chat-list/component';
 import ChatMessageFormContainer from './chat-message-form/component';
 import { PANELS, ACTIONS } from '/imports/ui/components/layout/enums';
 import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
@@ -20,7 +20,6 @@ import {
   colorWhite,
   colorOffWhite,
   colorGrayLight,
-  btnPrimaryBorder,
   colorDanger,
   btnPrimaryBg,
 } from '/imports/ui/stylesheets/styled-components/palette';
@@ -142,7 +141,7 @@ const Chat: React.FC<ChatProps> = ({
               textTransform: 'none',
               backgroundColor: showMessages ? btnPrimaryBg : colorOffWhite,
               color: showMessages ? colorWhite : colorGrayLight,
-              borderColor: showMessages ? 'transparent' : btnPrimaryBorder,
+              border: `1px solid ${btnPrimaryBg}`,
             }}
             onClick={() => handleClickSelectChat(true)}
           >
@@ -173,7 +172,7 @@ const Chat: React.FC<ChatProps> = ({
               textTransform: 'none',
               backgroundColor: !showMessages ? btnPrimaryBg : colorOffWhite,
               color: !showMessages ? colorWhite : colorGrayLight,
-              borderColor: !showMessages ? 'transparent' : btnPrimaryBorder,
+              border: `1px solid ${btnPrimaryBg}`,
             }}
             onClick={() => handleClickSelectChat(false)}
           >
@@ -194,7 +193,7 @@ const Chat: React.FC<ChatProps> = ({
           </Button>
         </Styled.ButtonsWrapper>
         {privateList ? (
-          <PrivateChatListContainer />
+          <PrivateChatListContainer privateChatSelectedCallback={() => setPrivateList(false)} />
         ) : (
           <>
             {!showMessages && !privateList && (

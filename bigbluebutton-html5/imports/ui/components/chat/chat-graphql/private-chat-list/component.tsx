@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import Styled from './styles';
-import PrivateChatListItem from '/imports/ui/components/chat/chat-graphql/user-messages/private-chat-list/chat-list-item/component';
+import PrivateChatListItem from './chat-list-item/component';
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
@@ -9,9 +9,14 @@ import roveBuilder from '/imports/ui/core/utils/keyboardRove';
 
 interface ChatListProps {
   chats: Chat[],
+  privateChatSelectedCallback: () => void;
 }
 
-const getActiveChats = (chats: Chat[], chatNodeRef: React.Ref<HTMLButtonElement>) => chats.map((chat, idx) => (
+const getActiveChats = (
+  chats: Chat[],
+  chatNodeRef: React.Ref<HTMLButtonElement>,
+  privateChatSelectedCallback: () => void,
+) => chats.map((chat, idx) => (
   <CSSTransition
     classNames="transition"
     appear
@@ -26,12 +31,13 @@ const getActiveChats = (chats: Chat[], chatNodeRef: React.Ref<HTMLButtonElement>
         chat={chat}
         chatNodeRef={chatNodeRef}
         index={idx}
+        privateChatSelectedCallback={privateChatSelectedCallback}
       />
     </Styled.ListTransition>
   </CSSTransition>
 ));
 
-const PrivateChatList: React.FC<ChatListProps> = ({ chats }) => {
+const PrivateChatList: React.FC<ChatListProps> = ({ chats, privateChatSelectedCallback }) => {
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const messageItemsRef = React.useRef<HTMLDivElement | null>(null);
   const chatNodeRef = React.useRef<HTMLButtonElement | null>(null);
@@ -45,19 +51,23 @@ const PrivateChatList: React.FC<ChatListProps> = ({ chats }) => {
       ref={messageListRef}
       onKeyDown={(e:React.KeyboardEvent<HTMLDivElement>) => rove(e)}
     >
-        <TransitionGroup>
-          {getActiveChats(chats, chatNodeRef)}
-        </TransitionGroup>
+      <TransitionGroup>
+        {getActiveChats(chats, chatNodeRef, privateChatSelectedCallback)}
+      </TransitionGroup>
     </Styled.ScrollableList>
   );
 };
 
-const PrivateChatListContainer: React.FC = () => {
+interface PrivateChatListContainerProps {
+  privateChatSelectedCallback: () => void;
+}
+
+const PrivateChatListContainer: React.FC<PrivateChatListContainerProps> = ({ privateChatSelectedCallback }) => {
   const { data } = useChat((chat) => chat) as GraphqlDataHookSubscriptionResponse<Chat[]>;
-  const chats = (data || []).filter((chat) => !chat.public);
+  const chats = (data || []).filter((chat) => !chat.public && chat.totalMessages !== 0);
 
   return (
-    <PrivateChatList chats={chats} />
+    <PrivateChatList chats={chats} privateChatSelectedCallback={privateChatSelectedCallback} />
   );
 };
 
