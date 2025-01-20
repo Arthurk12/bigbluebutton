@@ -650,6 +650,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = () => {
     }
   };
 
+  // Unused for now, but will be used in the future when UI/UX for sharing
+  // through the profile settings is implemented - prlanzarin
   const handleStartSharing = async () => {
     if (!currentVideoStream.current) return;
     if (
@@ -948,7 +950,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = () => {
           icon: 'close',
           label: formatMessage(intlMessages.closeLabel),
           onClick: () => {
-            handleStartSharing();
             layoutContextDispatch({
               type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
               value: false,
