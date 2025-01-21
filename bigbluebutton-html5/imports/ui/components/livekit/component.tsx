@@ -10,6 +10,7 @@ import {
 import {
   ConnectionState,
   type Room,
+  type InternalRoomOptions,
   type RoomConnectOptions,
 } from 'livekit-client';
 import Auth from '/imports/ui/services/auth';
@@ -30,6 +31,7 @@ import SelectiveSubscription from '/imports/ui/components/livekit/selective-subs
 interface BBBLiveKitRoomProps {
   url?: string;
   token?: string;
+  roomOptions: Partial<InternalRoomOptions>;
   bbbSessionToken: string;
   usingAudio: boolean;
   usingScreenShare: boolean;
@@ -103,6 +105,7 @@ const LiveKitObserver = ({
 const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
   url,
   token,
+  roomOptions,
   bbbSessionToken,
   usingAudio,
   usingScreenShare,
@@ -122,6 +125,7 @@ const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
       },
     };
 
+    liveKitRoom.options = { ...liveKitRoom.options, ...roomOptions };
     liveKitRoom.connect(url, token, connectOptions).catch((error) => {
       logger.error({
         logCode: 'livekit_connect_error',
@@ -179,6 +183,11 @@ const BBBLiveKitRoomContainer: React.FC = () => {
   const url = meetingSettings.public.media?.livekit?.url
     || `wss://${window.location.hostname}/livekit`;
   const withSelectiveSubscription = meetingSettings.public.media?.livekit?.selectiveSubscription ?? false;
+  const roomOptions = meetingSettings.public.media?.livekit?.roomOptions ?? {
+    adaptiveStream: true,
+    dynacast: true,
+    stopLocalTrackOnUnpublish: false,
+  };
   const { data: bridges } = useMeeting((m) => ({
     cameraBridge: m.cameraBridge,
     screenShareBridge: m.screenShareBridge,
@@ -194,6 +203,7 @@ const BBBLiveKitRoomContainer: React.FC = () => {
     <BBBLiveKitRoom
       token={currentUserData?.livekit?.livekitToken}
       url={url}
+      roomOptions={roomOptions}
       bbbSessionToken={Auth.sessionToken as string}
       usingAudio={bridges?.audioBridge === 'livekit'}
       usingScreenShare={bridges?.screenShareBridge === 'livekit'}
