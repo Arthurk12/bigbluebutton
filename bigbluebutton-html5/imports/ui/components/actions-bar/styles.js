@@ -107,14 +107,6 @@ const Wrapper = styled.div`
   }
 `;
 
-const Separator = styled.div`
-  height: 2.5rem;
-  width: 0;
-  border: 1px solid ${colorWhite};
-  align-self: center;
-  opacity: .75;
-`;
-
 export default {
   ActionsBar,
   Left,
@@ -124,6 +116,5 @@ export default {
   ButtonContainer,
   ReactionsDropdown,
   Wrapper,
-  Separator,
   ActionsBarWrapper,
 };
