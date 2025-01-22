@@ -127,10 +127,10 @@ module BigBlueButton
         # we append a silence entry.
         if senders.empty?
           last_entry = audio_groups_edl[group_id].last
-          if last_entry && !last_entry[:audios].nil?
+          if last_entry && !last_entry[:audios].empty?
             audio_groups_edl[group_id] << {
               timestamp: timestamp,
-              audios:    nil
+              audios:    []
             }
           end
           return
@@ -154,7 +154,7 @@ module BigBlueButton
         # Append this EDL entry (could be empty if no active_audios matched).
         audio_groups_edl[group_id] << {
           timestamp: timestamp,
-          audios:    new_audios.empty? ? nil : new_audios
+          audios:    new_audios
         }
       end
 
@@ -185,7 +185,7 @@ module BigBlueButton
           group_id = event.at_xpath('groupId')&.text
           # Initialize an EDL list for this group, starting with silence at t=0
           audio_groups_edl[group_id] = [
-            { timestamp: 0, audios: nil }
+            { timestamp: 0, audios: [] }
           ]
           senders = event.at_xpath('senders')&.text&.split(',') || []
           build_edl_entry.call(group_id, timestamp, senders)
@@ -198,7 +198,7 @@ module BigBlueButton
           group_id = event.at_xpath('groupId')&.text
           audio_groups_edl[group_id] << {
             timestamp: timestamp,
-            audios:    nil
+            audios:    []
           }
         end
       end
@@ -207,7 +207,7 @@ module BigBlueButton
       audio_groups_edl.each do |group_id, audio_edl|
         audio_edl << {
           timestamp: final_timestamp - initial_timestamp,
-          audios:    nil
+          audios:    []
         }
       end
     
