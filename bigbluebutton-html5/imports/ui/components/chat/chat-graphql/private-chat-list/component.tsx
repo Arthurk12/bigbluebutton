@@ -2,9 +2,7 @@ import React, { useMemo } from 'react';
 import { TransitionGroup, CSSTransition } from 'react-transition-group';
 import Styled from './styles';
 import PrivateChatListItem from './chat-list-item/component';
-import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
-import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 import roveBuilder from '/imports/ui/core/utils/keyboardRove';
 
 interface ChatListProps {
@@ -60,12 +58,10 @@ const PrivateChatList: React.FC<ChatListProps> = ({ chats, privateChatSelectedCa
 
 interface PrivateChatListContainerProps {
   privateChatSelectedCallback: () => void;
+  chats: Partial<ChatType>[];
 }
 
-const PrivateChatListContainer: React.FC<PrivateChatListContainerProps> = ({ privateChatSelectedCallback }) => {
-  const { data } = useChat((chat) => chat) as GraphqlDataHookSubscriptionResponse<Chat[]>;
-  const chats = (data || []).filter((chat) => !chat.public && chat.totalMessages !== 0);
-
+const PrivateChatListContainer: React.FC<PrivateChatListContainerProps> = ({ privateChatSelectedCallback, chats }) => {
   return (
     <PrivateChatList chats={chats} privateChatSelectedCallback={privateChatSelectedCallback} />
   );
