@@ -33,6 +33,7 @@ import Icon from '/imports/ui/components/common/icon/component';
 import { colorBlueLighterChannel } from '/imports/ui/stylesheets/styled-components/palette';
 import ChatMessageNotificationContent from './message-content/notification-content/component';
 import { getValueByPointer } from '/imports/utils/object-utils';
+import Auth from '/imports/ui/services/auth';
 
 interface ChatMessageProps {
   message: Message;
@@ -502,8 +503,9 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
                 avatar={message.user?.avatar || ''}
                 color={messageContent.color}
                 moderator={messageContent.isModerator}
+                you={message.user?.userId === Auth.userID}
               >
-                {avatarDisplay}
+                {typeof avatarDisplay === 'string' ? <span>{avatarDisplay}</span> : avatarDisplay}
               </ChatAvatar>
             )}
             {shouldRenderHeader && (
