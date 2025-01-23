@@ -616,8 +616,16 @@ module BigBlueButtonS3
     end
 
     def load_remote_md5(bucket_name, prefix)
-      prefix_list = list_objects(prefix, bucket_name)
-      Hash[ prefix_list.collect { |key| [ key, { :md5 => @s3.bucket(bucket_name).object(key).metadata().dig("content_md5") } ] } ].delete_if { |k, v| v[:md5].nil? }
+      result = {}
+      # credential might not have permission to list the bucket in order to reduce privilege
+      # if that's the case, proceed to the upload - it might result into uploading more objects than necessary
+      begin
+        prefix_list = list_objects(prefix, bucket_name)
+        result = Hash[ prefix_list.collect { |key| [ key, { :md5 => @s3.bucket(bucket_name).object(key).metadata().dig("content_md5") } ] } ].delete_if { |k, v| v[:md5].nil? }
+      rescue Aws::S3::Errors::AccessDenied
+        BigBlueButtonS3.logger.info "No permission to list bucket #{bucket_name}, keep going"
+      end
+      result
     end
 
     def upload_files(files, bucket_name, set_public, meeting_description: nil, metadata: {})
