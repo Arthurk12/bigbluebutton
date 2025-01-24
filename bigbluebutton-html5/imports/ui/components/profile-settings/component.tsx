@@ -62,9 +62,9 @@ const intlMessages: { [key: string]: { id: string; description?: string } } = de
     id: 'app.videoPreview.webcamSettingsTitle',
     description: 'Title for the video preview modal',
   },
-  closeLabel: {
-    id: 'app.videoPreview.closeLabel',
-    description: 'Close button label',
+  minimizeLabel: {
+    id: 'app.videoPreview.minimizeLabel',
+    description: 'Minimize button label',
   },
   cancelLabel: {
     id: 'app.mobileAppModal.dismissLabel',
@@ -945,10 +945,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = () => {
         title={formatMessage(intlMessages.title)}
         leftButtonProps={{}}
         rightButtonProps={{
-          'aria-label': formatMessage(intlMessages.closeLabel),
+          'aria-label': formatMessage(intlMessages.minimizeLabel),
           'data-test': 'closeProfileSettings',
-          icon: 'close',
-          label: formatMessage(intlMessages.closeLabel),
+          icon: 'minus',
+          label: formatMessage(intlMessages.minimizeLabel),
           onClick: () => {
             layoutContextDispatch({
               type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
