@@ -23,7 +23,6 @@ const SidebarContent = (props: SidebarContentProps) => {
     top,
     left = undefined,
     right = undefined,
-    zIndex,
     minWidth,
     width,
     maxWidth,
@@ -70,6 +69,8 @@ const SidebarContent = (props: SidebarContentProps) => {
   };
 
   const { isChrome } = browserInfo;
+
+  if (sidebarContentPanel === PANELS.NONE) return null;
 
   return (
     <Resizable
