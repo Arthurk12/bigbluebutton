@@ -184,7 +184,12 @@ logger.debug 'Merged Video EDL with Presentation:'
 BigBlueButton::EDL::Video.dump(video_edl)
 
 logger.info 'Generating audio events list'
-audio_edl = BigBlueButton::AudioEvents.create_audio_edl(events, raw_archive_dir)
+if props['process_audio_groups'] && events.xpath('/recording/event[@module="AUDIO_GROUP"]').any?
+  audio_edl, audio_groups_edl = BigBlueButton::AudioEvents.create_audio_edl_with_groups(events, raw_archive_dir)
+else
+  audio_edl = BigBlueButton::AudioEvents.create_audio_edl(events, raw_archive_dir)
+  audio_groups_edl = {}
+end
 logger.debug 'Audio EDL:'
 BigBlueButton::EDL::Audio.dump(audio_edl)
 
@@ -196,8 +201,35 @@ BigBlueButton::EDL::Audio.dump(audio_edl)
 logger.info 'Rendering audio'
 audio = BigBlueButton::EDL::Audio.render(audio_edl, "#{process_dir}/audio")
 
-logger.info 'Rendering audio groups'
-audio_groups = BigBlueButton::AudioProcessor.process_audio_groups(raw_archive_dir, "#{process_dir}/audio_group")
+audio_groups = {}
+if audio_groups_edl.empty?
+  BigBlueButton.logger.info("No audio groups to process.")
+else
+  logger.info 'Processing audio groups'
+  audio_groups_edl.each do |group_id, audio_edl|
+      BigBlueButton.logger.info("Printing edl of group #{group_id}")
+      BigBlueButton::EDL::Audio.dump(audio_edl)
+      BigBlueButton.logger.info("Applying recording start stop events:")
+      audio_edl = BigBlueButton::Events.edl_match_recording_marks_audio(
+                      audio_edl, events, initial_timestamp, final_timestamp)
+      BigBlueButton::EDL::Audio.dump(audio_edl)
+
+      target_dir = File.dirname("#{process_dir}/audio_group")
+
+      # Render each group's audio to a distinct file
+      output_basename = File.join(target_dir, "audio_group_#{group_id.gsub('|','_')}")
+      group_audio_file = BigBlueButton::EDL::Audio.render(audio_edl, output_basename)
+      BigBlueButton.logger.info("Group #{group_id} audio file generated at: #{group_audio_file}")
+
+      ogg_format = {
+        :extension => 'ogg',
+        :parameters => [ [ '-c:a', 'copy', '-f', 'ogg' ] ]
+      }
+      BigBlueButton::EDL.encode(group_audio_file, nil, ogg_format, output_basename)
+
+      audio_groups[group_id] = File.basename(group_audio_file)
+  end
+end
 # convert language to code to ISO 639-2 so ffmpeg can understand it in the metadata
 audio_groups.transform_keys! { |key| LANGUAGE_MAP[key.split('|').last[0,2]] }
 

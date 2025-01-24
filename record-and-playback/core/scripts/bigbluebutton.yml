@@ -69,6 +69,9 @@ override_recording_ready_callback_url:
 # continue recording or split into a new recording
 continue_recording_by_default: true
 
+# whether to proccess audio gruops to generate several audio tracks for each one
+process_audio_groups: false
+
 # For PRODUCTION
 log_dir: /var/log/bigbluebutton
 events_dir: /var/bigbluebutton/events
