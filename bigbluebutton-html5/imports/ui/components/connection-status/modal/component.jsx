@@ -8,7 +8,6 @@ import Styled from './styles';
 import ConnectionStatusHelper from '../status-helper/component';
 import Auth from '/imports/ui/services/auth';
 import connectionStatus from '../../../core/graphql/singletons/connectionStatus';
-import logger from '/imports/startup/client/logger';
 
 const MIN_TIMEOUT = 3000;
 
@@ -148,14 +147,12 @@ const propTypes = {
   intl: PropTypes.shape({
     formatMessage: PropTypes.func.isRequired,
   }).isRequired,
-  startMonitoringNetwork: PropTypes.func.isRequired,
-  stopMonitoringNetwork: PropTypes.func.isRequired,
   networkData: PropTypes.shape({
     ready: PropTypes.bool,
     audio: PropTypes.shape({
       audioCurrentUploadRate: PropTypes.number,
       audioCurrentDownloadRate: PropTypes.number,
-      jitter: PropTypes.number,
+      jitter: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
       packetsLost: PropTypes.number,
       transportStats: PropTypes.shape({
         isUsingTurn: PropTypes.bool,
@@ -166,6 +163,7 @@ const propTypes = {
       videoCurrentDownloadRate: PropTypes.number,
     }),
   }),
+  isModalOpen: PropTypes.bool.isRequired,
 };
 
 const isConnectionStatusEmpty = (connectionStatusParam) => {
@@ -200,27 +198,8 @@ class ConnectionStatusComponent extends PureComponent {
     this.handleSelectTab = this.handleSelectTab.bind(this);
   }
 
-  async componentDidMount() {
-    const { startMonitoringNetwork } = this.props;
-
-    try {
-      await startMonitoringNetwork();
-    } catch (error) {
-      logger.warn({
-        logCode: 'stats_monitor_network_error',
-        extraInfo: {
-          errorMessage: error?.message,
-          errorStack: error?.stack,
-        },
-      }, 'Failed to start monitoring network');
-    }
-  }
-
   componentWillUnmount() {
-    const { stopMonitoringNetwork } = this.props;
-
     clearTimeout(this.copyNetworkDataTimeout);
-    stopMonitoringNetwork();
   }
 
   handleSelectTab(tab) {
@@ -233,6 +212,23 @@ class ConnectionStatusComponent extends PureComponent {
     this.setState({
       copyButtonText: msg,
     });
+  }
+
+  stopMonitoringNetwork() {
+    clearInterval(this.rateInterval);
+    this.rateInterval = null;
+    clearTimeout(this.copyNetworkDataTimeout);
+    this.copyNetworkDataTimeout = null;
+  }
+
+  shouldLogMediaStats() {
+    const { logMediaStats, isModalOpen } = this.props;
+    const { networkData } = this.state;
+    const { audio, video } = networkData;
+
+    return logMediaStats
+      && !isModalOpen
+      && (Object.keys(audio).length > 0 || Object.keys(video).length > 0);
   }
 
   /**
@@ -521,6 +517,8 @@ class ConnectionStatusComponent extends PureComponent {
     } = this.props;
 
     const { selectedTab } = this.state;
+
+    if (!isModalOpen) return null;
 
     return (
       <Styled.ConnectionStatusModal
