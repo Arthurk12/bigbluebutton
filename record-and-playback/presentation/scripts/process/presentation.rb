@@ -85,7 +85,8 @@ unless FileTest.directory?(target_dir)
 
     events_xml = "#{raw_archive_dir}/events.xml"
     events = Nokogiri::XML(File.open(events_xml))
-    # Check if audio_groups is enabled and there are audio groups events in the recording
+
+    # Check if there are audio groups events in the recording
     if events.xpath('/recording/event[@module="AUDIO_GROUP"]').any?
       results = BigBlueButton::AudioProcessor.process_with_audio_groups(raw_archive_dir, "#{target_dir}/audio", props['process_audio_groups'])
       if props['process_audio_groups']

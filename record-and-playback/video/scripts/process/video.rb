@@ -184,7 +184,7 @@ logger.debug 'Merged Video EDL with Presentation:'
 BigBlueButton::EDL::Video.dump(video_edl)
 
 logger.info 'Generating audio events list'
-if props['process_audio_groups'] && events.xpath('/recording/event[@module="AUDIO_GROUP"]').any?
+if events.xpath('/recording/event[@module="AUDIO_GROUP"]').any?
   audio_edl, audio_groups_edl = BigBlueButton::AudioEvents.create_audio_edl_with_groups(events, raw_archive_dir)
 else
   audio_edl = BigBlueButton::AudioEvents.create_audio_edl(events, raw_archive_dir)
@@ -202,7 +202,7 @@ logger.info 'Rendering audio'
 audio = BigBlueButton::EDL::Audio.render(audio_edl, "#{process_dir}/audio")
 
 audio_groups = {}
-if audio_groups_edl.empty?
+if audio_groups_edl.empty? || props['process_audio_groups'] == false
   BigBlueButton.logger.info("No audio groups to process.")
 else
   logger.info 'Processing audio groups'
