@@ -752,6 +752,7 @@ class Presentation extends PureComponent {
       userIsPresenter,
       currentSlide,
       slidePosition,
+      isRTL,
       presentationBounds,
       fullscreenContext,
       isMobile,
@@ -826,7 +827,7 @@ class Presentation extends PureComponent {
     const presentationZIndex = fullscreenContext ? presentationBounds.zIndex : undefined;
 
     const APP_CRASH_METADATA = { logCode: 'whiteboard_crash', logMessage: 'Possible whiteboard crash' };
-  if (!presentationIsOpen) return null;
+    if (!presentationIsOpen) return null;
     return (
       <>
         <Styled.PresentationContainer
@@ -835,6 +836,8 @@ class Presentation extends PureComponent {
           ref={(ref) => {
             this.refPresentationContainer = ref;
           }}
+          isRTL={isRTL}
+          isVideoFocus={isVideoFocus}
           style={{
             top: presentationBounds.top,
             left: presentationBounds.left,
@@ -965,6 +968,7 @@ Presentation.propTypes = {
   presentationIsOpen: PropTypes.bool,
   totalPages: PropTypes.number.isRequired,
   publishedPoll: PropTypes.bool.isRequired,
+  isRTL: PropTypes.bool.isRequired,
   presentationBounds: PropTypes.shape({
     top: PropTypes.number,
     left: PropTypes.number,
