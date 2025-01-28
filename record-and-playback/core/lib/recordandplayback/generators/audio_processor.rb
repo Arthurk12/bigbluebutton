@@ -95,7 +95,7 @@ module BigBlueButton
       BigBlueButton::EDL.encode(@audio_file, nil, webm_format, file_basename)
     end
 
-    def self.process_with_audio_groups(archive_dir, file_basename)
+    def self.process_with_audio_groups(archive_dir, file_basename, include_groups)
       BigBlueButton.logger.info("AudioProcessor.process_all_audio: Processing main audio and audio groups...")
 
       events_xml = "#{archive_dir}/events.xml"
@@ -137,49 +137,51 @@ module BigBlueButton
         postprocess: [ [ 'mkclean', '--quiet', ':input', ':output' ] ]
       }
       BigBlueButton::EDL.encode(main_audio_file, nil, webm_format, file_basename)
+      @audio_file = main_audio_file	
     
       #-----------------------------------------------------------------------
       # Process AUDIO GROUPS
       #-----------------------------------------------------------------------
-      BigBlueButton.logger.info("Processing audio groups...")
-      group_results = {}
-    
-      if audio_groups_edl.empty?
-        BigBlueButton.logger.info("No audio groups to process.")
-      else
-        audio_groups_edl.each do |group_id, group_edl|
-          BigBlueButton.logger.info("Printing EDL of group #{group_id}:")
-          BigBlueButton::EDL::Audio.dump(group_edl)
-    
-          BigBlueButton.logger.info("Applying recording start stop events for group #{group_id}:")
-          trimmed_group_edl = BigBlueButton::Events.edl_match_recording_marks_audio(
-            group_edl, events, start_time, end_time
-          )
-          BigBlueButton::EDL::Audio.dump(trimmed_group_edl)
-    
-          # Render each group's audio to a distinct file
-          output_basename = File.join(target_dir, "audio_group_#{group_id.gsub('|','_')}")
-          group_audio_file = BigBlueButton::EDL::Audio.render(trimmed_group_edl, output_basename)
-          BigBlueButton.logger.info("Group #{group_id} audio file generated at: #{group_audio_file}")
-    
-          # Encode group audio only to OGG
-          BigBlueButton::EDL.encode(
-            group_audio_file,
-            nil,
-            {
-              extension:  'ogg',
-              parameters: [ [ '-c:a', 'copy', '-f', 'ogg' ] ]
-            },
-            output_basename
-          )
-    
-          # Store the final group filename in results
-          group_results[group_id] = File.basename(group_audio_file)
+      if include_groups
+        BigBlueButton.logger.info("Processing audio groups...")
+        group_results = {}
+        if audio_groups_edl.empty?
+          BigBlueButton.logger.info("No audio groups to process.")
+        else
+          audio_groups_edl.each do |group_id, group_edl|
+            BigBlueButton.logger.info("Printing EDL of group #{group_id}:")
+            BigBlueButton::EDL::Audio.dump(group_edl)
+      
+            BigBlueButton.logger.info("Applying recording start stop events for group #{group_id}:")
+            trimmed_group_edl = BigBlueButton::Events.edl_match_recording_marks_audio(
+              group_edl, events, start_time, end_time
+            )
+            BigBlueButton::EDL::Audio.dump(trimmed_group_edl)
+      
+            # Render each group's audio to a distinct file
+            output_basename = File.join(target_dir, "audio_group_#{group_id.gsub('|','_')}")
+            group_audio_file = BigBlueButton::EDL::Audio.render(trimmed_group_edl, output_basename)
+            BigBlueButton.logger.info("Group #{group_id} audio file generated at: #{group_audio_file}")
+      
+            # Encode group audio only to OGG
+            BigBlueButton::EDL.encode(
+              group_audio_file,
+              nil,
+              {
+                extension:  'ogg',
+                parameters: [ [ '-c:a', 'copy', '-f', 'ogg' ] ]
+              },
+              output_basename
+            )
+      
+            # Store the final group filename in results
+            group_results[group_id] = File.basename(group_audio_file)
+          end
         end
+        group_results
+      else
+        BigBlueButton.logger.info("Audio groups processing disabled.")
       end
-
-      @audio_file = main_audio_file	
-      group_results
     end
 
     def self.get_processed_audio_file(archive_dir, file_basename)
