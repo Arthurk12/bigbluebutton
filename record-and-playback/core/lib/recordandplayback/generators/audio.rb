@@ -106,25 +106,36 @@ module BigBlueButton
       return audio_edl
     end
 
-    def self.create_audio_group_edls(events, archive_dir)
+    def self.create_audio_edl_with_groups(events, archive_dir)
+      audio_dir = File.join(archive_dir, 'audio')
+    
+      main_audio_edl = [
+        { timestamp: 0, audios: [] }
+      ]
+      # For each filename, store when it was published
+      main_audios = {}
+      # For quick lookup of which user published which filename (only if microphone)
+      filename_to_user_id = {}
+      # For quick lookup of the source for each filename (e.g. "microphone" or "screen_share_audio")
+      filename_to_source = {}
+      # Currently active filenames in main EDL
+      main_active_filenames = []
+    
       audio_groups_edl = {}
-      audio_dir        = "#{archive_dir}/audio"
-
-      # Holds information about each audio’s base timestamp (when it was published).
-      audios        = {}
-      # List of currently active audio references
-      active_audios = []
-
-      # Determine global start/end times
-      initial_timestamp = BigBlueButton::Events.first_event_timestamp(events)
-      final_timestamp   = BigBlueButton::Events.last_event_timestamp(events)
-
-      #--------------------------------------------------------------------
-      # Helper to build and append an EDL entry in audio_groups_edl
-      #--------------------------------------------------------------------
-      build_edl_entry = lambda do |group_id, timestamp, senders|
-        # If we have no senders, and the last EDL entry wasn't already silence,
-        # we append a silence entry.
+      # For group-based audio: keep track of base timestamp for each file
+      group_audios = {}
+      # Currently active group-audio references: array of { filename:, user_id: }
+      group_active_audios = []
+    
+      # For each user, maintain a set of group IDs that user is currently in.
+      # If user_in_groups[user_id].empty? => user is in NO group => mic audio can appear in main
+      user_in_groups = Hash.new { |h, k| h[k] = Set.new }
+    
+      #--------------------------------------------------------------------------
+      # Helper to build a new EDL entry for a group
+      #--------------------------------------------------------------------------
+      build_group_edl_entry = lambda do |group_id, timestamp, senders|
+        # If we have no senders, and the last EDL entry wasn't silence, append silence
         if senders.empty?
           last_entry = audio_groups_edl[group_id].last
           if last_entry && !last_entry[:audios].empty?
@@ -135,83 +146,246 @@ module BigBlueButton
           end
           return
         end
-
-        # Otherwise, build a list of active audios that match the senders.
+    
+        # Otherwise, build a list of active audios that match the senders
         new_audios = []
-        active_audios.each do |audio|
+        group_active_audios.each do |audio|
           filename = audio[:filename]
           user_id  = audio[:user_id]
           if senders.include?(user_id)
-            # The timestamp offset inside this file is (current_time - time_when_published)
-            base_offset = audios[filename][:timestamp]
+            base_offset = group_audios[filename][:timestamp]
             new_audios << {
               filename:  filename,
-              timestamp: (timestamp - base_offset)
+              timestamp: timestamp - base_offset
             }
           end
         end
-
-        # Append this EDL entry (could be empty if no active_audios matched).
+    
+        # Append the EDL entry for this group
         audio_groups_edl[group_id] << {
           timestamp: timestamp,
           audios:    new_audios
         }
       end
 
-      # Parse AUDIO_GROUP / bbb-webrtc-sfu events
-      events.xpath('/recording/event[@module="AUDIO_GROUP" or @module="bbb-webrtc-sfu"]').each do |event|
-        timestamp = event['timestamp'].to_i - initial_timestamp
-        eventname = event['eventname']
+      #--------------------------------------------------------------------------
+      # Helper to (re)build a new EDL entry for the MAIN audio, at a given moment
+      #--------------------------------------------------------------------------
+      rebuild_main_edl_entry = lambda do |timestamp|
+        # Build a new EDL entry from the currently active filenames in main
+        edl_entry = {
+          timestamp: timestamp,
+          audios:    main_active_filenames.map do |fn|
+            # offset = now - time when track was published
+            {
+              filename:  fn,
+              timestamp: timestamp - main_audios[fn][:timestamp]
+            }
+          end
+        }
+        main_audio_edl << edl_entry
+      end
 
-        case eventname
+      #--------------------------------------------------------------------------
+      # Determine global start/end times
+      #--------------------------------------------------------------------------
+      initial_timestamp = BigBlueButton::Events.first_event_timestamp(events)
+      final_timestamp   = BigBlueButton::Events.last_event_timestamp(events)
+
+      #--------------------------------------------------------------------------
+      # Gather *all* relevant events in chronological order
+      #--------------------------------------------------------------------------
+      all_events = events.xpath(
+        '/recording/event[@module="VOICE" or @module="AUDIO_GROUP" or @module="bbb-webrtc-sfu"]'
+      ).sort_by { |e| e['timestamp'].to_i }
+
+      all_events.each do |event|
+        event_ts = event['timestamp'].to_i - initial_timestamp
+        name     = event['eventname']
+
+        case name
         when 'AudioTrackPublishedEvent'
-          source = event.at_xpath('source')&.text
-          next if source != 'microphone'
-          user_id  = event.at_xpath('userId')&.text
-          filename = File.basename(event.at_xpath('filename').text)
-          filepath = "#{audio_dir}/#{filename}"
-          # Keep track of the base timestamp for this file
-          audios[filepath] = { timestamp: timestamp }
-          # Mark this audio as active
-          active_audios << { filename: filepath, user_id: user_id }
+          pub_filename = event.at_xpath('filename')&.text
+          next unless pub_filename
+    
+          pub_filepath = File.join(audio_dir, File.basename(pub_filename))
+          user_id      = event.at_xpath('userId')&.text
+          source       = event.at_xpath('source')&.text
+    
+          # Store in lookups
+          main_audios[pub_filepath] = { timestamp: event_ts }
+          filename_to_source[pub_filepath] = source
+    
+          # Only store user_id if source == 'microphone'
+          if source == 'microphone'
+            filename_to_user_id[pub_filepath] = user_id if user_id
+          end
+    
+          #-----------------------------------
+          # 1) MAIN audio logic
+          #-----------------------------------
+          if source == 'screen_share_audio'
+            # Always in main
+            main_active_filenames << pub_filepath
+            rebuild_main_edl_entry.call(event_ts)
+          elsif source == 'microphone'
+            # Add if user not in any group or if user_id is missing
+            if user_id.nil? || user_in_groups[user_id].empty?
+              main_active_filenames << pub_filepath
+              rebuild_main_edl_entry.call(event_ts)
+            end
+          else
+            # For safety, let's include it in main by default:
+            main_active_filenames << pub_filepath
+            rebuild_main_edl_entry.call(event_ts)
+          end
+    
+          #-----------------------------------
+          # 2) GROUP audio logic (only if source == 'microphone')
+          #-----------------------------------
+          if source == 'microphone'
+            group_audios[pub_filepath] = { timestamp: event_ts }
+            group_active_audios << { filename: pub_filepath, user_id: user_id }
+          end
+    
+        #------------------------------------------------------------------------
+        # AudioTrackUnpublishedEvent
+        #------------------------------------------------------------------------
         when 'AudioTrackUnpublishedEvent'
-          source = event.at_xpath('source')&.text
-          next if source != 'microphone'
-          filename = File.basename(event.at_xpath('filename').text)
-          filepath = "#{audio_dir}/#{filename}"
-          # Remove this file from the list of active audios
-          active_audios.delete_if { |a| a[:filename] == filepath }
+          unpub_filename = event.at_xpath('filename')&.text
+          next unless unpub_filename
+    
+          unpub_filepath = File.join(audio_dir, File.basename(unpub_filename))
+    
+          # Remove from MAIN if it’s active
+          if main_active_filenames.include?(unpub_filepath)
+            main_active_filenames.delete(unpub_filepath)
+            rebuild_main_edl_entry.call(event_ts)
+          end
+    
+          # If microphone, remove from GROUP logic
+          if filename_to_source[unpub_filepath] == 'microphone'
+            group_active_audios.delete_if { |a| a[:filename] == unpub_filepath }
+          end
+    
+        #------------------------------------------------------------------------
+        # AUDIO GROUP: Created / Updated / Destroyed
+        #------------------------------------------------------------------------
         when 'AudioGroupCreatedEvent'
           group_id = event.at_xpath('groupId')&.text
-          # Initialize an EDL list for this group, starting with silence at t=0
+          next unless group_id
+    
           audio_groups_edl[group_id] = [
             { timestamp: 0, audios: [] }
           ]
           senders = event.at_xpath('senders')&.text&.split(',') || []
-          build_edl_entry.call(group_id, timestamp, senders)
+          build_group_edl_entry.call(group_id, event_ts, senders)
+    
+          # Mark each user in "senders" as belonging to this group
+          # => remove that user's microphone track(s) from main if they are active
+          senders.each do |uid|
+            old_count = user_in_groups[uid].size
+            user_in_groups[uid].add(group_id)
+            # If user just went from 0 groups => remove the mic track(s) from main
+            if old_count == 0
+              main_active_filenames.delete_if do |fn|
+                filename_to_user_id[fn] == uid && filename_to_source[fn] == 'microphone'
+              end
+              rebuild_main_edl_entry.call(event_ts)
+            end
+          end
+    
         when 'AudioGroupUpdatedEvent'
           group_id = event.at_xpath('groupId')&.text
-          senders  = event.at_xpath('senders')&.text&.split(',') || []
-          build_edl_entry.call(group_id, timestamp, senders)
+          next unless group_id
+    
+          senders = event.at_xpath('senders')&.text&.split(',') || []
+          build_group_edl_entry.call(group_id, event_ts, senders)
+    
+          # We interpret "senders" as the complete new set of users in group_id
+          current_members = user_in_groups.select { |_, grp_set| grp_set.include?(group_id) }.keys
+    
+          leaving_users  = current_members - senders
+          joining_users  = senders - current_members
+    
+          # 1) Remove group_id from each leaving user
+          leaving_users.each do |uid|
+            user_in_groups[uid].delete(group_id)
+            # If user now has 0 groups, re-add that user's mic tracks to main if they are still active
+            if user_in_groups[uid].empty?
+              main_audios.each_key do |fn|
+                if filename_to_user_id[fn] == uid && filename_to_source[fn] == 'microphone'
+                  # Only re-add if it's not already in main_active_filenames
+                  unless main_active_filenames.include?(fn)
+                    main_active_filenames << fn
+                  end
+                end
+              end
+              rebuild_main_edl_entry.call(event_ts)
+            end
+          end
+    
+          # 2) Add group_id for each joining user
+          joining_users.each do |uid|
+            old_count = user_in_groups[uid].size
+            user_in_groups[uid].add(group_id)
+            # If user was in 0 groups => new group => remove mic track(s) from main
+            if old_count == 0
+              main_active_filenames.delete_if do |fn|
+                filename_to_user_id[fn] == uid && filename_to_source[fn] == 'microphone'
+              end
+              rebuild_main_edl_entry.call(event_ts)
+            end
+          end
+    
         when 'AudioGroupDestroyedEvent'
-          # Marks the group as ended at 'timestamp', so we add an entry with no audio
           group_id = event.at_xpath('groupId')&.text
+          next unless group_id
+    
+          # Mark group as ended at event_ts with silence
           audio_groups_edl[group_id] << {
-            timestamp: timestamp,
+            timestamp: event_ts,
             audios:    []
           }
+    
+          # Now remove group_id from all users who had it
+          current_members = user_in_groups.select { |_, grp_set| grp_set.include?(group_id) }.keys
+          current_members.each do |uid|
+            user_in_groups[uid].delete(group_id)
+            # If user now has 0 groups, re-add any mic tracks to main
+            if user_in_groups[uid].empty?
+              main_audios.each_key do |fn|
+                if filename_to_user_id[fn] == uid && filename_to_source[fn] == 'microphone'
+                  unless main_active_filenames.include?(fn)
+                    main_active_filenames << fn
+                  end
+                end
+              end
+              rebuild_main_edl_entry.call(event_ts)
+            end
+          end
+    
+        else
+          # Ignore other events
+          next
         end
       end
 
-      # Add final silence entry at the end of each group's timeline
-      audio_groups_edl.each do |group_id, audio_edl|
-        audio_edl << {
+      # Append final silence entry to both main_audio_edl and each group’s EDL
+      main_audio_edl << {
+        timestamp: final_timestamp - initial_timestamp,
+        audios:    []
+      }
+    
+      audio_groups_edl.each_value do |group_edl|
+        group_edl << {
           timestamp: final_timestamp - initial_timestamp,
           audios:    []
         }
       end
-    
-      audio_groups_edl
+
+      # Return both EDLs
+      return [main_audio_edl, audio_groups_edl]
     end
 
     def self.create_deskshare_audio_edl(events, deskshare_dir)

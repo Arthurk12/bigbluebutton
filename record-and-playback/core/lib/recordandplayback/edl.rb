@@ -54,19 +54,23 @@ module BigBlueButton
             '-map', '0:v:0',
             '-map', '1:a:0',
           ]
-          audio_index = 1
+
+          input_index = 2
+          audio_track_index = 1
+
           additional_audio_languages.each do |language, audio_file|
             if audio_offset != 0
               ffmpeg_cmd += ['-itsoffset', ms_to_s(audio_offset)]
             end
             ffmpeg_cmd += ['-i', audio_file]
-            map_args += ['-map', "#{audio_index}:a:0"]
+            map_args += ['-map', "#{input_index}:a:0"]
             # Set language metadata
             metadata_args += [
-              "-metadata:s:a:#{audio_index}", "language=#{language}",
-              "-disposition:a:#{audio_index}", "0"  # not default
+              "-metadata:s:a:#{audio_track_index}", "language=#{language}",
+              "-disposition:a:#{audio_track_index}", "0"  # not default
             ]
-            audio_index += 1
+            input_index += 1
+            audio_track_index += 1
           end
           ffmpeg_cmd += map_args + metadata_args
         end
