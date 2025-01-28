@@ -174,7 +174,6 @@ const LayoutEngine = () => {
     const {
       sidebarNavWidth,
       sidebarNavWidthMobile,
-      sidebarNavHorizontalMargin,
     } = DEFAULT_VALUES;
 
     const { isOpen } = sidebarNavigationInput;
@@ -190,7 +189,7 @@ const LayoutEngine = () => {
         horizontalSpaceOccupied = 0;
       } else {
         width = sidebarNavWidth;
-        horizontalSpaceOccupied = sidebarNavWidth + (2 * sidebarNavHorizontalMargin);
+        horizontalSpaceOccupied = sidebarNavWidth;
       }
     }
     return {
@@ -224,24 +223,22 @@ const LayoutEngine = () => {
 
   const calculatesSidebarNavBounds = (sidebarNavHeight) => {
     const {
-      sidebarNavLeft,
-      sidebarNavHorizontalMargin,
-      sidebarNavHorizontalMarginMobile,
+      sidebarNavMarginToTheEdgeMobile,
     } = DEFAULT_VALUES;
 
-    let offset = bannerAreaHeight();
-    let horizontalPlacement = sidebarNavLeft + sidebarNavHorizontalMargin;
-    if (isMobile) {
-      offset = 0;
-      horizontalPlacement = sidebarNavLeft + sidebarNavHorizontalMarginMobile;
+    let left = null;
+    let right = null;
+    if (isRTL) {
+      right = isMobile ? sidebarNavMarginToTheEdgeMobile : 0;
+    } else {
+      left = isMobile ? sidebarNavMarginToTheEdgeMobile : 0;
     }
-    const remainingVerticalEmptySpace = windowHeight() - offset - sidebarNavHeight;
 
     return {
-      top: offset + (remainingVerticalEmptySpace / 2),
-      left: !isRTL ? horizontalPlacement : null,
-      right: isRTL ? horizontalPlacement : null,
-      zIndex: isMobile ? 11 : 2,
+      top: isMobile ? (windowHeight() - sidebarNavHeight) / 2 : bannerAreaHeight(),
+      left,
+      right,
+      zIndex: isMobile ? 12 : 2,
     };
   };
 
@@ -283,9 +280,9 @@ const LayoutEngine = () => {
   };
 
   const calculatesSidebarContentBounds = (sidebarNavWidth) => {
-    const { navBarHeight, sidebarNavTop } = DEFAULT_VALUES;
+    const { navBarHeight } = DEFAULT_VALUES;
 
-    let top = sidebarNavTop + bannerAreaHeight();
+    let top = bannerAreaHeight();
 
     if (isMobile) top = navBarHeight + bannerAreaHeight();
 

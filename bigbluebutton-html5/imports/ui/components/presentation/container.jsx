@@ -198,6 +198,7 @@ const PresentationContainer = (props) => {
   }
 
   const cameraDock = layoutSelectInput((i) => i.cameraDock);
+  const isRTL = layoutSelect((i) => i.isRTL);
   const presentation = layoutSelectOutput((i) => i.presentation);
   const fullscreen = layoutSelect((i) => i.fullscreen);
   const deviceType = layoutSelect((i) => i.deviceType);
@@ -232,6 +233,7 @@ const PresentationContainer = (props) => {
           numCameras,
           ...props,
           userIsPresenter,
+          isRTL,
           presentationBounds: presentation,
           fullscreenContext,
           fullscreenElementId,
