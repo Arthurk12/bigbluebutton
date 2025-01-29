@@ -21,6 +21,7 @@ import Headphones from '@mui/icons-material/Headphones';
 import Mic from '@mui/icons-material/Mic';
 import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
+import Slider from '@mui/material/Slider';
 import { styled as materialStyled } from '@mui/material/styles';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import {
@@ -45,6 +46,7 @@ const ProfileSettings = styled(ScrollboxVertical)`
   border-radius: ${contentSidebarBorderRadius};
   background: ${colorWhite};
   overflow-y: auto;
+  overflow-x: hidden;
 `;
 
 const HeaderContainer = styled(BaseHeaderContainer)``;
@@ -56,6 +58,8 @@ interface VideoPreviewProps {
 const VideoPreview = styled.video<VideoPreviewProps>`
   height: 100%;
   width: 100%;
+  border-radius: 0.5rem;
+  box-shadow: 8px 8px 24px 0px rgba(0, 0, 0, 0.10);
 
   @media ${smallOnly} {
     height: 10rem;
@@ -68,8 +72,6 @@ const VideoPreview = styled.video<VideoPreviewProps>`
 
 const VideoPreviewContent = styled.div`
   padding: 0px ${contentSidebarPadding};
-  position: sticky;
-  top: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -216,7 +218,6 @@ const DevicesSettingsContainer = styled.div`
 const DeviceContainer = styled.div`
   display: flex;
   flex-direction: row;
-  height: 3.5rem;
   flex-shrink: 0;
   gap: 1rem;
   align-items: center;
@@ -281,7 +282,6 @@ const VirtualBackgroundContainer = styled.div`
 `;
 
 const SwitchTitle = styled(FormControlLabel)`
-  height: 1.5rem;
   flex-shrink: 0;
   .MuiFormControlLabel-label {
     color: ${colorGrayDark};
@@ -337,6 +337,17 @@ const MaterialSwitch = materialStyled(Switch)(({ theme }) => ({
     }),
   },
 }));
+
+const BrightnessSlider = styled(Slider)`
+  color: ${colorPrimary};
+  & .MuiSlider-thumb {
+    height: 1rem;
+    width: 1rem;
+  };
+  & .MuiSlider-track {
+    height: 5px;
+  }
+`;
 
 const VirtualBgSelectorBorder = styled.div`
   width: 100%;
@@ -414,6 +425,7 @@ export default {
   VirtualBackgroundContainer,
   SwitchTitle,
   MaterialSwitch,
+  BrightnessSlider,
   VirtualBgSelectorBorder,
   CaptionsContainer,
   CaptionsToggleContainer,
