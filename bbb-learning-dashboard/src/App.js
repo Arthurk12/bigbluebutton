@@ -170,10 +170,11 @@ class App extends React.Component {
       learningDashboardAccessToken, meetingId, sessionToken, invalidSessionCount,
     } = this.state;
 
-    // adjust user sessions to be compatible with old json
-    const convertUserUsessionsFormat = (activitiesJson) => {
+    // conversions to be compatible with old json data
+    const convertFormat = (activitiesJson) => {
       const newActivivies = activitiesJson;
       Object.values(newActivivies.users).forEach((user) => {
+        // adjust user sessions
         Object.values(user.intIds).forEach((intId) => {
           if (!intId?.sessions && intId?.registeredOn) {
             const newIntId = intId;
@@ -182,6 +183,19 @@ class App extends React.Component {
             ];
           }
         });
+        // convert old raiseHand emoji to new format
+        if (user?.emojis) {
+          const newUser = user;
+          newUser.reactions = user.reactions || [];
+          const raiseHandTimestamps = [];
+          Object.values(user.emojis).forEach((emoji) => {
+            if (emoji.name === 'raiseHand') {
+              raiseHandTimestamps.push(emoji.sentOn);
+            }
+          });
+          newUser.raiseHand = raiseHandTimestamps;
+          delete newUser.emojis;
+        }
       });
       return newActivivies;
     };
@@ -191,7 +205,7 @@ class App extends React.Component {
         .then((response) => response.json())
         .then((json) => {
           this.setState({
-            activitiesJson: convertUserUsessionsFormat(json),
+            activitiesJson: convertFormat(json),
             loading: false,
             invalidSessionCount: 0,
             lastUpdated: Date.now(),
