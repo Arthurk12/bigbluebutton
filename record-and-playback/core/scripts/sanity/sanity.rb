@@ -121,6 +121,43 @@ def remux_files(directory)
   end
 end
 
+def self.check_talking_users_have_audio(events_xml, audio_dir)
+  # Gather all participants who have talking events
+  talking_events = BigBlueButton::Events.get_talking_events(events_xml)
+  # Filter out those who have no talking events
+  talking_participants = talking_events
+    .select { |_participant_id, data| data[:events].any? }
+    .keys
+
+  # Parse AudioTrackPublishedEvent to see which participants actually published audio
+  # and also check if the file physically exists on disk.
+  # Map: participant_id -> Array of actual existing files
+  published_audio_files = Hash.new { |h, k| h[k] = [] }
+
+  events_xml.xpath(
+    "recording/event[@module='bbb-webrtc-sfu' and @eventname='AudioTrackPublishedEvent']"
+  ).each do |event|
+    participant_id = event.at_xpath('userId')&.text
+    filename       = event.at_xpath('filename')&.text
+    next if participant_id.nil? || filename.nil?
+
+    # Derive the path used by the archive process
+    # For example, if the published filename is "some-track.wav",
+    # BigBlueButton’s code typically saves it into ".../audio/some-track.wav".
+    file_path = File.join(audio_dir, File.basename(filename))
+
+    # Check if this file actually exists on disk
+    if File.exist?(file_path)
+      published_audio_files[participant_id] << file_path
+    end
+  end
+
+  talking_participants.each do |participant_id|
+    has_audio = published_audio_files[participant_id].any?
+    BigBlueButton.logger.warn "User #{participant_id} talked but no audio files were found." if !has_audio
+  end
+end
+
 # Determine the filenames for the done and fail files
 if !break_timestamp.nil?
   done_base = "#{meeting_id}-#{break_timestamp}"
@@ -139,6 +176,10 @@ begin
 
   logger.info("Checking events.xml")
   check_events_xml(raw_archive_dir,meeting_id)
+
+  logger.info("Checking if talking users have recorded audio tracks...")
+  events_xml = Nokogiri::XML(File.open("#{raw_archive_dir}/#{meeting_id}/events.xml"))
+  check_talking_users_have_audio(events_xml, "#{raw_archive_dir}/#{meeting_id}/audio")
 
   logger.info("Repairing audio files")
   remux_files("#{raw_archive_dir}/#{meeting_id}/audio")
