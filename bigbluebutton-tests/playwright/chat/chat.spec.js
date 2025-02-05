@@ -11,13 +11,13 @@ test.describe('Chat', { tag: '@ci' }, () => {
     await initializePages(chat, browser, { isMultiUser: true });
   });
 
-  // https://docs.bigbluebutton.org/2.6/release-tests.html#public-message-automated
+  // https://docs.bigbluebutton.org/3.0/testing/release-testing/#public-message-automated
   test('Send public message', async () => {
     await chat.sendPublicMessage();
   });
 
-  // https://docs.bigbluebutton.org/2.6/release-tests.html#private-message-automated
-  test('Send private message', async () => {
+  // https://docs.bigbluebutton.org/3.0/testing/release-testing/#private-message-automated
+  test('Send private message', { tag: '@flaky-3.1' }, async () => {
     await chat.sendPrivateMessage();
   });
 
@@ -38,12 +38,12 @@ test.describe('Chat', { tag: '@ci' }, () => {
     await chat.characterLimit();
   });
 
-  // https://docs.bigbluebutton.org/2.6/release-tests.html#sending-empty-chat-message-automated
+  // https://docs.bigbluebutton.org/3.0/testing/release-testing/#sending-empty-chat-message-automated
   test('Not able to send an empty message', async () => {
     await chat.emptyMessage();
   });
 
-  test('Copy and paste public message', async () => {
+  test('Copy and paste public message', { tag: '@flaky-3.1' }, async () => {
     await chat.copyPastePublicMessage();
   })
 
@@ -55,7 +55,7 @@ test.describe('Chat', { tag: '@ci' }, () => {
     await chat.emojiCopyChat();
   });
 
-  test('Close private chat', async () => {
+  test('Close private chat', { tag: '@flaky-3.1' }, async () => {
     await chat.closePrivateChat();
   });
 
@@ -85,7 +85,7 @@ test.describe('Chat', { tag: '@ci' }, () => {
 
   // failure only reproducible in CI (user leaves but keeps shown in the mod user list)
   //! flaky flag recently removed in order to see current behavior
-  test('Private chat disabled when user leaves meeting', { tag: '@ci' }, async () => {
+  test('Private chat disabled when user leaves meeting', { tag: ['@ci', '@flaky-3.1'] }, async () => {
     await chat.chatDisabledUserLeaves();
   });
 });

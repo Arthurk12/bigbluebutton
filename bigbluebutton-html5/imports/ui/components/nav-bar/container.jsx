@@ -57,6 +57,10 @@ const NavBarContainer = ({ children, ...props }) => {
     'bbb_direct_leave_button',
     PUBLIC_CONFIG.app.defaultSettings.application.directLeaveButton,
   );
+  const SHOW_SESSION_DETAILS_ON_JOIN = getFromUserSettings(
+    'bbb_show_session_details_on_join',
+    PUBLIC_CONFIG.layout.showSessionDetailsOnJoin,
+  );
 
   let meetingTitle;
   let breakoutNum;
@@ -117,6 +121,7 @@ const NavBarContainer = ({ children, ...props }) => {
         // TODO: Remove/Replace
         isMeteorConnected: true,
         hideTopRow: navBar.hideTopRow,
+        showSessionDetailsOnJoin: SHOW_SESSION_DETAILS_ON_JOIN,
         ...props,
       }}
       style={{ ...navBar }}

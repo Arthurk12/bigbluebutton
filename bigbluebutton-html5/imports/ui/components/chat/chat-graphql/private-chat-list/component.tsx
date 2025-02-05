@@ -4,6 +4,7 @@ import Styled from './styles';
 import PrivateChatListItem from './chat-list-item/component';
 import { Chat } from '/imports/ui/Types/chat';
 import roveBuilder from '/imports/ui/core/utils/keyboardRove';
+import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 
 interface ChatListProps {
   chats: Chat[],

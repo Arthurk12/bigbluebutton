@@ -3,7 +3,7 @@ const { fullyParallel } = require('../playwright.config');
 const { Layouts } = require('./layouts');
 const { initializePages } = require('../core/helpers');
 
-test.describe('Layout', { tag: '@ci' }, () => {
+test.describe('Layout', { tag: ['@ci', '@flaky-3.1'] }, () => {
   const layouts = new Layouts();
 
   test.describe.configure({ mode: fullyParallel ? 'parallel' : 'serial' });
@@ -29,8 +29,7 @@ test.describe('Layout', { tag: '@ci' }, () => {
     await layouts.customLayout();
   });
 
-  test("Update everyone's layout", { tag: '@flaky' }, async () => {
-    // snapshot comparison failing due to unexpected zooming slide after layout update
+  test("Update everyone's layout", async () => {
     await layouts.updateEveryone();
   });
 });

@@ -172,7 +172,7 @@ const LiveKitCameraBridge: React.FC<LiveKitCameraBridgeProps> = ({
     const track = streamRefs.current.remoteTracks[stream];
 
     if (track) track.detach();
-    if (publication && publication.isSubscribed && withSelectiveSubscription) {
+    if (publication?.isSubscribed && withSelectiveSubscription) {
       publication.setSubscribed(false);
     }
   };
@@ -227,7 +227,7 @@ const LiveKitCameraBridge: React.FC<LiveKitCameraBridgeProps> = ({
       });
       delete streamRefs.current.localTracks[stream];
       delete streamRefs.current.localVideoStreams[stream];
-    } else {
+    } else if (publication) {
       unsubscribeFromRemotePub(stream, publication as RemoteTrackPublication);
     }
   };

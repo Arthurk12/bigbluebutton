@@ -4,7 +4,6 @@ const { DisabledFeatures } = require('./disabledFeatures');
 const c = require('./constants');
 const { encodeCustomParams, getAllShortcutParams, hexToRgb } = require('./util');
 const { CreateParameters } = require('./createParameters');
-const { linkIssue } = require('../core/helpers');
 
 test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
   test('Record Meeting', async ({ browser, context, page }) => {
@@ -14,7 +13,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
   });
 
   test.describe.parallel('Banner', () => {
-    test('Banner Text', async ({ browser, context, page }) => {
+    test('Banner Text', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
       const createParam = new CreateParameters(browser, context);
       await createParam.initModPage(page, true, { createParameter: c.bannerText });
       await createParam.bannerText();
@@ -28,10 +27,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
     });
   });
 
-  test('Max Participants', { tag: '@flaky' }, async ({ browser, context, page }) => {
-    // considering value set - 1 (e.g. maxParticipants=3: 2 users would be able to join)
-    // see issue below
-    linkIssue(19426);
+  test('Max Participants', async ({ browser, context, page }) => {
     const createParam = new CreateParameters(browser, context);
     await createParam.initModPage(page, true, { createParameter: c.maxParticipants });
     await createParam.initModPage2(true, context);
@@ -64,7 +60,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
     await createParam.muteOnStart();
   });
 
-  test('Allow Mods To Unmute Users', async ({ browser, context, page }) => {
+  test('Allow Mods To Unmute Users', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const createParam = new CreateParameters(browser, context);
     await createParam.initModPage(page, true, { createParameter: c.allowModsToUnmuteUsers });
     await createParam.allowModsToUnmuteUsers(context);
@@ -91,7 +87,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
     await createParam.lockSettingsDisablePublicChat();
   });
 
-  test('Lock Settings Hide User List', async ({ browser, context, page }) => {
+  test('Lock Settings Hide User List', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const createParam = new CreateParameters(browser, context);
     await createParam.initModPage(page, true, { createParameter: c.lockSettingsHideUserList });
     await createParam.initUserPage(true, context);
@@ -99,7 +95,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
     await createParam.lockSettingsHideUserList();
   });
 
-  test('Allow Moderator To Eject Cameras', async ({ browser, context, page }) => {
+  test('Allow Moderator To Eject Cameras', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const createParam = new CreateParameters(browser, context);
     await createParam.initModPage(page, true, { createParameter: c.allowModsToEjectCameras });
     await createParam.initUserPage(true, context);
@@ -107,7 +103,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
   });
 
   test.describe.parallel('Disabled Features', () => {
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Breakout rooms', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.breakoutRoomsDisabled });
@@ -149,7 +145,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Chat', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.chatDisabled });
@@ -162,7 +158,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('External Videos', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.externalVideosDisabled });
@@ -188,7 +184,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Learning Dashboard', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.learningDashboardDisabled });
@@ -201,7 +197,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Polls', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.pollsDisabled });
@@ -227,7 +223,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Shared Notes', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.sharedNotesDisabled });
@@ -253,7 +249,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Download Presentation With Annotations', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.downloadPresentationWithAnnotationsDisabled });
@@ -266,7 +262,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Import Presentation With Annotations From Breakout Rooms', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.importPresentationWithAnnotationsFromBreakoutRoomsDisabled });
@@ -279,7 +275,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Import Shared Notes From Breakout Rooms', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.importSharedNotesFromBreakoutRoomsDisabled });
@@ -331,7 +327,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
       });
     });
 
-    test.describe.serial(() => {
+    test.describe.serial('', { tag: '@flaky-3.1' }, () => {
       test('Camera As Content', async ({ browser, context, page }) => {
         const disabledFeatures = new DisabledFeatures(browser, context);
         await disabledFeatures.initModPage(page, true, { createParameter: c.cameraAsContent });
@@ -347,7 +343,7 @@ test.describe.parallel('Create Parameters', { tag: '@ci' }, () => {
 });
 
 test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
-  test('Show Public Chat On Login', async ({ browser, context, page }) => {
+  test('Show Public Chat On Login', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     await customParam.initModPage(page, true, { joinParameter: c.showPublicChatOnLogin });
     await customParam.showPublicChatOnLogin();
@@ -365,19 +361,13 @@ test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
     await customParam.clientTitle();
   });
 
-  test('Ask for feedback on logout', async ({ browser, context, page }) => {
-    const customParam = new CustomParameters(browser, context);
-    await customParam.initModPage(page, true, { joinParameter: c.askForFeedbackOnLogout });
-    await customParam.askForFeedbackOnLogout();
-  });
-
-  test('Display Branding Area', async ({ browser, context, page }) => {
+  test('Display Branding Area', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     await customParam.initModPage(page, true, { createParameter: `${c.displayBrandingArea}&${encodeCustomParams(c.logo)}` });
     await customParam.displayBrandingArea();
   });
 
-  test('Shortcuts', async ({ browser, context, page }) => {
+  test('Shortcuts', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     const shortcutParam = getAllShortcutParams();
     await customParam.initModPage(page, true, { joinParameter: encodeCustomParams(shortcutParam) });
@@ -385,19 +375,19 @@ test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
     await customParam.shortcuts();
   });
 
-  test('Custom Styles: CSS code', async ({ browser, context, page }) => {
+  test('Custom Styles: CSS code', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     await customParam.initModPage(page, true, { joinParameter: encodeCustomParams(c.customStyle) });
     await customParam.customStyle();
   });
 
-  test('Custom Styles: URL', async ({ browser, context, page }) => {
+  test('Custom Styles: URL', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     await customParam.initModPage(page, true, { joinParameter: encodeCustomParams(c.customStyleUrl) });
     await customParam.customStyle();
   });
 
-  test('Auto Swap Layout', async ({ browser, context, page }) => {
+  test('Auto Swap Layout', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     await customParam.initModPage(page, true, { joinParameter: c.autoSwapLayout });
     await customParam.autoSwapLayout();
@@ -409,7 +399,7 @@ test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
     await customParam.hideActionsBarTest();
   });
 
-  test('Override Default Locale', async ({ browser, context, page }) => {
+  test('Override Default Locale', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
     const customParam = new CustomParameters(browser, context);
     await customParam.initModPage(page, true, { joinParameter: c.overrideDefaultLocale });
     await customParam.overrideDefaultLocaleTest();
@@ -428,10 +418,7 @@ test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
   });
 
   test.describe.parallel('Audio', () => {
-    test('Auto join', { tag: '@flaky' }, async ({ browser, context, page }) => {
-      // first user to join the meeting is not auto-joining the audio
-      // see issue below
-      linkIssue(19427);
+    test('Auto join', async ({ browser, context, page }) => {
       const customParam = new CustomParameters(browser, context);
       await customParam.initModPage(page, false, { joinParameter: c.autoJoin });
       await customParam.autoJoin();
@@ -443,12 +430,8 @@ test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
       await customParam.listenOnlyMode();
     });
 
-    test('Force Listen Only', { tag: '@flaky' }, async ({ browser, context, page }) => {
-      // param applied to moderators (not expected)
-      // see issue below
-      linkIssue(21326);
+    test('Force Listen Only', async ({ browser, context, page }) => {
       const customParam = new CustomParameters(browser, context);
-      // param only applied for attendees
       await customParam.initUserPage(false, context, { useModMeetingId: false, joinParameter: c.forceListenOnly });
       await customParam.forceListenOnly(page);
     });
@@ -473,15 +456,15 @@ test.describe.parallel('Custom Parameters', { tag: '@ci' }, () => {
   });
 
   test.describe.parallel('Presentation', () => {
-    test('Hide Presentation on join', async ({ browser, context, page }) => {
+    test('Hide Presentation on join', { tag: '@flaky-3.1' }, async ({ browser, context, page }) => {
       const customParam = new CustomParameters(browser, context);
       await customParam.initModPage(page, true, { joinParameter: c.hidePresentationOnJoin });
       await customParam.initUserPage(true, context, { useModMeetingId: true, joinParameter: c.hidePresentationOnJoin });
       await customParam.hidePresentationOnJoin();
     });
 
+    // not restoring presentation after zooming in
     test('Force restore presentation on new events', { tag: '@flaky' }, async ({ browser, context, page }) => {
-      // tagged as flaky because it's restoring presentation right after minimizing it due to unexpected zooming slide
       const customParam = new CustomParameters(browser, context);
       await customParam.initModPage(page);
       await customParam.initUserPage(true, context, { useModMeetingId: true, joinParameter: c.forceRestorePresentationOnNewEvents });
