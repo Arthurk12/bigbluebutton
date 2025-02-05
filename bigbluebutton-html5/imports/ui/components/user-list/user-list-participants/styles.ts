@@ -1,14 +1,10 @@
 import styled, { css, keyframes } from 'styled-components';
 import {
-  contentSidebarBottomScrollPadding,
   contentSidebarPadding,
 } from '/imports/ui/stylesheets/styled-components/general';
 import {
   colorWhite,
 } from '/imports/ui/stylesheets/styled-components/palette';
-import {
-  ScrollboxVertical,
-} from '/imports/ui/stylesheets/styled-components/scrollable';
 
 interface AvatarProps {
   color: string;
@@ -98,9 +94,7 @@ const pulse = (color: string) => keyframes`
   }
 `;
 
-const VirtualizedList = styled(ScrollboxVertical)`
-  outline: none;
-  overflow-x: hidden;
+const VirtualizedList = styled.div`
   display: flex;
   flex-flow: column;
   gap: 1rem;
