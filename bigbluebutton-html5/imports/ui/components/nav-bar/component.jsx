@@ -159,7 +159,7 @@ class NavBar extends Component {
     this.splitPluginItems = this.splitPluginItems.bind(this);
 
     this.state = {
-      isModalOpen: false,
+      isModalOpen: props.showSessionDetailsOnJoin,
     };
   }
 

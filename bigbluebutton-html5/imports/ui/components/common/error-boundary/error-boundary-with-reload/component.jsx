@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState, useEffect, useRef, useCallback,
+} from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import logger from '/imports/startup/client/logger';
-import { ErrorContainer, Message, Spinner, ReloadButton } from './styles';
+import {
+  ErrorContainer, Message, Spinner, ReloadButton,
+} from './styles';
 
 const intlMessages = defineMessages({
   attemptingToRecover: {
@@ -25,6 +29,7 @@ const ErrorBoundaryWithReload = ({ children }) => {
   const [hasError, setHasError] = useState(false);
   const [errorKey, setErrorKey] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
+  const [isReady, setIsReady] = useState(false);
   const resetTimeout = useRef(null);
 
   const handleReset = useCallback(() => {
@@ -59,7 +64,7 @@ const ErrorBoundaryWithReload = ({ children }) => {
           errorStack: event.error?.stack,
         },
       }, 'Global error caught by ErrorBoundaryWithReload');
-    
+
       triggerError();
     };
 
@@ -71,12 +76,19 @@ const ErrorBoundaryWithReload = ({ children }) => {
           errorStack: event.reason?.stack,
         },
       }, 'Unhandled promise rejection caught by ErrorBoundaryWithReload');
-    
+
+      // Ignore errors caused by a Chrome Extension
+      if (event.reason?.stack?.toString().indexOf('chrome-extension://') !== -1) {
+        return;
+      }
+
       triggerError();
     };
 
     window.addEventListener('error', handleGlobalError);
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    setIsReady(true);
 
     return () => {
       if (resetTimeout.current) clearTimeout(resetTimeout.current);
@@ -84,6 +96,8 @@ const ErrorBoundaryWithReload = ({ children }) => {
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, [triggerError]);
+
+  if (!isReady) return null;
 
   if (hasError && errorCount <= MAX_RETRIES) {
     return (

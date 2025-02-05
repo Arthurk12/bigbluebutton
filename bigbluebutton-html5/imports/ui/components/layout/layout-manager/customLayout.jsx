@@ -133,6 +133,7 @@ const CustomLayout = (props) => {
   };
 
   const init = () => {
+    const hasLayoutEngineLoadedOnce = Session.getItem('hasLayoutEngineLoadedOnce');
     if (isMobile) {
       layoutContextDispatch({
         type: ACTIONS.SET_LAYOUT_INPUT,
@@ -183,7 +184,7 @@ const CustomLayout = (props) => {
                 isPinned: sharedNotes.isPinned,
               },
             },
-            INITIAL_INPUT_STATE,
+            hasLayoutEngineLoadedOnce ? prevInput : INITIAL_INPUT_STATE,
           );
         },
       });
@@ -237,7 +238,7 @@ const CustomLayout = (props) => {
                 isPinned: sharedNotes.isPinned,
               },
             },
-            INITIAL_INPUT_STATE,
+            hasLayoutEngineLoadedOnce ? prevInput : INITIAL_INPUT_STATE,
           );
         },
       });
@@ -450,7 +451,7 @@ const CustomLayout = (props) => {
     const { element: fullscreenElement } = fullscreen;
     const { camerasMargin } = DEFAULT_VALUES;
 
-    const hasPresentation = isPresentationEnabled && slidesLength !== 0;
+    const hasPresentation = (isPresentationEnabled && slidesLength !== 0) || isOpen;
     const isGeneralMediaOff = !hasPresentation && !hasExternalVideo
       && !hasScreenShare && !isSharedNotesPinned && !genericContentId;
 

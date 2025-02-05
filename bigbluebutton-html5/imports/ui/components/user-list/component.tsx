@@ -25,6 +25,10 @@ const intlMessages = defineMessages({
     id: 'app.userList.usersTitle',
     description: 'Title for the Header',
   },
+  minimizeLabel: {
+    id: 'app.userList.minimize',
+    description: 'Label for the minimize button in the user list panel',
+  },
   saveUsersNames: {
     id: 'app.actionsBar.actionsDropdown.saveUserNames',
     description: 'Label for the save user names button',

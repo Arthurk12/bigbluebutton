@@ -276,6 +276,8 @@ CREATE TABLE "user" (
 	"userId" varchar(50) NOT NULL,
 	"extId" varchar(50),
 	"name" varchar(255),
+	"firstName" varchar(255),
+	"lastName" varchar(255),
 	"role" varchar(20),
 	"avatar" varchar(500),
     "webcamBackground" varchar(500),
@@ -393,6 +395,8 @@ EXECUTE FUNCTION "set_user_firstJoinedAt_trigger_func"();
 
 --Used to sort the Userlist
 ALTER TABLE "user" ADD COLUMN "nameSortable" varchar(255) GENERATED ALWAYS AS (trim(remove_emojis(immutable_lower_unaccent("name")))) STORED;
+ALTER TABLE "user" ADD COLUMN "firstNameSortable" varchar(255) GENERATED ALWAYS AS (trim(remove_emojis(immutable_lower_unaccent("firstName")))) STORED;
+ALTER TABLE "user" ADD COLUMN "lastNameSortable" varchar(255) GENERATED ALWAYS AS (trim(remove_emojis(immutable_lower_unaccent("lastName")))) STORED;
 
 CREATE INDEX "idx_user_waiting" ON "user"("meetingId") where "isWaiting" is true;
 
@@ -413,6 +417,10 @@ AS SELECT "user"."userId",
     "user"."meetingId",
     "user"."name",
     "user"."nameSortable",
+    "user"."firstName",
+    "user"."firstNameSortable",
+    "user"."lastName",
+    "user"."lastNameSortable",
     "user"."avatar",
     "user"."color",
     "user"."away",
@@ -474,6 +482,10 @@ AS SELECT "user"."userId",
     "user"."meetingId",
     "user"."name",
     "user"."nameSortable",
+    "user"."firstName",
+    "user"."firstNameSortable",
+    "user"."lastName",
+    "user"."lastNameSortable",
     "user"."avatar",
     "user"."webcamBackground",
     "user"."color",
@@ -541,6 +553,10 @@ AS SELECT
     "user"."extId",
     "user"."name",
     "user"."nameSortable",
+    "user"."firstName",
+    "user"."firstNameSortable",
+    "user"."lastName",
+    "user"."lastNameSortable",
     "user"."avatar",
     "user"."color",
     "user"."away",
@@ -1188,9 +1204,9 @@ CREATE TRIGGER "update_chat_message_history_trigger" BEFORE UPDATE OF "message" 
 
 
 CREATE OR REPLACE VIEW "v_chat" AS
-SELECT 	"user"."userId",
+SELECT 	"user"."meetingId",
+        "user"."userId",
         case when "user"."userId" = "chat"."createdBy" then true else false end "amIOwner",
-		chat."meetingId",
 		chat."chatId",
 		cu."visible",
 		chat_with."userId" AS "participantId",
@@ -1212,7 +1228,7 @@ LEFT JOIN "chat_user" chat_with ON chat_with."meetingId" = chat."meetingId" AND
 LEFT JOIN chat_message cm ON cm."meetingId" = chat."meetingId" AND
                              cm."chatId" = chat."chatId"
 WHERE cu."visible" is true
-GROUP BY "user"."userId", chat."meetingId", chat."chatId", cu."visible", cu."lastSeenAt", chat_with."userId";
+GROUP BY "user"."meetingId", "user"."userId", chat."meetingId", chat."chatId", cu."visible", cu."lastSeenAt", chat_with."userId";
 
 create index idx_v_chat_with on chat_user("meetingId","chatId","userId") where "chatId" != 'MAIN-PUBLIC-GROUP-CHAT';
 
@@ -1277,6 +1293,7 @@ CREATE TABLE "pres_presentation" (
 	"filenameConverted" varchar(500),
 	"isDefault" boolean,
 	"current" boolean,
+	"preloadNextPages" integer,
 	"removable" boolean,
 	"downloadable" boolean,
 	"downloadFileExtension" varchar(25),
@@ -1294,6 +1311,20 @@ CREATE TABLE "pres_presentation" (
 CREATE INDEX "idx_pres_presentation_meetingId" ON "pres_presentation"("meetingId");
 CREATE INDEX "idx_pres_presentation_meetingId_curr" ON "pres_presentation"("meetingId") where "current" is true;
 CREATE INDEX "idx_pres_presentation_meetingId_uploadUserId" ON "pres_presentation"("meetingId","uploadUserId");
+
+--Populate preloadNextPages, which will be used to provide the SVG of next slides at pres_page_curr
+CREATE OR REPLACE FUNCTION "update_preloadNextPages"() RETURNS TRIGGER AS $$
+BEGIN
+    SELECT coalesce(("clientSettingsJson"->'public'->'app'->'preloadNextSlides')::int,0) INTO NEW."preloadNextPages"
+    from "meeting_clientSettings" mcs
+    where mcs."meetingId" = NEW."meetingId";
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER "trigger_update_preloadNextPages" BEFORE INSERT ON "pres_presentation"
+FOR EACH ROW EXECUTE FUNCTION "update_preloadNextPages"();
+
 
 CREATE TABLE "pres_page" (
 	"pageId" varchar(100) PRIMARY KEY,
@@ -1406,7 +1437,14 @@ SELECT pres_presentation."meetingId",
     (pres_page."height" * LEAST(pres_page."maxImageWidth" / pres_page."width", pres_page."maxImageHeight" / pres_page."height")) AS "scaledHeight",
     (pres_page."width" * pres_page."widthRatio" / 100 * LEAST(pres_page."maxImageWidth" / pres_page."width", pres_page."maxImageHeight" / pres_page."height")) AS "scaledViewBoxWidth",
     (pres_page."height" * pres_page."heightRatio" / 100 * LEAST(pres_page."maxImageWidth" / pres_page."width", pres_page."maxImageHeight" / pres_page."height")) AS "scaledViewBoxHeight",
-    pres_page."infiniteWhiteboard"
+    pres_page."infiniteWhiteboard",
+    (
+        select array_agg("nextPages"."urlsJson"->>'svg')
+        from pres_page "nextPages"
+        where "nextPages"."presentationId" = pres_page."presentationId"
+        and "nextPages".num > pres_page."num"
+        and "nextPages".num <= pres_page."num" + pres_presentation."preloadNextPages"
+    ) "nextPagesSvg"
 FROM pres_presentation
 JOIN pres_page ON pres_presentation."presentationId" = pres_page."presentationId" AND pres_page."current" IS TRUE
 and pres_presentation."current" IS TRUE;
@@ -1796,6 +1834,7 @@ CREATE TABLE "breakoutRoom" (
 	"shortName" varchar(100),
 	"isDefaultName" bool,
 	"freeJoin" bool,
+	"createdAt" timestamp with time zone,
 	"startedAt" timestamp with time zone,
 	"endedAt" timestamp with time zone,
 	"durationInSeconds" int4,
@@ -1949,6 +1988,17 @@ SELECT u."meetingId" as "userMeetingId", u."userId", b."parentMeetingId", b."bre
             OR b."freeJoin" IS TRUE
             OR u."role" = 'MODERATOR')
     AND b."endedAt" IS NULL;
+
+--view used to restore last breakout rooms
+CREATE OR REPLACE VIEW "v_breakoutRoom_createdLatest" AS
+select "parentMeetingId", "breakoutRoomId", "sequence", "name", "shortName", "isDefaultName", "durationInSeconds", "freeJoin",
+		"sendInvitationToModerators", "captureNotes", "captureSlides", "createdAt", "startedAt", "endedAt"
+from "breakoutRoom"
+where "createdAt" = (
+					select max("createdAt")
+					from "breakoutRoom" bkr
+					where bkr."parentMeetingId" = "breakoutRoom"."parentMeetingId"
+					);
 
 CREATE OR REPLACE VIEW "v_breakoutRoom_assignedUser" AS
 SELECT "parentMeetingId", "breakoutRoomId", "userMeetingId", "userId"
