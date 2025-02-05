@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import {
   colorWhite,
   colorPrimary,
-  colorGrayLightest,
+  colorBorder,
   appsPanelTextColor,
   colorBackground,
 } from '/imports/ui/stylesheets/styled-components/palette';
@@ -124,7 +124,7 @@ export const HeaderContainer = styled(Header)`
 export const Separator = styled.hr`
   width: 100%;
   border: 0;
-  border-bottom: 1px solid ${colorGrayLightest};
+  border-bottom: 1px solid ${colorBorder};
 `;
 
 export const PanelContent = styled.div`
