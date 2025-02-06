@@ -9,8 +9,12 @@ import { Meeting } from '/imports/ui/Types/meeting';
 
 const intlMessages = defineMessages({
   learningDashboardLabel: {
-    id: 'app.userList.learningDashboardLabel',
+    id: 'app.learning-dashboard.label',
     description: 'Title for the learning dashboard',
+  },
+  learningDashboardDesc: {
+    id: 'app.learning-dashboard.description',
+    description: 'Description for the learning dashboard',
   },
 });
 
@@ -26,6 +30,7 @@ const LearningDashboardListItem = () => {
   }, [intl, meetingInfo]);
 
   const label = intl.formatMessage(intlMessages.learningDashboardLabel);
+  const description = intl.formatMessage(intlMessages.learningDashboardDesc);
 
   if (meetingInfo?.isBreakout) return null;
 
@@ -36,7 +41,7 @@ const LearningDashboardListItem = () => {
     >
       <Styled.ListItem
         id="learning-dashboard-toggle-button"
-        aria-label={label}
+        aria-label={description}
         aria-describedby="learningDashboard"
         active={false}
         role="button"
