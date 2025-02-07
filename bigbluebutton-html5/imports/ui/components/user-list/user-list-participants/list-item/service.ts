@@ -133,7 +133,7 @@ export const generateActionsPermissions = (
   isPrivateChatEnabled: boolean,
 ) => {
   const subjectUserVoice = subjectUser.voice;
-
+  const subjectUserInAudio = subjectUserVoice?.joined && !subjectUserVoice?.deafened;
   const amIModerator = currentUser.isModerator;
   const isDialInUser = isVoiceOnlyUser(subjectUser.userId);
   const amISubjectUser = isMe(subjectUser.userId);
@@ -157,14 +157,14 @@ export const generateActionsPermissions = (
     && !isBreakout;
 
   const allowedToMuteAudio = hasAuthority
-    && subjectUserVoice?.joined
+    && subjectUserInAudio
     && !isMuted
     && !subjectUserVoice?.listenOnly
     && !isSubjectUserBot
     && !isBreakout;
 
   const allowedToUnmuteAudio = hasAuthority
-    && subjectUserVoice?.joined
+    && subjectUserInAudio
     && !subjectUserVoice.listenOnly
     && isMuted
     && (amISubjectUser || usersPolicies?.allowModsToUnmuteUsers)
