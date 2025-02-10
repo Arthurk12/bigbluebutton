@@ -14,6 +14,8 @@ import {
   type InternalRoomOptions,
   type RoomConnectOptions,
   ConnectionQuality,
+  LogLevel,
+  setLogLevel,
 } from 'livekit-client';
 import Auth from '/imports/ui/services/auth';
 import AudioManager from '/imports/ui/services/audio-manager';
@@ -38,6 +40,7 @@ interface BBBLiveKitRoomProps {
   url?: string;
   token?: string;
   roomOptions: Partial<InternalRoomOptions>;
+  logLevel?: LogLevel;
   bbbSessionToken: string;
   usingAudio: boolean;
   usingScreenShare: boolean;
@@ -156,6 +159,7 @@ const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
   url,
   token,
   roomOptions,
+  logLevel,
   bbbSessionToken,
   usingAudio,
   usingScreenShare,
@@ -204,6 +208,14 @@ const BBBLiveKitRoom: React.FC<BBBLiveKitRoomProps> = ({
     });
   }, [url]);
 
+  useEffect(() => {
+    if (logLevel !== undefined) setLogLevel(logLevel);
+
+    return () => {
+      liveKitRoom.disconnect();
+    };
+  }, []);
+
   // Screen share requires audio playback as well (Chrome supports it)
   const withAudioPlayback = usingAudio || usingScreenShare;
 
@@ -234,6 +246,7 @@ const BBBLiveKitRoomContainer: React.FC = () => {
   const url = meetingSettings.public.media?.livekit?.url
     || `wss://${window.location.hostname}/livekit`;
   const withSelectiveSubscription = meetingSettings.public.media?.livekit?.selectiveSubscription ?? false;
+  const logLevel = meetingSettings.public.media?.livekit?.logLevel ?? LogLevel.warn;
   const roomOptions = meetingSettings.public.media?.livekit?.roomOptions ?? {
     adaptiveStream: true,
     dynacast: true,
@@ -254,6 +267,7 @@ const BBBLiveKitRoomContainer: React.FC = () => {
     <BBBLiveKitRoom
       token={currentUserData?.livekit?.livekitToken}
       url={url}
+      logLevel={logLevel}
       roomOptions={roomOptions}
       bbbSessionToken={Auth.sessionToken as string}
       usingAudio={bridges?.audioBridge === 'livekit'}
