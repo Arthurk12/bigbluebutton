@@ -41,6 +41,7 @@ class App extends React.Component {
       ldAccessTokenCopied: false,
       sessionToken: '',
       lastUpdated: null,
+      data: '',
     };
   }
 
@@ -85,6 +86,7 @@ class App extends React.Component {
     let learningDashboardAccessToken = '';
     let meetingId = '';
     let sessionToken = '';
+    let data = '';
 
     const urlSearchParams = new URLSearchParams(window.location.search);
     const params = Object.fromEntries(urlSearchParams.entries());
@@ -95,6 +97,10 @@ class App extends React.Component {
 
     if (typeof params.sessionToken !== 'undefined') {
       sessionToken = params.sessionToken;
+    }
+
+    if (typeof params.data !== 'undefined') {
+      data = params.data;
     }
 
     if (typeof params.report !== 'undefined') {
@@ -120,7 +126,9 @@ class App extends React.Component {
       }
     }
 
-    this.setState({ learningDashboardAccessToken, meetingId, sessionToken }, () => {
+    this.setState({
+      learningDashboardAccessToken, meetingId, sessionToken, data,
+    }, () => {
       if (typeof callback === 'function') callback();
     });
   }
@@ -167,7 +175,7 @@ class App extends React.Component {
 
   fetchActivitiesJson() {
     const {
-      learningDashboardAccessToken, meetingId, sessionToken, invalidSessionCount,
+      learningDashboardAccessToken, meetingId, sessionToken, invalidSessionCount, data,
     } = this.state;
 
     // conversions to be compatible with old json data
@@ -200,8 +208,14 @@ class App extends React.Component {
       return newActivivies;
     };
 
-    if (learningDashboardAccessToken !== '') {
-      fetch(`${meetingId}/${learningDashboardAccessToken}/learning_dashboard_data.json`)
+    if (learningDashboardAccessToken !== '' || data !== '') {
+      let dataLocation = '';
+      if (learningDashboardAccessToken !== '') {
+        dataLocation = `${meetingId}/${learningDashboardAccessToken}/learning_dashboard_data.json`;
+      } else {
+        dataLocation = data;
+      }
+      fetch(dataLocation)
         .then((response) => response.json())
         .then((json) => {
           this.setState({
@@ -241,15 +255,17 @@ class App extends React.Component {
       this.setState({ loading: false });
     }
 
-    setTimeout(() => {
-      this.fetchActivitiesJson();
-    }, 10000 * (2 ** invalidSessionCount));
+    if (data === '') {
+      setTimeout(() => {
+        this.fetchActivitiesJson();
+      }, 10000 * (2 ** invalidSessionCount));
+    }
   }
 
   render() {
     const {
       activitiesJson, tab, sessionToken, loading, lastUpdated,
-      learningDashboardAccessToken, ldAccessTokenCopied,
+      learningDashboardAccessToken, ldAccessTokenCopied, data,
     } = this.state;
     const { intl } = this.props;
 
@@ -356,7 +372,7 @@ class App extends React.Component {
     }
 
     function getErrorMessage() {
-      if (learningDashboardAccessToken === '' && sessionToken === '') {
+      if (learningDashboardAccessToken === '' && sessionToken === '' && data === '') {
         return intl.formatMessage({ id: 'app.learningDashboard.errors.invalidToken', defaultMessage: 'Invalid session token' });
       }
 
