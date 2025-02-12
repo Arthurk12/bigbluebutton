@@ -23,12 +23,7 @@ import { BREAKOUT_ROOM_END_ALL, BREAKOUT_ROOM_REQUEST_JOIN_URL, USER_TRANSFER_VO
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import TimeRemaingPanel from './components/timeRemaining';
 import BreakoutMessageForm from './components/messageForm';
-import {
-  finishScreenShare,
-  forceExitAudio,
-  stopVideo,
-} from './service';
-import { useExitVideo, useStreams } from '/imports/ui/components/video-provider/hooks';
+import { useStopMediaOnMainRoom } from '/imports/ui/components/breakout-room/hooks';
 import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
 import CreateBreakoutRoomContainer from '../create-breakout-room/component';
 
@@ -127,6 +122,7 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
   const [breakoutRoomEndAll] = useMutation(BREAKOUT_ROOM_END_ALL);
   const [breakoutRoomTransfer] = useMutation(USER_TRANSFER_VOICE_TO_MEETING);
   const [breakoutRoomRequestJoinURL] = useMutation(BREAKOUT_ROOM_REQUEST_JOIN_URL);
+  const stopMediaOnMainRoom = useStopMediaOnMainRoom();
 
   const layoutContextDispatch = layoutDispatch();
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
@@ -168,12 +164,10 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
       if (breakout && breakout.joinURL) {
         window.open(breakout.joinURL, '_blank');
         setRequestedBreakoutRoomId('');
+        stopMediaOnMainRoom(presenter);
       }
     }
-  }, [breakouts]);
-
-  const exitVideo = useExitVideo();
-  const streams = useStreams();
+  }, [breakouts, stopMediaOnMainRoom, presenter]);
 
   return (
     <Styled.PanelContent
@@ -266,15 +260,7 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
                                     requestJoinURL(breakout.breakoutRoomId);
                                   } else {
                                     window.open(breakout.joinURL, '_blank');
-                                    // leave main room's audio,
-                                    // and stops video and screenshare when joining a breakout room
-                                    forceExitAudio();
-                                    stopVideo(exitVideo, streams);
-                                    logger.info({
-                                      logCode: 'breakoutroom_join',
-                                      extraInfo: { logType: 'user_action' },
-                                    }, 'joining breakout room closed audio in the main room');
-                                    if (presenter) finishScreenShare();
+                                    stopMediaOnMainRoom(presenter);
                                   }
                                 }}
                                 disabled={requestedBreakoutRoomId}
