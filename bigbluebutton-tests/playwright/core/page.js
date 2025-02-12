@@ -34,7 +34,6 @@ class Page {
       createParameter,
       joinParameter,
       customMeetingId,
-      isRecording,
       shouldCheckAllInitialSteps,
       shouldAvoidLayoutCheck,
     } = initOptions || {};
@@ -55,7 +54,6 @@ class Page {
       if (!shouldAvoidLayoutCheck) await this.waitForSelector('div#layout', ELEMENT_WAIT_EXTRA_LONG_TIME);
       this.settings = await generateSettingsData(this.page);
       const { autoJoinAudioModal } = this.settings;
-      if (isRecording && !isModerator) await this.closeRecordingModal();
       if (shouldCloseAudioModal && autoJoinAudioModal) await this.closeAudioModal();
     }
   }
@@ -149,19 +147,13 @@ class Page {
     return locator.count();
   }
 
-  async getCopiedText(context) {
-    await context.grantPermissions(['clipboard-write', 'clipboard-read'], { origin: process.env.BBB_URL });
+  async getCopiedText() {
     return this.page.evaluate(async () => navigator.clipboard.readText());
   }
 
   async closeAudioModal() {
     await this.hasElement(e.audioModal, 'should display the audio modal', ELEMENT_WAIT_EXTRA_LONG_TIME);
     await this.waitAndClick(e.closeModal);
-  }
-
-  async closeRecordingModal() {
-    await this.waitForSelector(e.simpleModal, ELEMENT_WAIT_LONGER_TIME);
-    await this.waitAndClick(e.confirmRecording);
   }
 
   async waitForSelector(selector, timeout = ELEMENT_WAIT_TIME) {
@@ -202,6 +194,10 @@ class Page {
     await this.waitForSelector(selector, timeout);
     await this.page.focus(selector);
     await this.page.click(selector, { timeout });
+  }
+
+  async getByLabelAndClick(label, timeout = ELEMENT_WAIT_TIME) {
+    await this.page.getByLabel(label).click({ timeout });
   }
 
   async clickOnLocator(locator, timeout = ELEMENT_WAIT_TIME) {
@@ -329,8 +325,8 @@ class Page {
     }
   }
 
-  async setHeightWidthViewPortSize() {
-    await this.page.setViewportSize({ width: 1366, height: 768 });
+  async setHeightWidthViewPortSize({ width = 1366, height = 768 } = {}) {
+    await this.page.setViewportSize({ width, height });
   }
 
   async getYoutubeFrame() {

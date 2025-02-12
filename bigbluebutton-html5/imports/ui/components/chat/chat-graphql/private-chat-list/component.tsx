@@ -4,15 +4,14 @@ import Styled from './styles';
 import PrivateChatListItem from './chat-list-item/component';
 import { Chat } from '/imports/ui/Types/chat';
 import roveBuilder from '/imports/ui/core/utils/keyboardRove';
-import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 
 interface ChatListProps {
-  chats: Chat[],
+  chats: Partial<Chat>[],
   privateChatSelectedCallback: () => void;
 }
 
 const getActiveChats = (
-  chats: Chat[],
+  chats: Partial<Chat>[],
   chatNodeRef: React.Ref<HTMLButtonElement>,
   privateChatSelectedCallback: () => void,
 ) => chats.map((chat, idx) => (
@@ -59,7 +58,7 @@ const PrivateChatList: React.FC<ChatListProps> = ({ chats, privateChatSelectedCa
 
 interface PrivateChatListContainerProps {
   privateChatSelectedCallback: () => void;
-  chats: Partial<ChatType>[];
+  chats: Partial<Chat>[];
 }
 
 const PrivateChatListContainer: React.FC<PrivateChatListContainerProps> = ({ privateChatSelectedCallback, chats }) => {

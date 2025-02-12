@@ -137,6 +137,7 @@ const Chat: React.FC<ChatProps> = ({
               variant={showMessages ? 'contained' : 'outlined'}
               color="primary"
               size="medium"
+              data-test="publicChatButton"
               sx={{
                 position: 'relative',
                 borderRadius: '16px',
@@ -169,6 +170,7 @@ const Chat: React.FC<ChatProps> = ({
               variant={!showMessages ? 'contained' : 'outlined'}
               color="primary"
               size="medium"
+              data-test="privateChatButton"
               sx={{
                 position: 'relative',
                 borderRadius: '16px',
@@ -248,7 +250,7 @@ const ChatContainer: React.FC = () => {
     && chat?.totalUnread
     && chat.totalUnread > 0
   ));
-  const filteredPrivateChats = (chats || []).filter(
+  const filteredPrivateChats = (chats || [] as ChatType[]).filter(
     (chat) => !chat.public && chat.totalMessages !== 0,
   );
 
