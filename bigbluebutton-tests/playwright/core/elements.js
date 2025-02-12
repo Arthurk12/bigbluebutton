@@ -59,13 +59,16 @@ exports.speechRecognition = 'select[id="speechSelect"]';
 exports.speechRecognitionUnsupported = 'div[data-test="speechRecognitionUnsupported"]';
 
 // Breakout
-exports.createBreakoutRooms = 'li[data-test="createBreakoutRooms"]';
+exports.createBreakoutRoomsButton = 'button[data-test="createBreakoutRoomsButton"]';
+exports.updateBreakoutRoomsButton = 'button[data-test="updateBreakoutRoomsButton"]';
+exports.breakoutRoomSidebarButton = 'div[data-test="breakoutroomSidebarButton"]';
 exports.randomlyAssign = 'button[data-test="randomlyAssign"]';
 exports.resetAssignments = 'button[data-test="resetAssignments"]'
 exports.breakoutRoomsItem = 'div[data-test="breakoutRoomsItem"]';
 exports.alreadyConnected = 'span[data-test="alreadyConnected"]';
 exports.askJoinRoom1 = 'button[data-test="askToJoinRoom1"]';
 exports.joinRoom1 = 'button[data-test="joinRoom1"]';
+exports.joinFirstRoom = 'button[data-test^="joinRoom"]';
 exports.allowChoiceRoom = 'input[id="freeJoinCheckbox"]';
 exports.labelGeneratingURL = 'span[data-test="labelGeneratingURL"]';
 exports.endBreakoutRoomsButton = 'button[data-test="endBreakoutRoomsButton"]';
@@ -103,6 +106,7 @@ exports.chatBox = 'textarea[id="message-input"]';
 exports.chatMessageItem = 'div[data-test="chatMessageItem"]';
 exports.partnerDisconnectedMessage = 'span[data-test="partnerDisconnected"]';
 exports.chatButton = 'button[data-test="chatButton"]';
+exports.messagesSidebarButton = 'div[data-test="chatButton"]';
 exports.sendButton = 'button[data-test="sendMessageButton"]';
 exports.chatPollMessageText = 'div[data-test="chatPollMessageText"]';
 exports.chatMessages = 'div[data-test="chatMessages"]';
@@ -111,12 +115,13 @@ exports.chatClear = 'li[data-test="chatClear"]';
 exports.chatSave = 'li[data-test="chatSave"]';
 exports.chatCopy = 'li[data-test="chatCopy"]';
 exports.chatTitle = 'header[data-test="chatTitle"]';
-exports.startPrivateChat = 'li[data-test="startPrivateChat"]';
-exports.publicChat = 'div[data-test="publicChat"]';
-exports.privateChat = 'div[data-test="messageContent"] p>>nth=1';
+exports.startPrivateChat = 'div[data-test="startPrivateChat"]';
+exports.publicChatButton = 'button[data-test="publicChatButton"]';
+exports.privateChatButton = 'button[data-test="privateChatButton"]';
+exports.privateChatItem = 'button[data-test="privateChatItem"]';
 exports.hidePublicChat = 'button[data-test="hidePublicChat"]';
-exports.hidePrivateChat = 'button[data-test="hidePrivateChat"]';
-exports.closePrivateChat = 'button[data-test="closePrivateChat"]';
+exports.hideMessagesButton = 'button[data-test="hideMessagesButton"]';
+exports.privateChatBackButton = 'div[data-test="privateChatBackButton"]';
 exports.typingIndicator = 'span[data-test="typingIndicator"]';
 exports.errorTypingIndicator = 'div[data-test="errorTypingIndicator"]';
 exports.chatUserMessageText = 'div[data-test="messageContent"] p';
@@ -140,7 +145,6 @@ exports.welcomeMessage = 'h1[id="welcome-message"]';
 // Emoji picker
 exports.emojiPickerButton = 'button[data-test="emojiPickerButton"]';
 exports.frequentlyUsedEmoji = '👍';
-exports.emojiSent = 'section[aria-label="Frequently Used"] button[title="+1"] span';
 // Auto Convert Emoji
 exports.autoConvertEmojiMessage = ':)';
 exports.convertedEmojiMessage = '😊';
@@ -167,7 +171,6 @@ exports.webcamMirroredVideoContainer = 'video[data-test="mirroredVideoContainer"
 exports.usersList = 'div[data-test="userList"]';
 exports.selectCameraQualityId = 'select[id="setQuality"]';
 exports.virtualBackgrounds = 'div[data-test="virtualBackground"]';
-exports.learningDashboard = 'li[data-test="learningDashboard"]';
 
 // Timer
 exports.timerContainer = 'div[data-test="timerContainer"]';
@@ -184,7 +187,7 @@ exports.minutesInput = 'input[data-test="minutesInput"]';
 exports.secondsInput = 'input[data-test="secondsInput"]';
 
 // Notes
-exports.sharedNotes = 'div[data-test="sharedNotes"]';
+exports.sharedNotes = 'div[data-test="sharedNotesButton"]';
 exports.hideNotesLabel = 'button[data-test="hideNotesLabel"]';
 exports.etherpadFrame = 'iframe[title="pad"]';
 exports.etherpadOuter = 'iframe[title="Ether"]';
@@ -238,6 +241,7 @@ exports.checkedIcon = `${baseBbbIcon}check`;
 exports.pollQuestion = 'Are we good ?';
 exports.answerMessage = 'All good!';
 exports.questionSlideFileName = 'mockPollSlide.pdf';
+exports.pollSidebarButton = 'div[data-test="pollSidebarButton"]';
 exports.polling = 'li[data-test="polling"]';
 exports.startPoll = 'button[data-test="startPoll"]';
 exports.restartPoll = 'button[data-test="restartPoll"]';
@@ -347,6 +351,7 @@ exports.userAvatar = userAvatar;
 exports.moderatorAvatar = 'div[data-test="moderatorAvatar"]';
 exports.viewerAvatar = 'div[data-test="viewerAvatar"]';
 exports.userListItem = 'div[data-test="userListItem"]';
+exports.usersListSidebarButton = 'div[data-test="usersListSidebarButton"]';
 exports.currentUser = 'div[data-test="userListItemCurrent"]';
 exports.multiWhiteboardTool = 'span[data-test="multiWhiteboardTool"]';
 exports.manageUsers = 'button[data-test="manageUsers"]';
@@ -527,11 +532,11 @@ exports.increaseFontSize = 'button[data-test="increaseFontSize"]';
 exports.decreaseFontSize = 'button[data-test="decreaseFontSize"]';
 
 // Learning dashboard
-exports.learningDashboard = 'li[data-test="learningDashboard"]';
+exports.learningDashboardSidebarButton = 'div[data-test="learningDashboardSidebarButton"]';
 exports.panels = 'div[role="tablist"]';
 exports.messageLearningDashboard = 'td[data-test="userTotalMessagesDashboard"]';
 exports.userOnlineTime = 'td[data-test="userOnlineTimeDashboard"]';
-exports.confirmRecording = 'div[id="simpleModal"] button:nth-child(1)';
+exports.confirmRecordingButton = 'button[data-test="confirmRecordingButton"]';
 exports.pollTrueFalse = 'button[data-test="pollTrueFalse"]';
 exports.pollPanel = 'button[data-test="pollsPanelDashboard"]';
 exports.pollTrueFalseQuestion = 'div[role="rowgroup"] div:nth-child(3) div';
