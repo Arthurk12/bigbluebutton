@@ -8,7 +8,7 @@ import {
   mdPadding,
 } from '/imports/ui/stylesheets/styled-components/general';
 import {
-  fontSizeBase,
+  fontSizeSmall,
   fontSizeSmaller,
 } from '/imports/ui/stylesheets/styled-components/typography';
 
@@ -44,7 +44,7 @@ export const ChatWrapper = styled.div<ChatWrapperProps>`
   flex-flow: column;
   gap: ${smPaddingY};
   position: relative;
-  font-size: ${fontSizeBase};
+  font-size: ${fontSizeSmall};
   position: relative;
 
   [dir='rtl'] & {
@@ -136,6 +136,7 @@ export const ChatAvatar = styled(UserAvatar)`
 export const Container = styled.div<{ $sequence: number }>`
   display: flex;
   flex-direction: column;
+  user-select: text;
 
   &:not(:first-of-type) {
     margin-top: calc((${fontSizeSmaller} + ${lgPadding} * 2) / 2);
