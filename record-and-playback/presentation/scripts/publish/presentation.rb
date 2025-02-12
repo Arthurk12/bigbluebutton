@@ -1225,6 +1225,16 @@ def processQuestionEvents(events, package_dir)
         }
       end
     end
+    events.xpath("//event[@eventname='PluginGeneratedEvent' and pluginEventName='QuestionAnsweredEvent']").each do |event|
+      if (event[:timestamp].to_i >= re[:start_timestamp] and event[:timestamp].to_i <= re[:stop_timestamp])
+        payloadJson = JSON.parse(event.at_xpath("payloadJson").text)
+        answered_questions << {
+          :timestamp => (translate_timestamp(event[:timestamp]) / 1000).to_i,
+          :text => payloadJson['questionTitle'],
+          :answer => payloadJson['questionResponse'],
+        }
+      end
+    end
   end
 
   if not answered_questions.empty?
