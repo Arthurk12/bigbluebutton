@@ -902,6 +902,8 @@ module BigBlueButton
         case [event[:module], event[:eventname]]
         when %w[CHAT PublicChatEvent]
           next if timestamp < start_time || !record
+          # ignore questions plugin messages
+          next if event.at_xpath('./message').content.strip.include? 'Questions Plugin:'
 
           date = event.at_xpath('./date')&.content
           date = DateTime.iso8601(date) unless date.nil?
@@ -996,6 +998,21 @@ module BigBlueButton
         external_videos_events << s
       end
       events_xml.xpath("recording/event[@eventname='StopExternalVideoRecordEvent']").each do |event|
+        s = { :timestamp => event['timestamp'].to_i }
+        external_videos_events << s
+      end
+      # audio player plugin events
+      events_xml.xpath("/recording/event[@eventname='PluginGeneratedEvent' and pluginEventName='StartAudioPlayer']").each do |event|
+        payloadJson = JSON.parse(event.at_xpath("payloadJson").text)
+        s = {
+          :timestamp => event['timestamp'].to_i,
+          :external_video_url => payloadJson['audioUrl'],
+          :is_audio => true,
+          :is_local => true,
+        }
+        external_videos_events << s
+      end
+      events_xml.xpath("/recording/event[@eventname='PluginGeneratedEvent' and pluginEventName='StopAudioPlayer']").each do |event|
         s = { :timestamp => event['timestamp'].to_i }
         external_videos_events << s
       end
