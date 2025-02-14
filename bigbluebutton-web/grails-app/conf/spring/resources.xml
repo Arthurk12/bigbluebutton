@@ -144,6 +144,8 @@ with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
         <property name="defaultServerUrl" value="${bigbluebutton.web.serverURL}"/>
         <property name="defaultNumDigitsForTelVoice" value="${defaultNumDigitsForTelVoice}"/>
         <property name="defaultHTML5ClientUrl" value="${defaultHTML5ClientUrl}"/>
+        <property name="defaultAllowTransfer" value="${defaultAllowTransfer}"/>
+        <property name="defaultTransferURL" value="${defaultTransferURL}"/>
         <property name="graphqlWebsocketUrl" value="${graphqlWebsocketUrl}"/>
         <property name="graphqlApiUrl" value="${graphqlApiUrl}"/>
         <property name="useDefaultLogo" value="${useDefaultLogo}"/>

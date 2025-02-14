@@ -43,6 +43,8 @@ class OldMeetingMsgHdlrActor(val olgMsgGW: OldMessageReceivedGW)
       case m: WebcamsOnlyForModeratorChangedEvtMsg => handleWebcamsOnlyForModeratorChangedEvtMsg(m)
       case m: GuestLobbyMessageChangedEvtMsg    => handleGuestLobbyMessageChangedEvtMsg(m)
       case m: PrivateGuestLobbyMsgChangedEvtMsg => handlePrivateGuestLobbyMsgChangedEvtMsg(m)
+      case m: MeetingStreamStartedEvtMsg        => handleMeetingStreamStartedEvtMsg(m)
+      case m: MeetingStreamStoppedEvtMsg        => handleMeetingStreamStoppedEvtMsg(m)
       case m: RecordingChapterBreakSysMsg       => handleRecordingChapterBreakSysMsg(m)
       case m: SetPresentationDownloadableEvtMsg => handleSetPresentationDownloadableEvtMsg(m)
       case m: RecordingStatusChangedEvtMsg      => handleRecordingStatusChangedEvtMsg(m)
@@ -80,6 +82,14 @@ class OldMeetingMsgHdlrActor(val olgMsgGW: OldMessageReceivedGW)
 
   def handlePrivateGuestLobbyMsgChangedEvtMsg(msg: PrivateGuestLobbyMsgChangedEvtMsg): Unit = {
     olgMsgGW.handle(new PrivateGuestLobbyMessageChanged(msg.header.meetingId, msg.body.guestId, msg.body.message))
+  }
+
+  def handleMeetingStreamStartedEvtMsg(msg: MeetingStreamStartedEvtMsg): Unit = {
+    olgMsgGW.handle(new MeetingStreamStarted(msg.header.meetingId, msg.body.streamUrl, msg.body.streamType, msg.body.videoUrl, msg.body.sharedSecret))
+  }
+
+  def handleMeetingStreamStoppedEvtMsg(msg: MeetingStreamStoppedEvtMsg): Unit = {
+    olgMsgGW.handle(new MeetingStreamStopped(msg.header.meetingId))
   }
 
   def handlePosInWaitingQueueUpdatedRespMsg(msg: PosInWaitingQueueUpdatedRespMsg): Unit = {

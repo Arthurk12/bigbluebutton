@@ -503,9 +503,23 @@ class ApiController {
 
     String meetingId = meeting.getInternalId()
 
-    if (hasReachedMaxParticipants(meeting, us)) {
+    Boolean allowTransfer = meeting.getAllowTransfer()
+    Boolean isTransfering = meeting.isTransfering()
+    if (allowTransfer && isTransfering) {
+      Boolean attendee = role == Meeting.ROLE_ATTENDEE
+      if (attendee && !us.bot) {
+        respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
+        return
+      }
+    }
+
+    if (hasReachedMaxParticipants(meeting, us) && !us.bot) {
+      if (allowTransfer) {
+        respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
+        return
+      }
       // BEGIN - backward compatibility
-      invalid("maxParticipantsReached", "The number of participants allowed for this meeting has been reached.", redirectClient, errorRedirectUrl)
+      invalid("maxParticipantsReached", "The number of participants allowed for this meeting has been reached.", REDIRECT_RESPONSE);
       return
       // END - backward compatibility
 
@@ -1940,6 +1954,25 @@ class ApiController {
     newURL = newURL.replace('%%USERNAME%%', userName);
 
     return newURL;
+  }
+
+  private void respondWithTransfer(meetingId, internalUserId, fullName, userdata, externalUserId, sessionToken) {
+    meetingService.redirectedUserToTransfer(meetingId, internalUserId, fullName, userdata, externalUserId, sessionToken);
+
+    String transferURL = paramsProcessorUtil.getDefaultTransferURL();
+    URI transferURI = URI.create(transferURL);
+    String query = "sessionToken=" + sessionToken;
+
+    URI uri = new URI(
+      transferURI.getScheme(),
+      transferURI.getAuthority(),
+      transferURI.getPath(),
+      query,
+      transferURI.getFragment()
+    );
+
+    log.debug "Constructed transfer URL {}", uri.toString();
+    redirect(url: uri);
   }
 
   private void respondWithRedirect(errorsJSONArray, redirectUrl = "") {

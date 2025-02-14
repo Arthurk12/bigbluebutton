@@ -98,6 +98,8 @@ public class ParamsProcessorUtil {
     private boolean defaultMuteOnStart = false;
     private boolean defaultAllowModsToUnmuteUsers = false;
     private boolean defaultAllowModsToEjectCameras = false;
+    private Boolean defaultAllowTransfer;
+    private String defaultTransferURL;
     private String defaultCameraBridge = "bbb-webrtc-sfu";
     private String defaultScreenShareBridge = "bbb-webrtc-sfu";
     private String defaultAudioBridge = "bbb-webrtc-sfu";
@@ -812,6 +814,7 @@ public class ParamsProcessorUtil {
                 .withAllowPromoteGuestToModerator(allowPromoteGuestToModerator)
                 .withWaitingGuestUsersTimeout(waitingGuestUsersTimeout)
                 .withAllowRequestsWithoutSession(allowRequestsWithoutSession)
+                .withDefaultAllowTransfer(defaultAllowTransfer)
                 .withMeetingLayout(meetingLayout)
 				.withBreakoutRoomsParams(breakoutParams)
 				.withLockSettingsParams(lockSettingsParams)
@@ -928,6 +931,14 @@ public class ParamsProcessorUtil {
 	public String getDefaultHTML5ClientUrl() {
 		return defaultHTML5ClientUrl;
 	}
+
+    public Boolean getDefaultAllowTransfer() {
+        return defaultAllowTransfer;
+    }
+
+    public String getDefaultTransferURL() {
+        return defaultTransferURL;
+    }
 
     public String getGraphqlWebsocketUrl() {
         return graphqlWebsocketUrl;
@@ -1303,6 +1314,14 @@ public class ParamsProcessorUtil {
 	public void setDefaultHTML5ClientUrl(String defaultHTML5ClientUrl) {
 		this.defaultHTML5ClientUrl = defaultHTML5ClientUrl;
 	}
+
+    public void setDefaultAllowTransfer(Boolean value) {
+        this.defaultAllowTransfer = value;
+    }
+
+    public void setDefaultTransferURL(String url) {
+        this.defaultTransferURL = url;
+    }
 
     public void setGraphqlWebsocketUrl(String graphqlWebsocketUrl) {
         this.graphqlWebsocketUrl = graphqlWebsocketUrl.replace("https://","wss://");

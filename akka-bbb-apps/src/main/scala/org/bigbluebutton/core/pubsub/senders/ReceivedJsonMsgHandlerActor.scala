@@ -435,6 +435,12 @@ class ReceivedJsonMsgHandlerActor(
       case TranscriptionProviderErrorMsg.NAME =>
         routeGenericMsg[TranscriptionProviderErrorMsg](envelope, jsonNode)
 
+      // Stream
+      case MeetingStreamStartedMsg.NAME =>
+        routeGenericMsg[MeetingStreamStartedMsg](envelope, jsonNode)
+      case MeetingStreamStoppedMsg.NAME =>
+        routeGenericMsg[MeetingStreamStoppedMsg](envelope, jsonNode)
+
       // GroupChats
       case GetGroupChatsReqMsg.NAME =>
         routeGenericMsg[GetGroupChatsReqMsg](envelope, jsonNode)

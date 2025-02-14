@@ -130,6 +130,26 @@ public class MeetingService implements MessageListener {
       return result;
   }
 
+  public void redirectedUserToTransfer(
+      String meetingID,
+      String internalUserID,
+      String fullname,
+      Map<String, String> userdata,
+      String externUserID,
+      String sessionToken) {
+    Meeting m = getMeeting(meetingID);
+    if (m != null) {
+      gw.redirectedUserToTransfer(
+          m.getInternalId(),
+          internalUserID,
+          fullname,
+          userdata,
+          m.getExternalId(),
+          externUserID,
+          sessionToken);
+    }
+  }
+
   public void registerUser(String meetingID, String internalUserId,
                            String fullname, String firstName, String lastName, String role, String externUserID,
                            String authToken, String sessionToken, String avatarURL, String webcamBackgroundURL, Boolean bot,
@@ -1371,6 +1391,10 @@ public class MeetingService implements MessageListener {
           processGuestStatusChangedEventMsg((GuestStatusChangedEventMsg) message);
         } else if (message instanceof GuestPolicyChanged) {
           processGuestPolicyChanged((GuestPolicyChanged) message);
+        } else if (message instanceof MeetingStreamStarted) {
+          processMeetingStreamStarted((MeetingStreamStarted) message);
+        } else if (message instanceof MeetingStreamStopped) {
+          processMeetingStreamStopped((MeetingStreamStopped) message);
         } else if (message instanceof LockSettingsChanged) {
           processLockSettingsChanged((LockSettingsChanged) message);
         } else if (message instanceof WebcamsOnlyForModeratorChanged) {
@@ -1432,6 +1456,22 @@ public class MeetingService implements MessageListener {
     HashMap<String,String> guestUsers = msg.guests;
     if (m != null) {
       m.setWaitingPositionsInWaitingQueue(guestUsers);
+    }
+  }
+
+  public void processMeetingStreamStarted(MeetingStreamStarted msg) {
+    Meeting m = getMeeting(msg.meetingId);
+    if (m != null) {
+      Stream s = new Stream(msg.streamUrl, msg.streamType, msg.videoUrl, msg.sharedSecret);
+      m.setStream(s);
+    }
+  }
+
+  public void processMeetingStreamStopped(MeetingStreamStopped msg) {
+    Meeting m = getMeeting(msg.meetingId);
+    if (m != null) {
+      Stream s = new Stream();
+      m.setStream(s);
     }
   }
 

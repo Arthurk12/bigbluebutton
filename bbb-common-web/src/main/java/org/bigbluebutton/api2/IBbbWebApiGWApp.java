@@ -82,6 +82,14 @@ public interface IBbbWebApiGWApp {
   void registerUserSessionToken(String meetingID, String internalUserId, String sessionToken, String sessionName,
                                 String replaceSessionToken, String enforceLayout, Map<String, String> userSessionMetadata);
 
+  void redirectedUserToTransfer(String meetingID,
+                                String internalUserId,
+                                String fullname,
+                                Map<String, String> userdata,
+                                String externalMeetingID,
+                                String externUserID,
+                                String sessionToken);
+
   void destroyMeeting(DestroyMeetingMessage msg);
   void endMeeting(EndMeetingMessage msg);
   void sendKeepAlive(String system, Long bbbWebTimestamp, Long akkaAppsTimestamp);

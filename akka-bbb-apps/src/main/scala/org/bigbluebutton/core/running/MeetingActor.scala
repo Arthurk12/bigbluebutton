@@ -21,6 +21,7 @@ import org.bigbluebutton.core.apps.screenshare.ScreenshareApp2x
 import org.bigbluebutton.core.apps.audiocaptions.AudioCaptionsApp2x
 import org.bigbluebutton.core.apps.timer.TimerApp2x
 import org.bigbluebutton.core.apps.presentation.PresentationApp2x
+import org.bigbluebutton.core.apps.stream.StreamApp2x
 import org.bigbluebutton.core.apps.users.UsersApp2x
 import org.bigbluebutton.core.apps.webcam.WebcamApp2x
 import org.bigbluebutton.core.apps.whiteboard.WhiteboardApp2x
@@ -137,6 +138,7 @@ class MeetingActor(
   val webcamApp2x = new WebcamApp2x
   val wbApp = new WhiteboardApp2x
   val timerApp2x = new TimerApp2x
+  val streamApp2x = new StreamApp2x
   val pluginHdlrs = new PluginHdlrs
   val sipApp2x = new SipApp2x
   val audioGroupHdlrs = new AudioGroupHdlrs
@@ -725,6 +727,10 @@ class MeetingActor(
       // SIP endpoints (with video)
       case m: SipEndpointCamStartMsg        => sipApp2x.handle(m, liveMeeting, msgBus)
       case m: SipEndpointCamStopMsg         => sipApp2x.handle(m, liveMeeting, msgBus)
+
+      // Stream
+      case m: MeetingStreamStartedMsg       => streamApp2x.handle(m, liveMeeting, msgBus)
+      case m: MeetingStreamStoppedMsg       => streamApp2x.handle(m, liveMeeting, msgBus)
 
       // GroupChat
       case m: CreateGroupChatReqMsg =>

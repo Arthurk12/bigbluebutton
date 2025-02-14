@@ -34,6 +34,14 @@
         <videoCount>${meeting.getNumVideos()?c}</videoCount>
         <maxUsers>${meeting.getMaxUsers()?c}</maxUsers>
         <moderatorCount>${meeting.getNumModerators()?c}</moderatorCount>
+        <transfer>${meeting.isTransfering()?c}</transfer>
+        <#if meeting.hasStream()>
+          <stream>
+            <#assign stream = meeting.getStream()>
+            <type>${stream.getStreamType()}</type>
+            <url>${stream.getVideoUrl()}</url>
+          </stream>
+        </#if>
         <attendees>
         <#list meetingDetail.meeting.getUsers() as att>
           <attendee>

@@ -84,6 +84,9 @@ public class Meeting {
 	private String guestPolicy = GuestPolicy.ASK_MODERATOR;
 	private String guestLobbyMessage = "";
 	private Map<String,String> usersWithGuestLobbyMessages;
+	private Stream stream = new Stream();
+	private Boolean transfer = false;
+	private Boolean defaultAllowTransfer = false;
 	private Boolean authenticatedGuest = false;
 	private Boolean allowPromoteGuestToModerator = false;
 	private long waitingGuestUsersTimeout = 30000;
@@ -182,6 +185,7 @@ public class Meeting {
         waitingGuestUsersTimeout = builder.waitingGuestUsersTimeout;
         meetingLayout = builder.meetingLayout;
         allowRequestsWithoutSession = builder.allowRequestsWithoutSession;
+        defaultAllowTransfer = builder.defaultAllowTransfer;
         breakoutRoomsParams = builder.breakoutRoomsParams;
         lockSettingsParams = builder.lockSettingsParams;
 		maxUserConcurrentAccesses = builder.maxUserConcurrentAccesses;
@@ -530,6 +534,26 @@ public class Meeting {
 		return guestLobbyMessage;
 	}
 
+	public Boolean hasStream() {
+		return stream.isRunning();
+	}
+
+	public void setStream(Stream stream) {
+		this.stream = stream;
+	}
+
+	public Stream getStream() {
+		return stream;
+	}
+
+	public void setTransfer(Boolean transfer) {
+		this.transfer = transfer;
+	}
+
+	public Boolean isTransfering() {
+		return transfer;
+	}
+
 	public void setPrivateGuestLobbyMessage(String guestId, String message) {
 		usersWithGuestLobbyMessages.put(guestId, message);
 	}
@@ -750,6 +774,25 @@ public class Meeting {
 
   public Boolean getAllowModsToEjectCameras() {
     return allowModsToEjectCameras;
+  }
+
+  public void setDefaultAllowTransfer(Boolean value) {
+    defaultAllowTransfer = value;
+  }
+
+  public Boolean getAllowTransfer() {
+    String allowTransfer = getMetadataByKey("enable-transfer");
+    if (allowTransfer != null) {
+      return Boolean.parseBoolean(allowTransfer);
+    }
+    return defaultAllowTransfer;
+  }
+
+  public String getMetadataByKey(String key) {
+    if (metadata != null) {
+      return metadata.get(key);
+    }
+    return null;
   }
 
 	public void userJoined(User user) {
@@ -996,6 +1039,7 @@ public class Meeting {
     	private Boolean allowPromoteGuestToModerator;
         private long waitingGuestUsersTimeout;
     	private Boolean allowRequestsWithoutSession;
+        private Boolean defaultAllowTransfer;
 		private String meetingLayout;
     	private BreakoutRoomsParams breakoutRoomsParams;
     	private LockSettingsParams lockSettingsParams;
@@ -1225,6 +1269,11 @@ public class Meeting {
     		allowRequestsWithoutSession = value;
     		return this;
     	}
+
+       public Builder withDefaultAllowTransfer(Boolean value) {
+           defaultAllowTransfer = value;
+           return this;
+       }
 
 			public Builder withMeetingLayout(String layout) {
 				meetingLayout = layout;

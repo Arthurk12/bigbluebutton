@@ -335,6 +335,23 @@ object MsgBuilder {
     BbbCommonEnvCoreMsg(envelope, req)
   }
 
+  def buildRedirectedUserToTransferSysMsg(
+      meetingId:    String,
+      intUserId:    String,
+      name:         String,
+      userdata:     java.util.Map[String, String],
+      extMeetingId: String,
+      extUserId:    String,
+      sessionToken: String
+  ): BbbCommonEnvCoreMsg = {
+    val routing = collection.immutable.HashMap("sender" -> "bbb-web")
+    val envelope = BbbCoreEnvelope(RedirectedUserToTransferSysMsg.NAME, routing)
+    val header = BbbCoreHeaderWithMeetingId(RedirectedUserToTransferSysMsg.NAME, meetingId)
+    val body = RedirectedUserToTransferSysMsgBody(intUserId, name, userdata, extMeetingId, extUserId, sessionToken)
+    val req = RedirectedUserToTransferSysMsg(header, body)
+    BbbCommonEnvCoreMsg(envelope, req)
+  }
+
   def buildPublishedRecordingSysMsg(msg: PublishedRecordingMessage): BbbCommonEnvCoreMsg = {
     val routing = collection.immutable.HashMap("sender" -> "bbb-web")
     val envelope = BbbCoreEnvelope(PublishedRecordingSysMsg.NAME, routing)
