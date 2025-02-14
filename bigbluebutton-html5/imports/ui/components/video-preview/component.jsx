@@ -1239,7 +1239,7 @@ class VideoPreview extends Component {
       previewError,
     } = this.state;
     const shouldDisableButtons = this.shouldSkipVideoPreview()
-      && !(deviceError || previewError);
+    || !!(deviceError || previewError);
 
     const shared = this.isAlreadyShared(webcamDeviceId);
 

@@ -11,7 +11,11 @@ exports.modalDismissButton = 'button[data-test="modalDismissButton"]';
 exports.closeModal = 'button[data-test="closeModal"]';
 exports.isSharingScreen = 'div[data-test="isSharingScreen"]';
 exports.pdfFileName = '100PagesFile.pdf';
-exports.reactionsButton = 'button[data-test="reactionsButton"]';
+const reactionsButton = 'button[data-test="reactionsButton"]';
+exports.reactionsButton = reactionsButton;
+exports.reactionsButtonLabel = `${reactionsButton} span:nth-child(2)`;
+exports.singleReactionButton = 'li[data-test="reaction"]';
+exports.emojiRain = 'div[data-test="emojiRain"] svg';
 exports.raiseHandBtn = 'button[data-test="raiseHandBtn"]';
 exports.lowerHandBtn = 'button[data-test="lowerHandBtn"]';
 exports.raiseHandRejection = 'button[data-test="raiseHandRejection"]';
@@ -67,6 +71,7 @@ exports.resetAssignments = 'button[data-test="resetAssignments"]'
 exports.breakoutRoomsItem = 'div[data-test="breakoutRoomsItem"]';
 exports.alreadyConnected = 'span[data-test="alreadyConnected"]';
 exports.askJoinRoom1 = 'button[data-test="askToJoinRoom1"]';
+exports.askJoinRoom2 = 'button[data-test="askToJoinRoom2"]';
 exports.joinRoom1 = 'button[data-test="joinRoom1"]';
 exports.joinFirstRoom = 'button[data-test^="joinRoom"]';
 exports.allowChoiceRoom = 'input[id="freeJoinCheckbox"]';
@@ -100,6 +105,9 @@ exports.captureBreakoutSharedNotes = 'input[id="captureNotesBreakoutCheckbox"]';
 exports.captureBreakoutWhiteboard = 'input[id="captureSlidesBreakoutCheckbox"]';
 exports.selectBreakoutRoomBtn = 'select[data-test="selectBreakoutRoomBtn"]';
 exports.roomOption = 'option[data-test="roomOption"]';
+exports.changeSlideBreakoutRoom1 = 'select[data-test="changeSlideBreakoutRoom1"]';
+exports.slide1BreakoutRoom = 'select[data-test="changeSlideBreakoutRoom"]'
+exports.currentSlideBreakoutOption = 'option[data-test="currentSlideBreakoutOption"]';
 
 // Chat
 exports.chatBox = 'textarea[id="message-input"]';
@@ -187,7 +195,7 @@ exports.minutesInput = 'input[data-test="minutesInput"]';
 exports.secondsInput = 'input[data-test="secondsInput"]';
 
 // Notes
-exports.sharedNotes = 'div[data-test="sharedNotesButton"]';
+exports.sharedNotesSidebarButton = 'div[data-test="sharedNotesSidebarButton"]';
 exports.hideNotesLabel = 'button[data-test="hideNotesLabel"]';
 exports.etherpadFrame = 'iframe[title="pad"]';
 exports.etherpadOuter = 'iframe[title="Ether"]';
@@ -380,6 +388,7 @@ exports.askModerator = 'button[data-test="askModerator"]';
 exports.alwaysAccept = 'button[data-test="alwaysAccept"]';
 exports.alwaysDeny = 'button[data-test="alwaysDeny"]';
 exports.deniedMessageElement = 'p[class="error-message"]';
+exports.moreOptionsUserItemButton = 'div[data-test="moreOptionsUserItemButton"]';
 exports.promoteToModerator = 'li[data-test="promoteToModerator"]';
 exports.demoteToViewer = 'li[data-test="demoteToViewer"]';
 exports.makePresenter = 'li[data-test="makePresenter"]';
@@ -397,7 +406,7 @@ exports.unmuteUser = 'li[data-test="unmuteUser"]';
 exports.ejectCamera = 'li[data-test="ejectCamera"]';
 
 // Lock Viewers
-exports.lockViewersButton = 'li[data-test="lockViewersButton"]';
+exports.lockViewersButton = 'button[data-test="lockViewersButton"]';
 exports.unlockUserButton = 'li[data-test="unlockUserButton"]';
 exports.applyLockSettings = 'button[data-test="applyLockSettings"]';
 exports.lockShareWebcam = 'input[data-test="lockShareWebcam"]';
