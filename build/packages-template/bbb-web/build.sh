@@ -77,6 +77,7 @@ echo $PWD
 
 mkdir -p "$STAGING"/usr/share/bbb-web
 mv build/libs/bigbluebutton-0.10.0.war "$STAGING"/usr/share/bbb-web
+cp pre-start.sh "$STAGING"/usr/share/bbb-web
 
 mkdir -p "$STAGING"/etc/default
 cp ../bbb-web.env "$STAGING"/etc/default/bbb-web
