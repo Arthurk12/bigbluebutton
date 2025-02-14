@@ -50,6 +50,14 @@ const intlMessages = defineMessages({
     id: 'app.navBar.openDetailsTooltip',
     description: 'Open details tooltip',
   },
+  sessionControlLabel: {
+    id: 'app.navBar.sessionControlLabel',
+    description: 'label for screen reader to jump to leave button and options menu',
+  },
+  speakersListLabel: {
+    id: 'app.navBar.speakersListLabel',
+    description: 'label for screen reader to jump to speakers list',
+  },
 });
 
 const propTypes = {
@@ -320,10 +328,6 @@ class NavBar extends Component {
         {!hideTopRow && (
           <Styled.Top>
             <Styled.Left>
-              {shouldShowNavBarToggleButton && isExpanded && document.dir === 'ltr'
-                && <Styled.ArrowLeft iconName="left_arrow" />}
-              {shouldShowNavBarToggleButton && !isExpanded && document.dir === 'rtl'
-                && <Styled.ArrowLeft iconName="left_arrow" />}
               {shouldShowNavBarToggleButton && (
                 <Styled.NavbarToggleButton
                   tooltipplacement="right"
@@ -336,16 +340,14 @@ class NavBar extends Component {
                   label={intl.formatMessage(intlMessages.toggleUserListLabel)}
                   tooltipLabel={intl.formatMessage(intlMessages.toggleUserListLabel)}
                   aria-label={ariaLabel}
-                  icon="user"
+                  icon={isExpanded ?
+                    (document.dir === 'rtl' ? 'right_arrow' : 'left_arrow')
+                    : (document.dir === 'rtl' ? 'left_arrow' : 'right_arrow')}
                   aria-expanded={isExpanded}
                   accessKey={TOGGLE_USERLIST_AK}
                   hasNotification={hasNotification}
                 />
               )}
-              {shouldShowNavBarToggleButton && !isExpanded && document.dir === 'ltr'
-                && <Styled.ArrowRight iconName="right_arrow" />}
-              {shouldShowNavBarToggleButton && isExpanded && document.dir === 'rtl'
-                && <Styled.ArrowRight iconName="right_arrow" />}
               {renderPluginItems(leftPluginItems)}
             </Styled.Left>
             <Styled.Center>
@@ -362,6 +364,7 @@ class NavBar extends Component {
               {renderPluginItems(centerPluginItems)}
             </Styled.Center>
             <Styled.Right>
+              <h2 class="sr-only">{intl.formatMessage(intlMessages.sessionControlLabel)}</h2>
               <RecordingIndicator
                 amIModerator={amIModerator}
                 currentUserId={currentUserId}
@@ -379,6 +382,7 @@ class NavBar extends Component {
           </Styled.Top>
         )}
         <Styled.Bottom>
+          <h2 class="sr-only">{intl.formatMessage(intlMessages.speakersListLabel)}</h2>
           {enableTalkingIndicator ? <TalkingIndicator amIModerator={amIModerator} /> : null}
           <TimerIndicatorContainer />
         </Styled.Bottom>
