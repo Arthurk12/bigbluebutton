@@ -23,6 +23,7 @@ import meetingClientSettingsInitialValues from '/imports/ui/core/initial-values/
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import KEY_CODES from '/imports/utils/keyCodes';
 import logger from '/imports/startup/client/logger';
+import { debounce } from '/imports/utils/debounce';
 import Styled from './styles';
 import {
   mapLanguage,
@@ -201,6 +202,28 @@ const Whiteboard = React.memo((props) => {
     };
   };
 
+  const debouncedUpdateShapes = debounce(() => {
+    if (shapes && Object.keys(shapes).length > 0) {
+      prevShapesRef.current = shapes;
+      tlEditorRef.current?.store.mergeRemoteChanges(() => {
+        const remoteShapesArray = Object.values(prevShapesRef.current).reduce((acc, shape) => {
+          if (shape.meta?.presentationId === presentationIdRef.current || shape?.whiteboardId?.includes(presentationIdRef.current)) {
+            acc.push(sanitizeShape(shape));
+          }
+          return acc;
+        }, []);
+
+        if (pageChanged) {
+          cleanupStore(`page:${parseInt(curPageIdRef.current, 10)}`);
+          editor.store.put(assets);
+          editor.store.put(bgShape);
+        }
+
+        tlEditorRef.current?.store.put(remoteShapesArray);
+      });
+    }
+  }, 175);
+
   React.useEffect(() => {
     localStorage.setItem('pageZoomMap', JSON.stringify(pageZoomMap));
   }, [pageZoomMap]);
@@ -220,6 +243,10 @@ const Whiteboard = React.memo((props) => {
   React.useEffect(() => {
     whiteboardIdRef.current = whiteboardId;
   }, [whiteboardId]);
+
+  React.useEffect(() => {
+    presentationIdRef.current = presentationId;
+  }, [presentationId]);
 
   React.useEffect(() => {
     hasWBAccessRef.current = hasWBAccess;
@@ -244,13 +271,7 @@ const Whiteboard = React.memo((props) => {
   }, [fitToWidth]);
 
   React.useEffect(() => {
-    if (shapes && Object.keys(shapes).length > 0) {
-      prevShapesRef.current = shapes;
-      const remoteShapesArray = Object.values(shapes).map((shape) => sanitizeShape(shape));
-      tlEditorRef.current?.store.mergeRemoteChanges(() => {
-        tlEditorRef.current?.store.put(remoteShapesArray);
-      });
-    }
+    debouncedUpdateShapes();
   }, [shapes]);
 
   React.useEffect(() => {
@@ -755,6 +776,7 @@ const Whiteboard = React.memo((props) => {
               meta: {
                 ...record.meta,
                 createdBy: currentUser?.userId,
+                presentationId: presentationIdRef.current,
               },
             };
 
@@ -771,6 +793,7 @@ const Whiteboard = React.memo((props) => {
             meta: {
               createdBy,
               updatedBy: currentUser?.userId,
+              presentationId: presentationIdRef.current,
             },
           };
 
@@ -1656,11 +1679,16 @@ const Whiteboard = React.memo((props) => {
   const cleanupStore = (currentPageId) => {
     const allRecords = tlEditorRef.current.store.allRecords();
     const shapeIdsToRemove = allRecords
-      .filter((record) => record.typeName === 'shape' && record.parentId && record.parentId !== currentPageId)
+      .filter((record) => {
+        return record.typeName === 'shape' && record.parentId;
+      })
+      .filter((record) => {
+        return record?.meta?.presentationId !== presentationIdRef.current || !record?.meta?.presentationId;
+      })
       .map((shape) => shape.id);
 
     if (shapeIdsToRemove.length > 0) {
-      tlEditorRef.current.deleteShapes(shapeIdsToRemove);
+      tlEditorRef.current?.store.remove([...shapeIdsToRemove]);
     }
   };
 
