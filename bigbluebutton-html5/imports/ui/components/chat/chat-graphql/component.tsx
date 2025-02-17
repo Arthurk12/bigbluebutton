@@ -63,16 +63,15 @@ const Chat: React.FC<ChatProps> = ({
   const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
 
   const isEditingMessage = useRef(false);
-  const [showMessages, setShowMessages] = useState(chatId === PUBLIC_GROUP_CHAT_ID);
   const [privateList, setPrivateList] = useState(false);
   const layoutContextDispatch = layoutDispatch();
   const intl = useIntl();
+  const isPrivateChat = chatId !== PUBLIC_GROUP_CHAT_ID;
+  const isPublicChat = chatId === PUBLIC_GROUP_CHAT_ID && !privateList;
 
   const handleClickSelectChat = (isPublicChat: boolean) => {
-    setShowMessages(isPublicChat);
-    setPrivateList(false);
-
     if (isPublicChat) {
+      setPrivateList(false);
       layoutContextDispatch({
         type: ACTIONS.SET_ID_CHAT_OPEN,
         value: PUBLIC_GROUP_CHAT_ID,
@@ -129,6 +128,26 @@ const Chat: React.FC<ChatProps> = ({
     };
   }, []);
 
+  const renderChatPanelContent = () => {
+    if (privateList) {
+      return (
+        <PrivateChatListContainer
+          privateChatSelectedCallback={() => setPrivateList(false)}
+          chats={filteredPrivateChats}
+        />
+      );
+    }
+    return (
+      <>
+        {isPrivateChat && (
+          <BackButton onClick={handleClickReturnPrivateList} title={participantName} />
+        )}
+        <ChatMessageListContainer />
+        <ChatMessageFormContainer />
+      </>
+    );
+  };
+
   return (
     <>
       <ChatHeader />
@@ -139,7 +158,7 @@ const Chat: React.FC<ChatProps> = ({
         {filteredPrivateChats.length > 0 ? (
           <Styled.ButtonsWrapper>
             <Button
-              variant={showMessages ? 'contained' : 'outlined'}
+              variant={isPublicChat ? 'contained' : 'outlined'}
               color="primary"
               size="medium"
               data-test="publicChatButton"
@@ -150,8 +169,8 @@ const Chat: React.FC<ChatProps> = ({
                 marginRight: '8px',
                 padding: '8px 16px',
                 textTransform: 'none',
-                backgroundColor: showMessages ? btnPrimaryBg : colorOffWhite,
-                color: showMessages ? colorWhite : colorGrayLight,
+                backgroundColor: isPublicChat ? btnPrimaryBg : colorOffWhite,
+                color: isPublicChat ? colorWhite : colorGrayLight,
                 border: `1px solid ${btnPrimaryBg}`,
                 display: 'block',
                 textAlign: 'center',
@@ -177,7 +196,7 @@ const Chat: React.FC<ChatProps> = ({
               )}
             </Button>
             <Button
-              variant={!showMessages ? 'contained' : 'outlined'}
+              variant={isPrivateChat || privateList ? 'contained' : 'outlined'}
               color="primary"
               size="medium"
               data-test="privateChatButton"
@@ -187,8 +206,8 @@ const Chat: React.FC<ChatProps> = ({
                 width: '100%',
                 padding: '8px 16px',
                 textTransform: 'none',
-                backgroundColor: !showMessages ? btnPrimaryBg : colorOffWhite,
-                color: !showMessages ? colorWhite : colorGrayLight,
+                backgroundColor: isPrivateChat || privateList ? btnPrimaryBg : colorOffWhite,
+                color: isPrivateChat || privateList ? colorWhite : colorGrayLight,
                 border: `1px solid ${btnPrimaryBg}`,
                 display: 'block',
                 textAlign: 'center',
@@ -215,20 +234,7 @@ const Chat: React.FC<ChatProps> = ({
             </Button>
           </Styled.ButtonsWrapper>
         ) : null}
-        {privateList ? (
-          <PrivateChatListContainer
-            privateChatSelectedCallback={() => setPrivateList(false)}
-            chats={filteredPrivateChats}
-          />
-        ) : (
-          <>
-            {!showMessages && !privateList && (
-              <BackButton onClick={handleClickReturnPrivateList} title={participantName} />
-            )}
-            <ChatMessageListContainer />
-            <ChatMessageFormContainer />
-          </>
-        )}
+        {renderChatPanelContent()}
       </Styled.ContentWrapper>
     </>
   );
