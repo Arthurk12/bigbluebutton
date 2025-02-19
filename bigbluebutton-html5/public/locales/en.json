@@ -1177,6 +1177,7 @@
     "app.notificationBar.connectionCode3003": "Server is currently not responding. Reconnection in progress (code 3003)",
     "app.notificationBar.connectionCode3004": "Connection is unstable. Please check your internet connection (code 3004)",
     "app.notificationBar.connectionCode3005": "Data is loading slowly. Reconnection in progress (code 3005)",
+    "app.notificationBar.issueLoadingDataCode3006": "Some live data could not be loaded. Please refresh your client (code 3006)",
     "app.learning-dashboard.label": "Engagement Report",
     "app.learning-dashboard.description": "Report with users activities",
     "app.learning-dashboard.clickHereToOpen": "Open Engagement Report",
