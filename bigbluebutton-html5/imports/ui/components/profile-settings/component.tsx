@@ -3,10 +3,10 @@ import React, {
 } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { useMutation } from '@apollo/client';
-import { Layout } from '../layout/layoutTypes';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import { Layout } from '../layout/layoutTypes';
 import Styled from './styles';
 import { layoutDispatch, layoutSelect } from '../layout/context';
 import { ACTIONS, PANELS } from '../layout/enums';
@@ -40,6 +40,7 @@ import AudioSelectors from './audio-selectors/component';
 import AudioCaptions from './audio-captions/component';
 import BBBVideoStream from '/imports/ui/services/webrtc-base/bbb-video-stream';
 import Tooltip from '/imports/ui/components/common/tooltip/component';
+import { colorPrimary } from '../../stylesheets/styled-components/palette';
 
 const intlMessages: { [key: string]: { id: string; description?: string } } = defineMessages({
   title: {
@@ -884,6 +885,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = () => {
 
     return (
       <Styled.BrightnessSlider
+        sx={{ color: colorPrimary }}
         value={brightness - 100}
         defaultValue={0}
         min={-100}
