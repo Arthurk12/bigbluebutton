@@ -199,6 +199,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const mobileWidth = `${isDragging ? cameraSize?.width : cameraDock.width}px`;
   const mobileHeight = `${isDragging ? cameraSize?.height : cameraDock.height}px`;
   const isDesktopWidth = isDragging ? cameraSize?.width : cameraDock.width;
+  const desktopWidthWithSidebar = isCameraSidebar ? '100%' : isDesktopWidth;
   const isDesktopHeight = isDragging ? cameraSize?.height : cameraDock.height;
   const camOpacity = isDragging ? 0.5 : undefined;
   let padding = '';
@@ -288,7 +289,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
               role="region"
               draggable={cameraDock.isDraggable && !isFullscreen ? 'true' : undefined}
               style={{
-                width: isIphone ? mobileWidth : isDesktopWidth,
+                width: isIphone ? mobileWidth : desktopWidthWithSidebar,
                 height: isIphone ? mobileHeight : isDesktopHeight,
                 opacity: camOpacity,
                 background: 'none',
