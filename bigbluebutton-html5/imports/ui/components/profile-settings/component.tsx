@@ -37,7 +37,6 @@ import { useSharedDevices, useIsUserLocked } from '/imports/ui/components/video-
 import { useIsCustomVirtualBackgroundsEnabled, useIsVirtualBackgroundsEnabled } from '../../services/features';
 import VirtualBgSelector from '/imports/ui/components/video-preview/virtual-background/component';
 import AudioSelectors from './audio-selectors/component';
-import AudioCaptions from './audio-captions/component';
 import BBBVideoStream from '/imports/ui/services/webrtc-base/bbb-video-stream';
 import Tooltip from '/imports/ui/components/common/tooltip/component';
 import { colorPrimary } from '../../stylesheets/styled-components/palette';
@@ -1012,7 +1011,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = () => {
         <Styled.VirtualBackgroundContainer>
           {isVirtualBackgroundsEnabled && renderVirtualBgSelector()}
         </Styled.VirtualBackgroundContainer>
-        <AudioCaptions />
       </Styled.ProfileSettings>
     </>
   );
