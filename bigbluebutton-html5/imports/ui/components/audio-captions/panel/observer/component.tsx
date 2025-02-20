@@ -26,7 +26,7 @@ const AudioCaptionsPanelAppObserver = () => {
         layoutContextDispatch({
           type: ACTIONS.REGISTER_SIDEBAR_APP,
           value: {
-            panel,
+            id: panel,
             name,
             icon,
           },
