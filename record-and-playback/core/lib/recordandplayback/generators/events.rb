@@ -1006,9 +1006,9 @@ module BigBlueButton
         payloadJson = JSON.parse(event.at_xpath("payloadJson").text)
         s = {
           :timestamp => event['timestamp'].to_i,
-          :external_video_url => payloadJson['audioUrl'],
-          :is_audio => true,
-          :is_local => true,
+          :external_video_url => "filename=#{File.basename(payloadJson['audioUrl'])}",
+          :is_audio => 'true',
+          :is_local => 'true',
         }
         external_videos_events << s
       end
