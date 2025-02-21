@@ -732,6 +732,9 @@ class MeetingActor(
       case m: MeetingStreamStartedMsg       => streamApp2x.handle(m, liveMeeting, msgBus)
       case m: MeetingStreamStoppedMsg       => streamApp2x.handle(m, liveMeeting, msgBus)
 
+      // Transfer
+      case m: MeetingSetTransferMsg         => streamApp2x.handle(m, liveMeeting, msgBus);
+
       // GroupChat
       case m: CreateGroupChatReqMsg =>
         state = groupChatApp.handle(m, state, liveMeeting, msgBus)

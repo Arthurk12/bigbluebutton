@@ -882,6 +882,13 @@ public class MeetingService implements MessageListener {
     }
   }
 
+  private void processUpdateTransferStatus(UpdateTransferStatus message) {
+    Meeting m = getMeeting(message.meetingId);
+    if (m != null) {
+      m.setTransfer(message.state);
+    }
+  }
+
   private void processUpdateRecordingStatus(UpdateRecordingStatus message) {
     Meeting m = getMeeting(message.meetingId);
       // Set only once
@@ -1395,6 +1402,8 @@ public class MeetingService implements MessageListener {
           processMeetingStreamStarted((MeetingStreamStarted) message);
         } else if (message instanceof MeetingStreamStopped) {
           processMeetingStreamStopped((MeetingStreamStopped) message);
+        } else if (message instanceof UpdateTransferStatus) {
+          processUpdateTransferStatus((UpdateTransferStatus) message);
         } else if (message instanceof LockSettingsChanged) {
           processLockSettingsChanged((LockSettingsChanged) message);
         } else if (message instanceof WebcamsOnlyForModeratorChanged) {

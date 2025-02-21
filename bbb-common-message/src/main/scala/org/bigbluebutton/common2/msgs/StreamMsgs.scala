@@ -39,6 +39,10 @@ object MeetingStreamSetShowCaptionsMsg { val NAME = "MeetingStreamSetShowCaption
 case class MeetingStreamSetShowCaptionsMsg(header: BbbClientMsgHeader, body: MeetingStreamSetShowCaptionsMsgBody) extends StandardMsg
 case class MeetingStreamSetShowCaptionsMsgBody(showCaptions: Boolean)
 
+object MeetingSetTransferMsg { val NAME = "MeetingSetTransferMsg" }
+case class MeetingSetTransferMsg(header: BbbClientMsgHeader, body: MeetingSetTransferMsgBody) extends StandardMsg
+case class MeetingSetTransferMsgBody(state: Boolean)
+
 // Out messages
 object MeetingStreamStartedEvtMsg { val NAME = "MeetingStreamStartedEvtMsg" }
 case class MeetingStreamStartedEvtMsg(header: BbbCoreHeaderWithMeetingId, body: MeetingStreamStartedEvtMsgBody) extends BbbCoreMsg
@@ -80,3 +84,7 @@ case class UserDisconnectedFromTransferEvtMsgBody(
 object MeetingStreamSetShowCaptionsEvtMsg { val NAME = "MeetingStreamSetShowCaptionsEvtMsg" }
 case class MeetingStreamSetShowCaptionsEvtMsg(header: BbbCoreHeaderWithMeetingId, body: MeetingStreamSetShowCaptionsEvtMsgBody) extends BbbCoreMsg
 case class MeetingStreamSetShowCaptionsEvtMsgBody(showCaptions: Boolean)
+
+object MeetingSetTransferEvtMsg { val NAME = "MeetingSetTransferEvtMsg" }
+case class MeetingSetTransferEvtMsg(header: BbbCoreHeaderWithMeetingId, body: MeetingSetTransferEvtMsgBody) extends BbbCoreMsg
+case class MeetingSetTransferEvtMsgBody(state: Boolean)

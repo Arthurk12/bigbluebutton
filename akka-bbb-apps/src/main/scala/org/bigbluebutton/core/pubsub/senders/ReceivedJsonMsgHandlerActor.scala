@@ -441,6 +441,9 @@ class ReceivedJsonMsgHandlerActor(
       case MeetingStreamStoppedMsg.NAME =>
         routeGenericMsg[MeetingStreamStoppedMsg](envelope, jsonNode)
 
+      case MeetingSetTransferMsg.NAME =>
+        routeGenericMsg[MeetingSetTransferMsg](envelope, jsonNode)
+
       // GroupChats
       case GetGroupChatsReqMsg.NAME =>
         routeGenericMsg[GetGroupChatsReqMsg](envelope, jsonNode)

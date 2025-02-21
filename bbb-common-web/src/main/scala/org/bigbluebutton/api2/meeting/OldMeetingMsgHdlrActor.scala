@@ -46,6 +46,7 @@ class OldMeetingMsgHdlrActor(val olgMsgGW: OldMessageReceivedGW)
       case m: MeetingStreamStartedEvtMsg        => handleMeetingStreamStartedEvtMsg(m)
       case m: MeetingStreamStoppedEvtMsg        => handleMeetingStreamStoppedEvtMsg(m)
       case m: RecordingChapterBreakSysMsg       => handleRecordingChapterBreakSysMsg(m)
+      case m: MeetingSetTransferEvtMsg          => handleTransferStatusChangedEvtMsg(m)
       case m: SetPresentationDownloadableEvtMsg => handleSetPresentationDownloadableEvtMsg(m)
       case m: RecordingStatusChangedEvtMsg      => handleRecordingStatusChangedEvtMsg(m)
       case m: LearningDashboardEvtMsg           => handleLearningDashboardEvtMsg(m)
@@ -101,6 +102,10 @@ class OldMeetingMsgHdlrActor(val olgMsgGW: OldMessageReceivedGW)
 
   def handleRecordingChapterBreakSysMsg(msg: RecordingChapterBreakSysMsg): Unit = {
     olgMsgGW.handle(new RecordChapterBreak(msg.body.meetingId, msg.body.timestamp))
+  }
+
+  def handleTransferStatusChangedEvtMsg(msg: MeetingSetTransferEvtMsg): Unit = {
+    olgMsgGW.handle(new UpdateTransferStatus(msg.header.meetingId, msg.body.state));
   }
 
   def handleMeetingCreatedEvtMsg(msg: MeetingCreatedEvtMsg): Unit = {
