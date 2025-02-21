@@ -1040,7 +1040,7 @@
     "app.toast.chat.pollClick": "Poll results were published. Click here to see.",
     "app.toast.usersJoinMutedOn.label": "Users join muted have been enabled",
     "app.toast.usersJoinMutedOff.label": "Users join muted have been disabled",
-    "app.toast.muteAllViewers.label": "All viewers have been muted",
+    "app.toast.muteAllViewers.label": "All users except the presenter have been muted",
     "app.toast.wakeLock.acquireSuccess": "Wake lock active! You can turn it off under the settings menu.",
     "app.toast.wakeLock.acquireFailed": "Error acquiring wake lock",
     "app.toast.wakeLock.notSupported": "Your browser does not support wake locks",
