@@ -33,6 +33,7 @@ public class Meeting {
 
 	public static final String ROLE_MODERATOR = "MODERATOR";
 	public static final String ROLE_ATTENDEE = "VIEWER";
+	public static final String ROLE_BOT = "BOT";
 
 	private String name;
 	private String extMeetingId;
@@ -612,7 +613,7 @@ public class Meeting {
 		if (!authenticatedGuest) return getUnauthenticatedGuestStatus(guest);
 
 		// Allow moderators all the time.
-		if (ROLE_MODERATOR.equals(role)) {
+		if (ROLE_MODERATOR.equals(role) || ROLE_BOT.equals(role)) {
 			return GuestPolicy.ALLOW;
 		}
 

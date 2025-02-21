@@ -602,6 +602,9 @@ class ApiController {
     //Currently, it's associated with the externalUserID
     meetingService.addUserCustomData(meeting.getInternalId(), externUserID, userCustomData);
 
+    if (bot) {
+      role = 'BOT';
+    }
     String guestStatusVal = meeting.calcGuestStatus(role, guest, authenticated)
 
     UserSession us = new UserSession();
