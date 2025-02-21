@@ -659,7 +659,6 @@ const Whiteboard = React.memo((props) => {
   };
 
   const handleTldrawMount = (editor) => {
-    console.log('Tldraw:mount');
     tlEditorRef.current = editor;
     setTldrawAPI(editor);
     setEditor(editor);
