@@ -437,6 +437,15 @@ class ApiController {
     //Currently, it's associated with the externalUserID
     meetingService.addUserCustomData(meeting.getInternalId(), externUserID, userCustomData);
 
+    Boolean joinViaTransfer = false;
+    if (!StringUtils.isEmpty(params.joinViaTransfer)) {
+      joinViaTransfer = true
+    }
+
+    if (joinViaTransfer) {
+      guest = true
+    }
+
     if (bot) {
       role = 'BOT';
     }
@@ -502,15 +511,6 @@ class ApiController {
 
     if (!StringUtils.isEmpty(params.lastName)) {
       us.lastName = params.lastName;
-    }
-
-    Boolean joinViaTransfer = false;
-    if (!StringUtils.isEmpty(params.joinViaTransfer)) {
-      joinViaTransfer = true
-    }
-
-    if (joinViaTransfer) {
-      us.guest = true
     }
 
     String meetingId = meeting.getInternalId()
