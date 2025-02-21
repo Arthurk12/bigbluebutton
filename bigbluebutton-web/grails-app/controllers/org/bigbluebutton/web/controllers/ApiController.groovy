@@ -251,6 +251,171 @@ class ApiController {
   }
 
   /**********************************************
+   * TRANSFER JOIN API
+   *********************************************/
+  def transferJoin = {
+    String API_CALL = 'transferJoin'
+    ApiErrors errors = new ApiErrors()
+
+    // Do we have a checksum? If none, complain.
+    if (StringUtils.isEmpty(params.checksum)) {
+      errors.missingParamError("checksum")
+    }
+
+    // Do we have a name for the user joining? If none, complain.
+    if (!StringUtils.isEmpty(params.fullName)) {
+      params.fullName = StringUtils.strip(params.fullName)
+      if (StringUtils.isEmpty(params.fullName)) {
+        errors.missingParamError("fullName")
+      }
+    } else {
+      errors.missingParamError("fullName")
+    }
+
+    String fullName = params.fullName
+
+    // Do we have a meeting id? If none, complain.
+    if (!StringUtils.isEmpty(params.meetingID)) {
+      params.meetingID = StringUtils.strip(params.meetingID)
+      if (StringUtils.isEmpty(params.meetingID)) {
+        errors.missingParamError("meetingID")
+      }
+    } else {
+      errors.missingParamError("meetingID")
+    }
+
+    String externalMeetingId = params.meetingID
+
+    // Do we agree on the checksum? If not, complain.
+    if (!paramsProcessorUtil.isChecksumSame(API_CALL, params.checksum, request.getQueryString())) {
+      errors.checksumError()
+    }
+
+    if (errors.hasErrors()) {
+      respondWithErrors(errors, REDIRECT_RESPONSE)
+      return
+    }
+
+    // Everything is good so far. Translate the external meeting id to an internal meeting id. If
+    // we can't find the meeting, complain.
+    String internalMeetingId = paramsProcessorUtil.convertToInternalMeetingId(externalMeetingId)
+    Meeting meeting = meetingService.getMeeting(internalMeetingId)
+    if (meeting == null) {
+      errors.invalidMeetingIdError()
+      respondWithErrors(errors, REDIRECT_RESPONSE)
+      return
+    }
+
+    // Is this user joining a meeting that has been ended. If so, complain.
+    if (meeting.isForciblyEnded()) {
+      errors.meetingForciblyEndedError()
+      respondWithErrors(errors, REDIRECT_RESPONSE)
+      return
+    }
+
+    // We preprend "w_" to our internal meeting Id to indicate that this is a web user.
+    // For users joining using the phone, we will prepend "v_" so it will be easier
+    // to distinguish users who doesn't have a web client. (ralam june 12, 2017)
+    String internalUserID = "w_" + RandomStringUtils.randomAlphanumeric(12).toLowerCase()
+    String authToken = RandomStringUtils.randomAlphanumeric(12).toLowerCase()
+    String sessionToken = RandomStringUtils.randomAlphanumeric(16).toLowerCase()
+
+    String externUserID = params.userID
+    if (StringUtils.isEmpty(externUserID)) {
+      externUserID = internalUserID
+    }
+
+    // Return a Map with the user custom data
+    Map<String, String> userCustomData = paramsProcessorUtil.getUserCustomData(params)
+
+    // Currently, it's associated with the externalUserID
+    if (userCustomData.size() > 0) {
+      meetingService.addUserCustomData(meeting.getInternalId(), externUserID, userCustomData)
+    }
+
+    if (!StringUtils.isEmpty(params.enforceLayout)) {
+      us.enforceLayout = params.enforceLayout;
+    }
+
+    // Never bot
+    Boolean bot = false
+    // Always a guest coming from transfer
+    Boolean guest = true
+    // Never authenticated (or whatever this means)
+    Boolean authenticated = false
+    // Always attendee
+    String role = Meeting.ROLE_ATTENDEE
+    String guestStatus = meeting.calcGuestStatus(role, guest, authenticated)
+
+    UserSession us = new UserSession()
+    us.authToken = authToken
+    us.internalUserId = internalUserID
+    us.conferencename = meeting.getName()
+    us.meetingID = meeting.getInternalId()
+    us.externMeetingID = meeting.getExternalId()
+    us.externUserID = externUserID
+    us.fullname = fullName
+    us.role = role
+    us.conference = meeting.getInternalId()
+    us.room = meeting.getInternalId()
+    us.voicebridge = meeting.getTelVoice()
+    us.webvoiceconf = meeting.getWebVoice()
+    us.mode = "LIVE"
+    us.record = meeting.isRecord()
+    us.welcome = meeting.getWelcomeMessage()
+    us.bot = bot
+    us.guest = guest
+    us.authed = authenticated
+    us.guestStatus = guestStatus
+    us.logoutUrl = meeting.getLogoutUrl()
+    us.defaultLayout = meeting.getMeetingLayout()
+    us.avatarURL = meeting.defaultAvatarURL
+    us.leftGuestLobby = false
+
+    // Register user into the meeting.
+    meetingService.registerUser(
+      us.meetingID,
+      us.internalUserId,
+      us.fullname,
+      us.role,
+      us.externUserID,
+      us.authToken,
+      sessionToken,
+      us.avatarURL,
+      us.bot,
+      us.guest,
+      us.authed,
+      us.guestStatus,
+      us.excludeFromDashboard,
+      us.enforceLayout,
+      userCustomData,
+      us.leftGuestLobby
+    )
+
+    session.setMaxInactiveInterval(paramsProcessorUtil.getDefaultHttpSessionTimeout())
+
+    String clientURL = paramsProcessorUtil.getDefaultHTML5ClientUrl()
+
+    // Keep track of the client URL in case this needs to wait for
+    // approval as guest. We need to be able to send the user to the
+    // client after being approved by moderator.
+    us.clientUrl = clientURL + "?sessionToken=" + sessionToken
+
+    session[sessionToken] = sessionToken
+    meetingService.addUserSession(sessionToken, us)
+
+    String guestWaitUrl = paramsProcessorUtil.getDefaultGuestWaitURL();
+    String destUrl = guestWaitUrl + "?sessionToken=" + sessionToken
+    // Check if the user has her/his default locale overridden by an userdata
+    String customLocale = userCustomData.get("bbb_override_default_locale")
+    if (customLocale != null) {
+      destUrl += "&locale=" + customLocale
+    }
+
+    redirect(url: destUrl)
+  }
+
+  /**********************************************
    * JOIN API
    *********************************************/
   def join = {
@@ -437,6 +602,9 @@ class ApiController {
     //Currently, it's associated with the externalUserID
     meetingService.addUserCustomData(meeting.getInternalId(), externUserID, userCustomData);
 
+    if (bot) {
+      role = 'BOT';
+    }
     String guestStatusVal = meeting.calcGuestStatus(role, guest, authenticated)
 
     UserSession us = new UserSession();
@@ -503,9 +671,23 @@ class ApiController {
 
     String meetingId = meeting.getInternalId()
 
-    if (hasReachedMaxParticipants(meeting, us)) {
+    Boolean allowTransfer = meeting.getAllowTransfer()
+    Boolean isTransfering = meeting.isTransfering()
+    if (allowTransfer && isTransfering) {
+      Boolean attendee = role == Meeting.ROLE_ATTENDEE
+      if (attendee && !us.bot) {
+        respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
+        return
+      }
+    }
+
+    if (hasReachedMaxParticipants(meeting, us) && !us.bot) {
+      if (allowTransfer) {
+        respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
+        return
+      }
       // BEGIN - backward compatibility
-      invalid("maxParticipantsReached", "The number of participants allowed for this meeting has been reached.", redirectClient, errorRedirectUrl)
+      invalid("maxParticipantsReached", "The number of participants allowed for this meeting has been reached.", REDIRECT_RESPONSE);
       return
       // END - backward compatibility
 
@@ -1940,6 +2122,25 @@ class ApiController {
     newURL = newURL.replace('%%USERNAME%%', userName);
 
     return newURL;
+  }
+
+  private void respondWithTransfer(meetingId, internalUserId, fullName, userdata, externalUserId, sessionToken) {
+    meetingService.redirectedUserToTransfer(meetingId, internalUserId, fullName, userdata, externalUserId, sessionToken);
+
+    String transferURL = paramsProcessorUtil.getDefaultTransferURL();
+    URI transferURI = URI.create(transferURL);
+    String query = "sessionToken=" + sessionToken;
+
+    URI uri = new URI(
+      transferURI.getScheme(),
+      transferURI.getAuthority(),
+      transferURI.getPath(),
+      query,
+      transferURI.getFragment()
+    );
+
+    log.debug "Constructed transfer URL {}", uri.toString();
+    redirect(url: uri);
   }
 
   private void respondWithRedirect(errorsJSONArray, redirectUrl = "") {

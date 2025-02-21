@@ -91,6 +91,9 @@ object MeetingStatus2x {
     status2x.voiceRecordings.values.filter(s => s.recording).toVector
   }
 
+  def setTransfer(status: MeetingStatus2x, value: Boolean) = status.transfer = value
+  def isTransfer(status: MeetingStatus2x): Boolean = status.transfer
+
   def setWebcamsOnlyForModerator(status: MeetingStatus2x, value: Boolean) = status.webcamsOnlyForModerator = value
   def webcamsOnlyForModeratorEnabled(status: MeetingStatus2x): Boolean = status.webcamsOnlyForModerator
   def permisionsInitialized(status: MeetingStatus2x): Boolean = status.permissionsInited
@@ -124,6 +127,8 @@ class MeetingStatus2x {
 
   private var meetingEnded = false
   private var meetingMuted = false
+
+  private var transfer = false
 
   private var extension = new MeetingExtensionProp
 

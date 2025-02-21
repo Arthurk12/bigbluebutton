@@ -295,6 +295,27 @@ class BbbWebApiGWApp(
 
   }
 
+  def redirectedUserToTransfer(
+      meetingId:    String,
+      intUserId:    String,
+      name:         String,
+      userdata:     java.util.Map[String, String],
+      extMeetingId: String,
+      extUserId:    String,
+      sessionToken: String
+  ): Unit = {
+    val event = MsgBuilder.buildRedirectedUserToTransferSysMsg(
+      meetingId,
+      intUserId,
+      name,
+      userdata,
+      extMeetingId,
+      extUserId,
+      sessionToken
+    )
+    msgSender.send(fromBbbWebRedisChannel, JsonUtil.toJson(event))
+  }
+
   def registerUser(meetingId: String, intUserId: String, name: String, firstName: String, lastName: String,
                    role: String, extUserId: String, authToken: String, sessionToken: String,
                    avatarURL: String, webcamBackgroundURL: String, bot: java.lang.Boolean, guest: java.lang.Boolean,
