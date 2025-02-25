@@ -328,7 +328,7 @@ class Presentation extends PureComponent {
       ) {
         const slideChanged = currentSlide.id !== prevProps.currentSlide.id;
         const positionChanged = slidePosition.viewBoxHeight
-            !== prevProps.slidePosition.viewBoxHeight
+          !== prevProps.slidePosition.viewBoxHeight
           || slidePosition.viewBoxWidth !== prevProps.slidePosition.viewBoxWidth;
         const pollPublished = publishedPoll && !prevProps.publishedPoll;
         if (
@@ -504,6 +504,7 @@ class Presentation extends PureComponent {
   }
 
   getInitialPresentationSizes() {
+    Session.setItem('componentPresentationWillUnmount', false);
     // determining the presentationWidth and presentationHeight (available
     // space for the svg) on the initial load
 
@@ -700,9 +701,9 @@ class Presentation extends PureComponent {
             <Styled.ToastSeparator />
             <a
               data-test="toastDownload"
-              aria-label={`${intl.formatMessage(intlMessages.downloadLabel)} ${
-                presentationName
-              }`}
+              aria-label={
+                `${intl.formatMessage(intlMessages.downloadLabel)} ${presentationName}`
+              }
               href={downloadPresentationUri}
               target="_blank"
               rel="noopener noreferrer"
@@ -866,7 +867,7 @@ class Presentation extends PureComponent {
                 : null,
           }}
         >
-          <h2 class="sr-only">{intl.formatMessage(intlMessages.presentationHeader)}</h2>
+          <h2 className="sr-only">{intl.formatMessage(intlMessages.presentationHeader)}</h2>
           <Styled.Presentation
             ref={(ref) => {
               this.refPresentation = ref;
