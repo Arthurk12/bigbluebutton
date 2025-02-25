@@ -205,6 +205,9 @@ module BigBlueButton
             if /^medium-v_\d+-\d+\.\w+$$/.match File.basename(filename)
               BigBlueButton.logger.warn("This is most likely a bug of recording the SIP video twice, so it's going to be ignored")
               next
+            elsif duration_from_file.nil?
+              BigBlueButton.logger.warn("No file info information, ignoring Stop event without prior Start for video #{File.basename(filename)}")
+              next
             else
               event_filename = event.at_xpath('filename').text
               if ! events_copy.xpath("/recording/event[@module='bbb-webrtc-sfu' and @eventname='StartWebRTCShareEvent' and @timestamp>#{timestamp} and ./filename='#{event_filename}']").empty?
