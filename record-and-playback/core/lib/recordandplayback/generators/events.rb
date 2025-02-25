@@ -902,8 +902,11 @@ module BigBlueButton
         case [event[:module], event[:eventname]]
         when %w[CHAT PublicChatEvent]
           next if timestamp < start_time || !record
+          message_text = event.at_xpath('./message').content.strip
+          # ignore empty messages
+          next if message_text.empty?
           # ignore questions plugin messages
-          next if event.at_xpath('./message').content.strip.include? 'Questions Plugin:'
+          next if message_text.include? 'Questions Plugin:'
 
           date = event.at_xpath('./date')&.content
           date = DateTime.iso8601(date) unless date.nil?
@@ -923,7 +926,7 @@ module BigBlueButton
             senderRole: senderRole,
             chatEmphasizedText: chatEmphasizedText,
             replyToMessageId: replyToMessageId,
-            message: linkify(event.at_xpath('./message').content.strip),
+            message: linkify(message_text),
             reactions: reaction_emoji[message_id],
             date: date,
           }
