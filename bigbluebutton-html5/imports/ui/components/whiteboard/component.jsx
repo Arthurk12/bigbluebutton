@@ -1003,7 +1003,7 @@ const Whiteboard = React.memo((props) => {
     localHeight,
     widthAdjustment = 0,
   ) => {
-    const presentationWidthLocal = presentationAreaWidth - widthAdjustment;
+    const presentationWidthLocal = Math.max(presentationAreaWidth - widthAdjustment, 0);
     const calcedZoom = (fitToWidth
       ? presentationWidthLocal / localWidth
       : Math.min(
