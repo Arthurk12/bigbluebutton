@@ -151,10 +151,10 @@ const AudioCaptionsSelectContainer: React.FC<AudioCaptionsContainerProps> = ({
   const voices = getSpeechVoices();
 
   useEffect(() => {
-    if (voices && voicesList.length === 0) {
+    if (voices && voices.length > 0 && voicesList.length === 0) {
       setVoicesList(voices);
     }
-  }, [voices]);
+  }, [voices, voicesList]);
   const {
     data: currentUser,
   } = useCurrentUser(
