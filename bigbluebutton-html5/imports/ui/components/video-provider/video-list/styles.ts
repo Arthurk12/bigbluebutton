@@ -9,6 +9,9 @@ import { CAMERADOCK_POSITION } from '../../layout/enums';
 const NextPageButton = styled(Button)`
   color: ${colorWhite};
   width: ${mdPaddingX};
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   & > i {
     [dir="rtl"] & {
@@ -36,6 +39,9 @@ const NextPageButton = styled(Button)`
 const PreviousPageButton = styled(Button)`
   color: ${colorWhite};
   width: ${mdPaddingX};
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   i {
     [dir="rtl"] & {
@@ -87,6 +93,7 @@ const VideoCanvas = styled.div<{
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 1px;
 
   ${({ $position }) => ($position === 'contentRight' || $position === 'contentLeft') && `
     flex-wrap: wrap;
