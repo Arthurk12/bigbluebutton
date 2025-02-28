@@ -205,6 +205,9 @@ module BigBlueButton
             if /^medium-v_\d+-\d+\.\w+$$/.match File.basename(filename)
               BigBlueButton.logger.warn("This is most likely a bug of recording the SIP video twice, so it's going to be ignored")
               next
+            elsif duration_from_file.nil?
+              BigBlueButton.logger.warn("No file info information, ignoring Stop event without prior Start for video #{File.basename(filename)}")
+              next
             else
               event_filename = event.at_xpath('filename').text
               if ! events_copy.xpath("/recording/event[@module='bbb-webrtc-sfu' and @eventname='StartWebRTCShareEvent' and @timestamp>#{timestamp} and ./filename='#{event_filename}']").empty?
@@ -902,8 +905,11 @@ module BigBlueButton
         case [event[:module], event[:eventname]]
         when %w[CHAT PublicChatEvent]
           next if timestamp < start_time || !record
+          message_text = event.at_xpath('./message').content.strip
+          # ignore empty messages
+          next if message_text.empty?
           # ignore questions plugin messages
-          next if event.at_xpath('./message').content.strip.include? 'Questions Plugin:'
+          next if message_text.include? 'Questions Plugin:'
 
           date = event.at_xpath('./date')&.content
           date = DateTime.iso8601(date) unless date.nil?
@@ -923,7 +929,7 @@ module BigBlueButton
             senderRole: senderRole,
             chatEmphasizedText: chatEmphasizedText,
             replyToMessageId: replyToMessageId,
-            message: linkify(event.at_xpath('./message').content.strip),
+            message: linkify(message_text),
             reactions: reaction_emoji[message_id],
             date: date,
           }
