@@ -529,42 +529,42 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
         setKeyboardFocused={setKeyboardFocused}
       />
       {message.replyToMessage && !deleteTime && (
-      <ChatMessageReplied
-        message={message.replyToMessage.message || ''}
-        sequence={message.replyToMessage.messageSequence}
-        emphasizedMessage={message.replyToMessage.chatEmphasizedText}
-        deletedByUser={message.replyToMessage.deletedBy?.name ?? null}
-      />
+        <ChatMessageReplied
+          message={message.replyToMessage.message || ''}
+          sequence={message.replyToMessage.messageSequence}
+          emphasizedMessage={message.replyToMessage.chatEmphasizedText}
+          deletedByUser={message.replyToMessage.deletedBy?.name ?? null}
+        />
       )}
       {!deleteTime && (
-      <MessageItemWrapper>
-        {messageContent.component}
-        {messageReadFeedbackEnabled && (
-        <MessageReadConfirmation
-          message={message}
-        />
-        )}
-      </MessageItemWrapper>
+        <MessageItemWrapper>
+          {messageContent.component}
+          {messageReadFeedbackEnabled && (
+            <MessageReadConfirmation
+              message={message}
+            />
+          )}
+        </MessageItemWrapper>
       )}
       {sameSender && (
-      <ChatContentFooter>
-        {!deleteTime && editTime && (
-        <Tooltip title={intl.formatTime(editTime, { hour12: false })}>
-          <EditLabel>
-            <Icon iconName="pen_tool" />
-            <span>{intl.formatMessage(intlMessages.edited)}</span>
-          </EditLabel>
-        </Tooltip>
-        )}
-        <ChatTime>
-          <FormattedTime value={dateTime} hour12={false} />
-        </ChatTime>
-      </ChatContentFooter>
+        <ChatContentFooter>
+          {!deleteTime && editTime && (
+            <Tooltip title={intl.formatTime(editTime, { hour12: false })}>
+              <EditLabel>
+                <Icon iconName="pen_tool" />
+                <span>{intl.formatMessage(intlMessages.edited)}</span>
+              </EditLabel>
+            </Tooltip>
+          )}
+          <ChatTime>
+            <FormattedTime value={dateTime} hour12={false} />
+          </ChatTime>
+        </ChatContentFooter>
       )}
       {deleteTime && (
-      <DeleteMessage>
-        {intl.formatMessage(intlMessages.deleteMessage, { 0: message.deletedBy?.name })}
-      </DeleteMessage>
+        <DeleteMessage>
+          {intl.formatMessage(intlMessages.deleteMessage, { 0: message.deletedBy?.name })}
+        </DeleteMessage>
       )}
     </ChatContent>
   );
@@ -580,7 +580,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
     />
   );
 
-  const focusable = !deleteTime && !messageContent.isSystemSender;
+  const focusable = !deleteTime && (!messageContent.isSystemSender || message.messageType === ChatMessageType.POLL);
 
   return (
     <Container
