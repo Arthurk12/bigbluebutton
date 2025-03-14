@@ -6,6 +6,13 @@ import { ACTIONS } from '/imports/ui/components/layout/enums';
 import useSettings from '/imports/ui/services/settings/hooks/useSettings';
 import { SETTINGS } from '/imports/ui/services/settings/enums';
 import { layoutDispatch } from '/imports/ui/components/layout/context';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const theme = createTheme({
+  typography: {
+    fontFamily: 'Source Sans Pro, Arial, sans-serif',
+  },
+});
 
 const HTML = document.getElementsByTagName('html')[0];
 
@@ -83,7 +90,9 @@ class Base extends Component {
     return (
       <>
         <DebugWindow />
-        <AppContainer {...this.props} />
+        <ThemeProvider theme={theme}>
+          <AppContainer {...this.props} />
+        </ThemeProvider>
       </>
     );
   }

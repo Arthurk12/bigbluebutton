@@ -119,7 +119,6 @@ const Panel = styled.div<PanelProps>`
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
-  padding-top: 0.5rem;
   gap: 1rem;
 
   ${({ isChrome }) => isChrome && `
@@ -216,7 +215,7 @@ const GuestLobbyMessageContainer = styled.div`
   align-self: stretch;
   width: 100%;
   gap: 0.5rem;
-  padding-top: 1rem;
+  padding-top: 0.5rem;
 `;
 
 const SwitchTitle = styled(FormControlLabel)`
