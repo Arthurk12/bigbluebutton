@@ -840,8 +840,14 @@ class Presentation extends PureComponent {
     const isVideoFocus = layoutType === LAYOUT_TYPE.VIDEO_FOCUS;
     const presentationZIndex = fullscreenContext ? presentationBounds.zIndex : undefined;
 
-    const APP_CRASH_METADATA = { logCode: 'whiteboard_crash', logMessage: 'Possible whiteboard crash' };
-    if (!presentationIsOpen) return null;
+    const APP_CRASH_METADATA = {
+      logCode: 'whiteboard_crash',
+      logMessage: 'Possible whiteboard crash',
+    };
+    const presentationIsHidden = !presentationBounds
+      || presentationBounds.width === 0
+      || presentationBounds.height === 0;
+    if (!presentationIsOpen || presentationIsHidden) return null;
     return (
       <>
         <Styled.PresentationContainer
