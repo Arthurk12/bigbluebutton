@@ -332,6 +332,8 @@ module BigBlueButton
         additional_events << event
       end
 
+      last_floor_event = nil
+
       ( webcam_events + additional_events ).sort_by { |e| e['timestamp'].to_i }.each do |event|
         timestamp = event['timestamp'].to_i - initial_timestamp
         # Determine the video filename
@@ -391,6 +393,7 @@ module BigBlueButton
             :join_timestamp => timestamp,
             :floor_timestamp => 0
           }
+          next
         when 'ParticipantJoinedEvent'
           # event['module'] == "VOICE"
           user_id = event.at_xpath('participant').text
@@ -401,6 +404,7 @@ module BigBlueButton
             :join_timestamp => timestamp,
             :floor_timestamp => 0
           } if list_user_info[user_id].nil?
+          next
           # this is focused for SIP, regular participants will hit the ParticipantJoinEvent event
         when "ParticipantStatusChangeEvent"
           user_id = event.at_xpath('userId').text
@@ -430,6 +434,8 @@ module BigBlueButton
               end
             end
             list_user_info[user_id][:role] = role
+          else
+            next
           end
         when 'AssignPresenterEvent'
           user_id = event.at_xpath('userid').text
@@ -441,7 +447,12 @@ module BigBlueButton
           user_id = event.at_xpath('participant').text
           user = list_user_info[user_id]
           floor = event.at_xpath('floor').text == 'true'
-          user[:floor_timestamp] = timestamp if floor
+          if !floor || (last_floor_event && last_floor_event[:user_id] == user_id && last_floor_event[:floor] == floor)
+            next
+          else
+            last_floor_event = { :user_id => user_id, :floor => floor }
+            user[:floor_timestamp] = timestamp if floor
+          end
         when "MeetingConfigurationEvent"
           webcamsOnlyForModerator = self.to_boolean(event.at_xpath('webcamsOnlyForModerator').text)
         when "WebcamsOnlyForModeratorEvent"
