@@ -106,7 +106,7 @@ export const CircleButton = styled.div`
 `;
 
 export const ExpandedContent = styled.div`
-  padding: 0px 0.5rem 0.5rem;
+  padding: 0px 0.5rem 0px;
   animation: expand 0.3s ease-out;
 
   @keyframes expand {
@@ -128,6 +128,7 @@ export const GuestPolicyContainer = styled.div`
   flex-direction: column;
   width: 100%;
   margin-top: 0.5rem;
+  padding-bottom: 0.5rem;
 `;
 
 export const GuestPolicySelector = styled(Select)`
