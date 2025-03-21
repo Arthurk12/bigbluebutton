@@ -2,6 +2,9 @@
 
 yq d -i presentation.yml "video_formats[*]"
 yq w -i presentation.yml "video_formats[0]" "${MCONF_REC_WORKER_VIDEO_FORMAT}"
+yq w -i presentation.yml "video_output_width" "${MCONF_REC_WORKER_PRESENTATION_VIDEO_OUTPUT_WIDTH}"
+yq w -i presentation.yml "video_output_height" "${MCONF_REC_WORKER_PRESENTATION_VIDEO_OUTPUT_HEIGHT}"
+yq w -i presentation.yml "video_output_framerate" "${MCONF_REC_WORKER_PRESENTATION_VIDEO_OUTPUT_FRAMERATE}"
 
 yq w -i bigbluebutton.yml "playback_host" "${MCONF_REC_WORKER_PLAYBACK_HOST}"
 yq w -i bigbluebutton.yml "playback_protocol" "${MCONF_REC_WORKER_PLAYBACK_PROTOCOL}"
