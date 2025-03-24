@@ -515,6 +515,7 @@ class Presentation extends PureComponent {
         presentationHeight: presentationSizes.presentationHeight,
         presentationWidth: presentationSizes.presentationWidth,
       });
+      this.onResize();
     }
   }
 
