@@ -26,6 +26,7 @@ import BreakoutMessageForm from './components/messageForm';
 import { useStopMediaOnMainRoom } from '/imports/ui/components/breakout-room/hooks';
 import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
 import CreateBreakoutRoomContainer from '../create-breakout-room/component';
+import connectionStatus from '/imports/ui/core/graphql/singletons/connectionStatus';
 
 interface BreakoutRoomProps {
   breakouts: BreakoutRoomType[];
@@ -270,27 +271,27 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
                             )
                         }
                         {
-                        isModerator && (userJoinedAudio || userJoinedDialin) && audioBridge !== 'livekit'
-                          ? [
-                            ('|'),
-                            (
-                              <Styled.AudioButton
-                                label={
-                                  userJoinedDialin
-                                    ? intl.formatMessage(intlMessages.breakoutReturnAudio)
-                                    : intl.formatMessage(intlMessages.breakoutJoinAudio)
-                                }
-                                disabled={false}
-                                key={`join-audio-${breakout.breakoutRoomId}`}
-                                onClick={
-                                  userJoinedDialin ? () => transferUserToMeeting(breakout.breakoutRoomId, meetingId)
-                                    : () => transferUserToMeeting(meetingId, breakout.breakoutRoomId)
-                                }
-                              />
-                            ),
-                          ]
-                          : null
-                      }
+                          isModerator && (userJoinedAudio || userJoinedDialin) && audioBridge !== 'livekit'
+                            ? [
+                              ('|'),
+                              (
+                                <Styled.AudioButton
+                                  label={
+                                    userJoinedDialin
+                                      ? intl.formatMessage(intlMessages.breakoutReturnAudio)
+                                      : intl.formatMessage(intlMessages.breakoutJoinAudio)
+                                  }
+                                  disabled={false}
+                                  key={`join-audio-${breakout.breakoutRoomId}`}
+                                  onClick={
+                                    userJoinedDialin ? () => transferUserToMeeting(breakout.breakoutRoomId, meetingId)
+                                      : () => transferUserToMeeting(meetingId, breakout.breakoutRoomId)
+                                  }
+                                />
+                              ),
+                            ]
+                            : null
+                        }
                       </Styled.BreakoutActions>
                     )}
                   </Styled.BreakoutRoomList>
@@ -345,13 +346,17 @@ const BreakoutRoomContainer: React.FC = () => {
   ) return null;
 
   if (breakoutError) {
-    logger.error(breakoutError);
-    return (
-      <div>
-        Error:
-        {JSON.stringify(breakoutError)}
-      </div>
+    connectionStatus.setSubscriptionFailed(true);
+    logger.error(
+      {
+        logCode: 'subscription_Failed',
+        extraInfo: {
+          error: breakoutError,
+        },
+      },
+      'Subscription failed to load',
     );
+    return null;
   }
   if (!currentUserData || !breakoutData || !meetingData) return null; // or loading spinner or error
   if ((!hasBreakoutRoom && currentUserData.isModerator) || updateUsersWhileRunning) {

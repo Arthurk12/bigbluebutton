@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { lgBorderRadius } from '../../stylesheets/styled-components/general';
 
 type ContainerProps = {
   isResizing: boolean;
@@ -11,6 +12,7 @@ export const Container = styled.div<ContainerProps>`
   background: var(--color-black);
   z-index: 5;
   display: grid;
+  border-radius: ${lgBorderRadius};
   ${({ isResizing }) => isResizing && `
     pointer-events: none;
   `}

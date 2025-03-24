@@ -180,14 +180,14 @@ const PushLayoutEngine = (props) => {
   }, [hasMeetingLayout, enforceLayoutResult]);
 
   useEffect(() => {
-    if (!selectedLayout) return () => {};
+    if (!selectedLayout) return () => { };
     const meetingLayoutDidChange = meetingLayout !== prevProps.meetingLayout;
     const pushLayoutMeetingDidChange = pushLayoutMeeting !== prevProps.pushLayoutMeeting;
     const enforceLayoutDidChange = enforceLayoutResult !== prevProps.enforceLayoutResult;
     const shouldSwitchLayout = isPresenter
       ? meetingLayoutDidChange || enforceLayoutDidChange
       : ((meetingLayoutDidChange || pushLayoutMeetingDidChange) && pushLayoutMeeting)
-        || enforceLayoutDidChange;
+      || enforceLayoutDidChange;
     const layoutReplicateElements = LAYOUTS_SYNC[selectedLayout][SYNC.REPLICATE_ELEMENTS];
     const layoutPropagateElements = LAYOUTS_SYNC[selectedLayout][SYNC.PROPAGATE_ELEMENTS];
     const Settings = getSettingsSingletonInstance();
@@ -336,7 +336,7 @@ const PushLayoutEngine = (props) => {
     if (selectedLayout !== prevProps.selectedLayout) {
       Session.setItem('isGridEnabled', selectedLayout === LAYOUT_TYPE.VIDEO_FOCUS);
     }
-    return () => {};
+    return () => { };
   });
 
   return null;
@@ -382,8 +382,8 @@ const PushLayoutEngineContainer = (props) => {
   } = useMeeting((m) => ({
     layout: m.layout,
   }));
-  const meetingLayout = LAYOUT_TYPE[currentMeeting?.layout.currentLayoutType];
-  const meetingLayoutUpdatedAt = new Date(currentMeeting?.layout.updatedAt).getTime();
+  const meetingLayout = LAYOUT_TYPE[currentMeeting?.layout?.currentLayoutType];
+  const meetingLayoutUpdatedAt = new Date(currentMeeting?.layout?.updatedAt).getTime();
   const {
     propagateLayout: pushLayoutMeeting,
     cameraDockIsResizing: isMeetingLayoutResizing,
