@@ -135,7 +135,9 @@ const UserListItem: React.FC<UserListItemProps> = ({
     setIsConfirmationModalOpen,
   );
 
-  const userAvatarFiltered = (user.raiseHand === true || user.away === true || (user.reactionEmoji && user.reactionEmoji !== 'none')) ? '' : user.avatar;
+  const userAvatarFiltered = (user.raiseHand === true || user.away === true || (user.reactionEmoji && user.reactionEmoji !== 'none'))
+    ? ''
+    : (user.avatar || '');
 
   const removeUser = (userId: string, banUser: boolean) => {
     if (isVoiceOnlyUser(user.userId)) {
