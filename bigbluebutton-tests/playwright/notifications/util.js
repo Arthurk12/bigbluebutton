@@ -1,5 +1,4 @@
 const { expect } = require('@playwright/test');
-const { ELEMENT_WAIT_LONGER_TIME } = require('../core/constants');
 const e = require('../core/elements');
 const { sleep } = require('../core/helpers');
 
@@ -11,10 +10,6 @@ async function enableChatPopup(test) {
 async function enableUserJoinPopup(test) {
   await test.waitAndClick(e.notificationsTab);
   await test.waitAndClickElement(e.userJoinPushAlerts);
-}
-
-async function saveSettings(page) {
-  await page.waitAndClick(e.modalConfirmButton);
 }
 
 async function checkNotificationText(test, text) {
@@ -41,25 +36,11 @@ async function privateChatMessageToast(page2) {
   await page2.waitAndClick(e.usersListSidebarButton);
   await page2.waitAndClick(e.startPrivateChat);
   // wait for the private chat to be ready
-  await page2.waitUntilHaveCountSelector(e.chatButton, 2);
+  await page2.hasElement(e.privateChatBackButton, 'should display the private chat back button');
   // send a private message
   await page2.type(e.chatBox, e.message1);
   await sleep(1000);
   await page2.waitAndClick(e.sendButton);
-}
-
-async function waitAndClearNotification(testPage) {
-  await testPage.waitAndClick(e.smallToastMsg, ELEMENT_WAIT_LONGER_TIME);
-  await testPage.wasRemoved(e.smallToastMsg, 'should the new small toast message disappear');
-}
-
-async function waitAndClearDefaultPresentationNotification(testPage) {
-  await testPage.hasElement(e.whiteboard, 'should the whiteboard appear on the meeting', ELEMENT_WAIT_LONGER_TIME);
-  const hasCurrentPresentationToast = await testPage.checkElement(e.currentPresentationToast);
-  if (hasCurrentPresentationToast) {
-    await testPage.waitAndClick(e.currentPresentationToast, ELEMENT_WAIT_LONGER_TIME);
-    await testPage.wasRemoved(e.currentPresentationToast, 'should disappear the current presentation toast');
-  }
 }
 
 exports.privateChatMessageToast = privateChatMessageToast;
@@ -68,6 +49,3 @@ exports.enableUserJoinPopup = enableUserJoinPopup;
 exports.checkNotificationText = checkNotificationText;
 exports.checkNotificationIcon = checkNotificationIcon;
 exports.enableChatPopup = enableChatPopup;
-exports.saveSettings = saveSettings;
-exports.waitAndClearNotification = waitAndClearNotification;
-exports.waitAndClearDefaultPresentationNotification = waitAndClearDefaultPresentationNotification;

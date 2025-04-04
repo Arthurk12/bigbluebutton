@@ -17,6 +17,8 @@ import {
   colorGrayLightest,
   colorGrayDark,
   colorGrayLight,
+  emphasizedMessageBackgroundColor,
+  highlightedMessageBorderColor,
 } from '/imports/ui/stylesheets/styled-components/palette';
 import { ChatTime as ChatTimeBase } from './message-header/styles';
 import UserAvatar from '/imports/ui/components/user-avatar/component';
@@ -36,6 +38,7 @@ interface ChatContentProps {
   $highlight: boolean;
   $reactionPopoverIsOpen: boolean;
   $keyboardFocused: boolean;
+  $emphasizedMessage: boolean;
 }
 
 export const FlexColumn = styled.div`
@@ -82,6 +85,7 @@ export const ChatContent = styled.div<ChatContentProps>`
   width: 100%;
   border-radius: 0.5rem;
   position: relative;
+  border: 1px solid transparent;
 
   ${({ $isSystemSender }) => !$isSystemSender && `
     background-color: #f4f6fa;
@@ -89,7 +93,7 @@ export const ChatContent = styled.div<ChatContentProps>`
 
   ${({ $highlight }) => $highlight && `
     &:hover {
-      background-color: ${colorBlueLightest} !important;
+      border: 1px solid ${highlightedMessageBorderColor};
     }
   `}
 
@@ -103,6 +107,14 @@ export const ChatContent = styled.div<ChatContentProps>`
   .chat-message-container:focus & {
     background-color: ${colorBlueLightest} !important;
   }
+
+  ${({ $emphasizedMessage }) => $emphasizedMessage && `
+    background-color: ${emphasizedMessageBackgroundColor};
+
+    &:hover {
+      border: 1px solid ${highlightedMessageBorderColor};
+    }
+  `}
 `;
 
 export const ChatContentFooter = styled.div`

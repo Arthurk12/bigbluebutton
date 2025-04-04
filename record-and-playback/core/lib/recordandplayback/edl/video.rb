@@ -278,14 +278,7 @@ module BigBlueButton
           end
 
           # Try decoding a frame to detect some types of problems
-          ffmpeg_cmd = [
-            *FFMPEG,
-            '-max_error_rate', '0',
-            '-noaccurate_seek', '-ss', '0', '-i', videofile,
-            '-map', '0:v:0', '-frames:v', '1', '-f', 'null', '-',
-          ]
-          exitstatus = BigBlueButton.execute(ffmpeg_cmd, false)
-          unless exitstatus.success?
+          unless test_video_decode(videofile)
             BigBlueButton.logger.warn("    Failed to run test decode; will attempt to remux")
             try_remux_videos << videofile
           end
@@ -310,7 +303,7 @@ module BigBlueButton
             end
 
             info = video_info(newvideofile)
-            if !info[:video]
+            if !info[:video] || !test_video_decode(newvideofile)
               BigBlueButton.logger.warn("    Result of remux is corrupt, not using it.")
               corrupt_videos << videofile
               next
@@ -456,6 +449,18 @@ module BigBlueButton
         else
           0
         end
+      end
+
+       # Try decoding a frame to detect some types of problems
+       def self.test_video_decode(videofile)
+        ffmpeg_cmd = [
+          *FFMPEG,
+          '-max_error_rate', '0',
+          '-noaccurate_seek', '-ss', '0', '-i', videofile,
+          '-map', '0:v:0', '-frames:v', '1', '-f', 'null', '-',
+        ]
+        exitstatus = BigBlueButton.execute(ffmpeg_cmd, false)
+        exitstatus.success?
       end
 
       def self.check_deskshare_timestamp_bug(filename)

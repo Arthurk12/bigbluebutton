@@ -7,6 +7,7 @@ import useSettings from '/imports/ui/services/settings/hooks/useSettings';
 import { SETTINGS } from '/imports/ui/services/settings/enums';
 import { layoutDispatch } from '/imports/ui/components/layout/context';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import logger from '/imports/startup/client/logger';
 
 const theme = createTheme({
   typography: {
@@ -43,6 +44,11 @@ class Base extends Component {
     });
     Session.setItem('isFullscreen', false);
     Session.setItem('audioCaptions', CAPTIONS_ALWAYS_VISIBLE);
+
+    const isLegacyBundle = HTML.classList.contains('legacy');
+    if (isLegacyBundle) {
+      logger.warn({ logCode: 'legacy_browser_bundle_loaded' }, 'Client loaded using legacy bundle');
+    }
   }
 
   componentDidUpdate(prevProps) {

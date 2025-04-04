@@ -70,6 +70,7 @@ public class Meeting {
 	private boolean record;
 	private boolean autoStartRecording = false;
 	private boolean allowStartStopRecording = false;
+	private boolean presentationConversionCacheEnabled = false;
 	private boolean recordFullDurationMedia = false;
 	private boolean haveRecordingMarks = false;
 	private boolean webcamsOnlyForModerator = false;
@@ -133,6 +134,8 @@ public class Meeting {
 
 	private String overrideClientSettings = "";
 
+	private int maxNumPages;
+
     public Meeting(Meeting.Builder builder) {
         name = builder.name;
         extMeetingId = builder.externalId;
@@ -166,6 +169,7 @@ public class Meeting {
         record = builder.record;
         autoStartRecording = builder.autoStartRecording;
         allowStartStopRecording = builder.allowStartStopRecording;
+		presentationConversionCacheEnabled = builder.presentationConversionCacheEnabled;
         recordFullDurationMedia = builder.recordFullDurationMedia;
         webcamsOnlyForModerator = builder.webcamsOnlyForModerator;
         meetingCameraCap = builder.meetingCameraCap;
@@ -677,6 +681,10 @@ public class Meeting {
 		return allowStartStopRecording;
 	}
 
+	public boolean isPresentationConversionCacheEnabled() {
+		return presentationConversionCacheEnabled;
+	}
+
 	public boolean getRecordFullDurationMedia() {
 		return recordFullDurationMedia;
 	}
@@ -989,6 +997,9 @@ public class Meeting {
         return this.enteredUsers.get(userId);
     }
 
+	public void setMaxNumPages(int maxNumPages) { this.maxNumPages = maxNumPages; }
+	public int getMaxNumPages() { return maxNumPages; }
+
     /***
 	 * Meeting Builder
 	 *
@@ -1002,6 +1013,7 @@ public class Meeting {
     	private boolean autoStartRecording;
     	private boolean recordFullDurationMedia;
         private boolean allowStartStopRecording;
+        private boolean presentationConversionCacheEnabled;
         private boolean webcamsOnlyForModerator;
         private Integer meetingCameraCap;
         private Integer userCameraCap;
@@ -1083,6 +1095,11 @@ public class Meeting {
 
     	public Builder withAllowStartStopRecording(boolean allow) {
     		this.allowStartStopRecording = allow;
+    		return this;
+    	}
+
+		public Builder withPresentationConversionCacheEnabled(boolean cacheEnabled) {
+    		this.presentationConversionCacheEnabled = cacheEnabled;
     		return this;
     	}
 

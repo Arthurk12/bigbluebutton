@@ -437,7 +437,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
             },
           }, 'Microphone device change rollback failed - the device may become silent');
 
-          backupStream.getAudioTracks().forEach((track) => track.stop());
+          backupStream?.getAudioTracks().forEach((track) => track.stop());
           backupStream = null;
         });
       }

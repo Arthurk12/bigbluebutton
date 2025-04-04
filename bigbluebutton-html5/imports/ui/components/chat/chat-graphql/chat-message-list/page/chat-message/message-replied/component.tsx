@@ -2,7 +2,7 @@ import React from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import Styled, { DeleteMessage } from './styles';
 import { ChatEvents } from '/imports/ui/core/enums/chat';
-import { textToMarkdown } from '/imports/ui/components/chat/chat-graphql/service';
+import { messageToQuoteMarkdown } from '/imports/ui/components/chat/chat-graphql/service';
 
 const intlMessages = defineMessages({
   deleteMessage: {
@@ -14,17 +14,15 @@ const intlMessages = defineMessages({
 interface MessageRepliedProps {
   message: string;
   sequence: number;
-  emphasizedMessage: boolean;
   deletedByUser: string | null;
 }
 
 const ChatMessageReplied: React.FC<MessageRepliedProps> = (props) => {
   const {
-    message, sequence, emphasizedMessage, deletedByUser,
+    message, sequence, deletedByUser,
   } = props;
 
   const intl = useIntl();
-  const messageChunks = textToMarkdown(message).split('\n');
 
   return (
     <Styled.Container
@@ -45,12 +43,11 @@ const ChatMessageReplied: React.FC<MessageRepliedProps> = (props) => {
       {!deletedByUser && (
         <Styled.Message>
           <Styled.Markdown
-            $emphasizedMessage={emphasizedMessage}
             linkTarget="_blank"
             allowedElements={window.meetingClientSettings.public.chat.allowedElements}
             unwrapDisallowed
           >
-            {messageChunks[0]}
+            {messageToQuoteMarkdown(message)}
           </Styled.Markdown>
         </Styled.Message>
       )}

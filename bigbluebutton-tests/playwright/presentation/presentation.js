@@ -1,10 +1,11 @@
 const { expect } = require('@playwright/test');
 const { MultiUsers } = require('../user/multiusers');
 const e = require('../core/elements');
-const { checkSvgIndex, getSlideOuterHtml, uploadSinglePresentation, uploadMultiplePresentations, getCurrentPresentationHeight } = require('./util.js');
+const { checkSvgIndex, getSlideOuterHtml, uploadSinglePresentation, uploadMultiplePresentations, getCurrentPresentationHeight, hasCurrentPresentationToastElement } = require('./util.js');
 const { ELEMENT_WAIT_LONGER_TIME, ELEMENT_WAIT_EXTRA_LONG_TIME, UPLOAD_PDF_WAIT_TIME, CI } = require('../core/constants');
 const { sleep } = require('../core/helpers');
 const { getSettings } = require('../core/settings');
+const { checkNotificationText } = require('../notifications/util.js');
 
 const defaultZoomLevel = '100%';
 
@@ -34,7 +35,7 @@ class Presentation extends MultiUsers {
   async shareCameraAsContent() {
     await this.modPage.hasElement(e.whiteboard, 'should display the whiteboard whent then moderator joins the meeting', ELEMENT_WAIT_LONGER_TIME);
 
-    await this.modPage.waitAndClick(e.actions);
+    await this.modPage.waitAndClick(e.mediaAreaButton);
     await this.modPage.waitAndClick(e.shareCameraAsContent);
     await this.modPage.hasElement(e.webcamMirroredVideoPreview, 'should display the camera preview when sharing camera as content');
     await this.modPage.waitAndClick(e.startSharingWebcam);
@@ -88,9 +89,11 @@ class Presentation extends MultiUsers {
   }
 
   async uploadSinglePresentationTest() {
+    // wait for whiteboard to load and no notifications
     await this.modPage.waitForSelector(e.whiteboard, ELEMENT_WAIT_LONGER_TIME);
     await this.modPage.waitForSelector(e.skipSlide);
-    await this.modPage.wasRemoved(e.smallToastMsg, ELEMENT_WAIT_EXTRA_LONG_TIME);
+    await this.modPage.closeAllToastNotifications();
+    await this.modPage.wasRemoved(e.smallToastMsg);
 
     const imageURLFirstPresentation = await this.modPage.page.evaluate(() => {
       const element = document.querySelector('div[id="whiteboard-element"] div[class="tl-image"]');
@@ -103,7 +106,6 @@ class Presentation extends MultiUsers {
 
     await this.modPage.closeAllToastNotifications();
     await this.userPage.closeAllToastNotifications();
-    await this.modPage.setHeightWidthViewPortSize();
 
     // Skip check for screenshot on ci, due to the ci and the local machine generating two different image sizes
     // also because the slide location is different and inconsistent (it initially shakes to stabilize and then set incorrect location)
@@ -124,7 +126,6 @@ class Presentation extends MultiUsers {
     await this.userPage.closeAudioModal();
     await this.userPage.closeAllToastNotifications();
     const userWhiteboardLocator = this.userPage.getLocator(e.whiteboard);
-    await this.userPage.setHeightWidthViewPortSize();
 
     await expect(imageURLFirstPresentation).not.toBe(imageURLSecondPresentation);
 
@@ -138,7 +139,12 @@ class Presentation extends MultiUsers {
   }
 
   async uploadOtherPresentationsFormat() {
-    await this.modPage.hasElement(e.whiteboard);
+    // wait for whiteboard to load and no notifications
+    await this.modPage.waitForSelector(e.whiteboard, ELEMENT_WAIT_LONGER_TIME);
+    await this.modPage.waitForSelector(e.skipSlide);
+    await this.modPage.closeAllToastNotifications();
+    await this.modPage.wasRemoved(e.smallToastMsg);
+
     const imageURLFirstPresentation = await this.modPage.page.evaluate(() => {
       const element = document.querySelector('div[id="whiteboard-element"] div[class="tl-image"]');
       const style = element.getAttribute('style')
@@ -153,8 +159,6 @@ class Presentation extends MultiUsers {
     const modWhiteboardLocator = this.modPage.getLocator(e.whiteboard);
     const userWhiteboardLocator = this.userPage.getLocator(e.whiteboard);
 
-    await this.modPage.setHeightWidthViewPortSize();
-    await this.userPage.setHeightWidthViewPortSize();
 
     const imageURLSecondPresentation = await this.modPage.page.evaluate(() => {
       const element = document.querySelector('div[id="whiteboard-element"] div[class="tl-image"]');
@@ -187,8 +191,6 @@ class Presentation extends MultiUsers {
 
     await expect(imageURLSecondPresentation).not.toBe(imageURLThirdPresentation);
 
-    await this.modPage.setHeightWidthViewPortSize();
-    await this.userPage.setHeightWidthViewPortSize();
 
     // Skip check for screenshot on ci, due to the ci and the local machine generating two different image sizes
     if (!CI) {
@@ -213,8 +215,6 @@ class Presentation extends MultiUsers {
 
     await expect(imageURLThirdPresentation).not.toBe(imageURLForthPresentation);
 
-    await this.modPage.setHeightWidthViewPortSize();
-    await this.userPage.setHeightWidthViewPortSize();
 
     // Skip check for screenshot on ci, due to the ci and the local machine generating two different image sizes
     if (!CI) {
@@ -228,7 +228,11 @@ class Presentation extends MultiUsers {
   }
 
   async uploadMultiplePresentationsTest() {
+    // wait for whiteboard to load and no notifications
     await this.modPage.waitForSelector(e.whiteboard, ELEMENT_WAIT_LONGER_TIME);
+    await this.modPage.waitForSelector(e.skipSlide);
+    await this.modPage.closeAllToastNotifications();
+    await this.modPage.wasRemoved(e.smallToastMsg);
 
     const modSlides0 = await getSlideOuterHtml(this.modPage);
     const userSlides0 = await getSlideOuterHtml(this.userPage);
@@ -278,10 +282,9 @@ class Presentation extends MultiUsers {
     await this.modPage.waitAndClick(e.enableOriginalPresentationDownloadBtn);
     await this.userPage.waitForSelector(e.whiteboard);
     // check for the download buttons displayed
-    await this.userPage.hasElement(e.currentPresentationToast, 'should display the current presentation toast notification for the attendee');
-    await this.userPage.hasElement(e.toastDownload, 'should display download button on the toast notification for the attendee');
+    await checkNotificationText(this.userPage, e.presentationDownloadEnabledLabel);
     await this.userPage.hasElement(e.presentationDownloadBtn, 'should display the presentation download button for the attendee');
-    await this.modPage.hasElement(e.presentationDownloadBtn, 'should display the presentation download button for the attendee');
+    await this.modPage.hasElement(e.presentationDownloadBtn, 'should display the presentation download button for the moderator');
     /**
      * the following steps throwing "Error: ENOENT: no such file or directory" at the end of execution
      * due to somehow it's trying to take the screenshot of the tab that opened for the file download
@@ -296,7 +299,6 @@ class Presentation extends MultiUsers {
     await this.modPage.hasElement(e.whiteboard, 'should display the whiteboard for the moderator');
     await this.modPage.wasRemoved(e.presentationDownloadBtn, 'should not display the presentation download button for the moderator');
     await this.userPage.wasRemoved(e.presentationDownloadBtn, 'should not display the presentation download button for the attendee');
-    await this.userPage.wasRemoved(e.toastDownload, 'should not display the download button on the toast notification for the attendee');
   }
 
   async sendPresentationToDownload(testInfo) {
@@ -340,9 +342,9 @@ class Presentation extends MultiUsers {
     await expect(modSlides1, 'should the moderator slide and the attendee slide to be equal').toEqual(userSlides1);
 
     // Remove
-    await this.modPage.waitAndClick(e.actions);
+    await this.modPage.waitAndClick(e.mediaAreaButton);
     await this.modPage.waitAndClick(e.managePresentations);
-    await this.modPage.checkElementCount(e.presentationItem, 2, 'should display both default and uploaded presentation on the manage presentations modal');
+    await this.modPage.hasElementCount(e.presentationItem, 2, 'should display both default and uploaded presentation on the manage presentations modal');
     await this.modPage.waitAndClick(e.removePresentation);  // remove first presentation
     await this.modPage.waitAndClick(e.removePresentation);  // remove second presentation
     await this.modPage.waitAndClick(e.confirmManagePresentation);
@@ -353,16 +355,17 @@ class Presentation extends MultiUsers {
     await this.userPage.wasRemoved(e.minimizePresentation, 'should not display the minimize presentation button for the attendee');
 
     // Check removed presentations inside the Manage Presentations
-    await this.modPage.waitAndClick(e.actions);
+    await this.modPage.waitAndClick(e.mediaAreaButton);
     await this.modPage.waitAndClick(e.managePresentations);
     await this.modPage.wasRemoved(e.presentationsList, 'should not display the presentation list for the moderator');
     await this.modPage.waitAndClick(e.confirmManagePresentation);
 
     // Making viewer a presenter
-    await this.modPage.waitAndClick(e.userListItem);
+    await this.modPage.waitAndClick(e.usersListSidebarButton);
+    await this.modPage.waitAndClick(e.moreOptionsUserItemButton);
     await this.modPage.waitAndClick(e.makePresenter);
 
-    await this.userPage.waitAndClick(e.actions);
+    await this.userPage.waitAndClick(e.mediaAreaButton);
     await this.userPage.waitAndClick(e.managePresentations);
     await this.userPage.wasRemoved(e.presentationsList, 'should not display the presentation list for the attendee');
   }
@@ -376,17 +379,18 @@ class Presentation extends MultiUsers {
     const userSlides1 = await getSlideOuterHtml(this.userPage);
     await expect(modSlides1, 'should the moderator slide and the attendee slide to be equal').toEqual(userSlides1);
 
-    await this.modPage.waitAndClick(e.userListItem);
+    await this.modPage.waitAndClick(e.usersListSidebarButton);
+    await this.modPage.waitAndClick(e.moreOptionsUserItemButton);
     await this.modPage.waitAndClick(e.makePresenter);
 
-    await this.userPage.waitAndClick(e.actions);
+    await this.userPage.waitAndClick(e.mediaAreaButton);
     await this.userPage.waitAndClick(e.managePresentations);
     await this.userPage.waitAndClick(e.removePresentation);
     await this.userPage.waitAndClick(e.removePresentation);
     await this.userPage.waitAndClick(e.confirmManagePresentation);
 
     await this.userPage.wasRemoved(e.whiteboard, 'should not display the whiteboard for the attendee');
-    await this.userPage.waitAndClick(e.actions);
+    await this.userPage.waitAndClick(e.mediaAreaButton);
     await this.userPage.waitAndClick(e.managePresentations);
     await this.userPage.wasRemoved(e.presentationsList, 'should not display the presentation list for the attendee');
   }
@@ -413,6 +417,12 @@ class Presentation extends MultiUsers {
   }
 
   async hidePresentationToolbar() {
+    // wait for whiteboard to load and no notifications
+    await this.modPage.waitForSelector(e.whiteboard, ELEMENT_WAIT_LONGER_TIME);
+    await this.modPage.waitForSelector(e.skipSlide);
+    await this.modPage.closeAllToastNotifications();
+    await this.modPage.wasRemoved(e.smallToastMsg);
+    // enabled multi-users whiteboard and hide toolbar
     await this.modPage.waitAndClick(e.multiUsersWhiteboardOn);
     await this.modPage.waitAndClick(e.whiteboardOptionsButton);
     await this.modPage.waitAndClick(e.toolVisibility);

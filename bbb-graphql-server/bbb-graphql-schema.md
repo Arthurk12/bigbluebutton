@@ -521,7 +521,7 @@ Permission: Restricted to Presenter
 - `name`
 - `presentationId`
 - `removable`
-- `renderedInToast`
+- `uploadCompletionNotified`
 - `totalPages`
 - `totalPagesUploaded`
 - `uploadCompleted`
@@ -743,6 +743,16 @@ Permission: Restricted to User Viewing Self-Related Data
 - `sequence`
 - `shortName`
 - `userId`
+
+## Type: user_connectionStatusHistory
+Permission: Restricted to Moderators or the User Viewing Self-Related Data
+### Fields:
+- `networkRttInMs`
+- `status`
+- `statusUpdatedAt`
+- `userId`
+### Relationships:
+- `user: Object` [Type User](#type-user)
 
 ## Type: user_connectionStatusReport
 Permission: Restricted to Moderators or the User Viewing Self-Related Data

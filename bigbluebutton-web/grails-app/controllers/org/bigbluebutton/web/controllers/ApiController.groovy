@@ -1244,7 +1244,7 @@ class ApiController {
         }
 
         if (!StringUtils.isEmpty(params.sessionName)) {
-          queryParameters.put("sessionName", sessionName);
+          queryParameters.put("sessionName", params.sessionName);
         }
 
         request.getParameterMap()

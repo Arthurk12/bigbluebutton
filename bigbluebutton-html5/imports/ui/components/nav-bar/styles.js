@@ -62,6 +62,10 @@ const PresentationTitle = styled.h1`
   @media ${smallOnly} {
     padding: 0 0.3rem;
   }
+  & span i {
+    margin-left: .5rem;
+    margin-right: .5rem;
+  }
 `;
 
 const PluginInfoComponent = styled.h1`
