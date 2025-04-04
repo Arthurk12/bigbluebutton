@@ -187,9 +187,6 @@ export const EditLabel = styled.span`
 
 export const ChatTime = styled(ChatTimeBase)`
   font-style: italic;
-<<<<<<< HEAD
-  color: ${colorGrayLight};
-=======
   color: ${colorGrayDark};
   display: none;
 
@@ -198,5 +195,4 @@ export const ChatTime = styled(ChatTimeBase)`
   .chat-message-content:hover & {
     display: flex;
   }
->>>>>>> 0147dbfcd1655dacc7ead8f18b464dbb7408b0df
 `;
