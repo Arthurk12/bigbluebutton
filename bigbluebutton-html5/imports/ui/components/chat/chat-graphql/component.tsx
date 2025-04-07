@@ -49,7 +49,7 @@ interface ChatProps {
 }
 
 interface ChatLoadingProps {
-  isRTL?: boolean;
+  isRTL: boolean;
 }
 
 const Chat: React.FC<ChatProps> = ({

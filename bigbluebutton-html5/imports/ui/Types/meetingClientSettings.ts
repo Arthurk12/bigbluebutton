@@ -29,6 +29,7 @@ export interface Public {
   whiteboard: Whiteboard
   clientLog: ClientLog
   virtualBackgrounds: VirtualBackgrounds
+  minBrowserVersions: MinBrowserVersions
 }
 export interface Locales {
   locale: string
@@ -88,7 +89,6 @@ export interface App {
   remainingTimeAlertThresholdArray: number[]
   enableDebugWindow: boolean
   breakouts: Breakouts
-  customHeartbeat: boolean
   showAllAvailableLocales: boolean
   showAudioFilters: boolean
   reactionsButton: ReactionsButton
@@ -152,6 +152,8 @@ export interface AppsGallery {
 
 export interface Breakouts {
   allowUserChooseRoomByDefault: boolean
+  offerRecordingForBreakouts: boolean
+  recordRoomByDefault: boolean
   captureWhiteboardByDefault: boolean
   captureSharedNotesByDefault: boolean
   sendInvitationToAssignedModeratorsByDefault: boolean
@@ -590,6 +592,7 @@ export interface Layout {
   showParticipantsOnLogin: boolean
   showPushLayoutButton: boolean
   showPushLayoutToggle: boolean
+  showScreenshareQuickSwapButton: boolean
 }
 
 export interface Pads {
@@ -684,7 +687,7 @@ export interface LocalEchoTest {
 
 export interface MediaNetworkPriorities {
   audio: RTCPriorityType
-  video: RTCPriorityType
+  webcam: RTCPriorityType
   screenshare: RTCPriorityType
 }
 
@@ -832,7 +835,6 @@ export interface VirtualBackgrounds {
 export interface Private {
   analytics: Analytics
   app: App2
-  minBrowserVersions: MinBrowserVersion[]
   prometheus: Prometheus
 }
 
@@ -859,9 +861,17 @@ export interface Channels {
   toThirdParty: string
 }
 
-export interface MinBrowserVersion {
-  browser: string
-  version: number | number[] | string
+export interface mobileBrowsers {
+  safari: string
+  chrome: string
+}
+
+export interface MinBrowserVersions {
+  safari: string
+  chrome: string
+  firefox: string
+  edge: string
+  mobile: mobileBrowsers
 }
 
 export interface Prometheus {

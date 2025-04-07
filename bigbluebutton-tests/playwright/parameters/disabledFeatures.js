@@ -50,8 +50,7 @@ class DisabledFeatures extends MultiUsers {
   }
 
   async polls() {
-    await this.modPage.waitAndClick(e.actions);
-    await this.modPage.wasRemoved(e.polling, 'should not display the polling on the actions button');
+    await this.modPage.wasRemoved(e.pollSidebarButton, 'should not display the poll sidebar button');
   }
 
   async screenshare() {
@@ -98,6 +97,7 @@ class DisabledFeatures extends MultiUsers {
 
   async slideSnapshot() {
     await this.modPage.hasElement(e.whiteboard, 'should display the whiteboard');
+    await this.modPage.closeAllToastNotifications();
     await this.modPage.waitAndClick(e.whiteboardOptionsButton);
     await this.modPage.hasElement(e.presentationFullscreen, 'should display the presentation fullscreen on the whiteboard options');
     await this.modPage.wasRemoved(e.presentationSnapshot, 'should not display the presentation snapshot on the whiteboard options');
@@ -152,8 +152,7 @@ class DisabledFeatures extends MultiUsers {
   }
 
   async pollsExclude() {
-    await this.modPage.waitAndClick(e.actions);
-    await this.modPage.hasElement(e.polling, 'should display the polling option on the actions');
+    await this.modPage.hasElement(e.pollSidebarButton, 'should display the polling sidebar button');
   }
 
   async screenshareExclude() {
@@ -202,6 +201,7 @@ class DisabledFeatures extends MultiUsers {
 
   async slideSnapshotExclude() {
     await this.modPage.hasElement(e.whiteboard, 'should display the whiteboard');
+    await this.modPage.closeAllToastNotifications();
     await this.modPage.waitAndClick(e.whiteboardOptionsButton);
     await this.modPage.hasElement(e.presentationSnapshot, 'should display the presentation snapshot on the whiteboard options');
   }

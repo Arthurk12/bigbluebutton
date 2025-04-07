@@ -362,7 +362,7 @@ const WebcamContainer: React.FC = () => {
 
   const audioModalIsOpen = useStorageKey('audioModalIsOpen');
 
-  return !audioModalIsOpen && (usersVideo.length > 0 || isGridEnabled)
+  return cameraDock?.display && !audioModalIsOpen && (usersVideo.length > 0 || isGridEnabled)
     ? (
       <WebcamComponent
         {...{

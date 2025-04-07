@@ -110,6 +110,9 @@ const intlMessages = defineMessages({
 const propTypes = {
   darkTheme: PropTypes.bool.isRequired,
   hideNotificationToasts: PropTypes.bool.isRequired,
+  isBreakout: PropTypes.bool.isRequired,
+  meetingId: PropTypes.string.isRequired,
+  meetingName: PropTypes.string.isRequired,
 };
 
 class App extends Component {
@@ -119,6 +122,7 @@ class App extends Component {
       isAudioModalOpen: false,
       isVideoPreviewModalOpen: false,
       presentationFitToWidth: false,
+      isJoinLogged: false,
     };
 
     this.timeOffsetInterval = null;
@@ -126,11 +130,13 @@ class App extends Component {
     this.setPresentationFitToWidth = this.setPresentationFitToWidth.bind(this);
     this.setAudioModalIsOpen = this.setAudioModalIsOpen.bind(this);
     this.setVideoPreviewModalIsOpen = this.setVideoPreviewModalIsOpen.bind(this);
+    this.logJoin = this.logJoin.bind(this);
   }
 
   componentDidMount() {
     const { browserName } = browserInfo;
     const { osName } = deviceInfo;
+    const { isJoinLogged } = this.state;
 
     Session.setItem('videoPreviewFirstOpen', true);
 
@@ -147,7 +153,9 @@ class App extends Component {
     window.ondragover = (e) => { e.preventDefault(); };
     window.ondrop = (e) => { e.preventDefault(); };
 
-    logger.info({ logCode: 'app_component_componentdidmount' }, 'Client loaded successfully');
+    if (!isJoinLogged) {
+      this.logJoin();
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -155,7 +163,10 @@ class App extends Component {
       currentUserAway,
       currentUserRaiseHand,
       intl,
+      fitToWidth,
     } = this.props;
+
+    const { isJoinLogged } = this.state;
 
     this.renderDarkMode();
 
@@ -174,6 +185,14 @@ class App extends Component {
         notify(intl.formatMessage(intlMessages.loweredHand), 'info', 'clear_status');
       }
     }
+
+    if (prevProps.fitToWidth !== fitToWidth) {
+      this.setState({ presentationFitToWidth: fitToWidth });
+    }
+
+    if (!isJoinLogged) {
+      this.logJoin();
+    }
   }
 
   componentWillUnmount() {
@@ -185,6 +204,8 @@ class App extends Component {
   }
 
   setPresentationFitToWidth(presentationFitToWidth) {
+    const { handlePresentationFitToWidth } = this.props;
+    handlePresentationFitToWidth(presentationFitToWidth);
     this.setState({ presentationFitToWidth });
   }
 
@@ -194,6 +215,24 @@ class App extends Component {
 
   setVideoPreviewModalIsOpen(value) {
     this.setState({ isVideoPreviewModalOpen: value });
+  }
+
+  logJoin() {
+    const { isJoinLogged } = this.state;
+    const { meetingId, meetingName, isBreakout } = this.props;
+
+    const logMessage = isBreakout ? 'User joined breakout room' : 'User joined main room';
+
+    if (!isJoinLogged && meetingId) {
+      logger.info({
+        logCode: 'app_component_componentdidmount',
+        extraInfo: {
+          meetingId,
+          meetingName,
+        },
+      }, logMessage);
+      this.setState({ isJoinLogged: true });
+    }
   }
 
   renderDarkMode() {
@@ -256,6 +295,8 @@ class App extends Component {
       genericMainContentId,
       hideNotificationToasts,
       selectedLayout,
+      isNotificationEnabled,
+      isNonMediaLayout,
     } = this.props;
 
     const {
@@ -294,23 +335,30 @@ class App extends Component {
             <SidebarContentContainer isSharedNotesPinned={isSharedNotesPinned} />
             <NavBarContainer main="new" />
             <WebcamContainer />
-            <ExternalVideoPlayerContainer />
+            {
+              !isNonMediaLayout
+                && <ExternalVideoPlayerContainer />
+            }
             <GenericContentMainAreaContainer
               genericMainContentId={genericMainContentId}
             />
             {
-              shouldShowPresentation
-                ? (
-                  <PresentationContainer
-                    setPresentationFitToWidth={this.setPresentationFitToWidth}
-                    fitToWidth={presentationFitToWidth}
-                    darkTheme={darkTheme}
-                    presentationIsOpen={presentationIsOpen}
-                  />
-                )
-                : null
+            shouldShowPresentation
+              ? (
+                <PresentationContainer
+                  setPresentationFitToWidth={this.setPresentationFitToWidth}
+                  fitToWidth={presentationFitToWidth}
+                  darkTheme={darkTheme}
+                  presentationIsOpen={presentationIsOpen}
+                />
+              )
+              : null
+              }
+            {
+              !isNonMediaLayout
+              && <ScreenshareContainer shouldShowScreenshare={shouldShowScreenshare} />
             }
-            <ScreenshareContainer shouldShowScreenshare={shouldShowScreenshare} />
+
             {isSharedNotesPinned
               ? (
                 <NotesContainer
@@ -319,7 +367,9 @@ class App extends Component {
               ) : null}
             <AudioCaptionsSpeechContainer />
             {this.renderAudioCaptions()}
-            {!hideNotificationToasts && <PresentationUploaderToastContainer intl={intl} />}
+            { (
+              !hideNotificationToasts
+              && isNotificationEnabled) && <PresentationUploaderToastContainer intl={intl} /> }
             <UploaderContainer />
             <BreakoutJoinConfirmationContainerGraphQL />
             <BBBLiveKitRoomContainer />
@@ -330,7 +380,9 @@ class App extends Component {
               setVideoPreviewModalIsOpen: this.setVideoPreviewModalIsOpen,
             }}
             />
-            {!hideNotificationToasts && <ToastContainer rtl />}
+            { (
+              !hideNotificationToasts
+              && isNotificationEnabled) && <ToastContainer rtl /> }
             <ChatAlertContainerGraphql />
             <RaiseHandNotifier />
             <ManyWebcamsNotifier />
