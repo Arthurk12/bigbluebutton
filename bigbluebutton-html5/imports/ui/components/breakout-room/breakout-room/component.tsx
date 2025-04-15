@@ -315,6 +315,7 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
 };
 
 const BreakoutRoomContainer: React.FC = () => {
+  const layoutContextDispatch = layoutDispatch();
   const {
     data: meetingData,
   } = useMeeting((m) => ({
@@ -340,6 +341,7 @@ const BreakoutRoomContainer: React.FC = () => {
     loading: breakoutLoading,
     error: breakoutError,
   } = useDeduplicatedSubscription<GetBreakoutDataResponse>(getBreakoutData);
+  const [isOpen, setIsOpen] = useState(!hasBreakoutRoom);
   if (
     breakoutLoading
     || currentUserLoading
@@ -359,15 +361,8 @@ const BreakoutRoomContainer: React.FC = () => {
     return null;
   }
   if (!currentUserData || !breakoutData || !meetingData) return null; // or loading spinner or error
-  if ((!hasBreakoutRoom && currentUserData.isModerator) || updateUsersWhileRunning) {
-    return (
-      <CreateBreakoutRoomContainer
-        isUpdate={updateUsersWhileRunning}
-        setUpdateUsersWhileRunning={setUpdateUsersWhileRunning}
-      />
-    );
-  }
-  return (
+
+  const returnedComponents = [(
     <BreakoutRoom
       breakouts={breakoutData.breakoutRoom || []}
       isModerator={currentUserData.isModerator ?? false}
@@ -379,6 +374,32 @@ const BreakoutRoomContainer: React.FC = () => {
       setUpdateUsersWhileRunning={setUpdateUsersWhileRunning}
       audioBridge={meetingData.audioBridge ?? 'livekit'}
     />
-  );
+  )];
+
+  if (updateUsersWhileRunning) {
+    returnedComponents.push((
+      <CreateBreakoutRoomContainer
+        isOpen={isOpen}
+        setIsOpen={(value: boolean) => {
+          if (!hasBreakoutRoom) {
+            layoutContextDispatch({
+              type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+              value: false,
+            });
+            layoutContextDispatch({
+              type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+              value: PANELS.NONE,
+            });
+          }
+          setIsOpen(value);
+        }}
+        priority="low"
+        isUpdate={updateUsersWhileRunning}
+        setUpdateUsersWhileRunning={setUpdateUsersWhileRunning}
+      />
+    ));
+  }
+
+  return returnedComponents;
 };
 export default BreakoutRoomContainer;
