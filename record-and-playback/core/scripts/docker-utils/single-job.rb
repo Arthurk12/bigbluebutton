@@ -11,11 +11,8 @@ require 'cgi'
 require 'logger'
 require 'optimist'
 
+require File.expand_path('../media-reporter', __FILE__)
 require File.expand_path('../../../lib/rec_builder', __FILE__)
-
-def isset(name)
-  ENV[name] && ENV[name] != '0' && ENV[name].strip != ''
-end
 
 logger = Logger.new(STDOUT)
 
@@ -26,6 +23,10 @@ opts = Optimist::options do
 end
 
 record_id = opts[:key].start_with?("http") ? opts[:key] : File.basename(CGI::unescape(opts[:key]), ".tar")
+
+reporter = MediaReporter.new
+reporter.logger = logger
+reporter.perform(record_id)
 
 builder = RecordingBuilder.new
 builder.logger = logger
@@ -55,7 +56,7 @@ if s3_client
   )
   publisher = BigBlueButtonS3::Publisher.new(client: s3_client)
 
-  if isset('MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_NAME') and format == 'presentation'
+  if BigBlueButton.isset('MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_NAME') and format == 'presentation'
     bucket_notify = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_NAME']
     temp_file = "/tmp/temp_s3.txt"
     FileUtils.touch temp_file
@@ -75,7 +76,7 @@ if s3_client
   end
 
   # publisher is using credentials for NOTIFY
-  if isset('MCONF_REC_WORKER_AWS_S3_BUCKET_STATS_NAME')
+  if BigBlueButton.isset('MCONF_REC_WORKER_AWS_S3_BUCKET_STATS_NAME')
     bucket_stats = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_STATS_NAME']
     [ "cpu.png", "memory.png" ].each do |f|
       stats_file = "/stats/#{f}"

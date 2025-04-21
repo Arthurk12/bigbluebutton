@@ -262,6 +262,18 @@ module BigBlueButton
         {}
       end
 
+      def self.get_silence(filename)
+        IO.popen(['ffmpeg', '-i', filename, '-af', 'silencedetect=noise=-50dB:d=0.25', '-f', 'null', '-'], err: %i[child out]) do |ffmpeg|
+          output = ffmpeg.read
+          silence = output.scan(/silence_(start|end): (\d+(\.\d+)?)/).map do |(type, timestamp)|
+            { type.to_sym => ( timestamp.to_f * 1000 ).to_i }
+          end
+          silence.each_slice(2).map{ |(e1, e2)| e1.merge(e2) }
+          # result is an array
+          # [{:start=>0, :end=>732}, {:start=>734, :end=>2550520}]
+        end
+      end
+
       def self.ms_to_s(timestamp)
         s = timestamp / 1000
         ms = timestamp % 1000
