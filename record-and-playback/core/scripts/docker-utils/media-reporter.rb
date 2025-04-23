@@ -56,7 +56,9 @@ class MediaReporter
       end
 
       # convert captureStats.tracks into an array, which will be better suitable for elasticsearch
-      obj[:captureStats][:tracks] = obj[:captureStats][:tracks].values
+      if obj[:captureStats][:tracks].is_a?(Hash)
+        obj[:captureStats][:tracks] = obj[:captureStats][:tracks].values
+      end
 
       media[key] = obj
     end
