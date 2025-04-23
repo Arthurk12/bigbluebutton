@@ -247,7 +247,7 @@ class MediaReporter
         }
         body << record
       end
-      elastic_client.bulk(body: body)
+      elastic_client.bulk(body: body) if ! body.empty?
     end
   end
 end
