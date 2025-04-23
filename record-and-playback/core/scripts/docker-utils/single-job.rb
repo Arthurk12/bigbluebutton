@@ -24,10 +24,6 @@ end
 
 record_id = opts[:key].start_with?("http") ? opts[:key] : File.basename(CGI::unescape(opts[:key]), ".tar")
 
-reporter = MediaReporter.new
-reporter.logger = logger
-reporter.perform(record_id)
-
 builder = RecordingBuilder.new
 builder.logger = logger
 
@@ -36,6 +32,10 @@ monit_proc = BigBlueButton.execute_async('python3 docker-utils/monitor.py')
 builder.perform(record_id)
 BigBlueButton.kill(monit_proc)
 BigBlueButton.wait(monit_proc, 300)
+
+reporter = MediaReporter.new
+reporter.logger = logger
+reporter.perform(record_id)
 
 s3_key = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_ACCESS_KEY_ID'] || ""
 s3_secret = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_SECRET_ACCESS_KEY'] || ""
