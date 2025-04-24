@@ -136,18 +136,6 @@ class MediaReporter
           :startTimestamp => event.at_xpath('@timestamp')&.text.to_i,
         }
 
-        recording_duration_past = 0
-        recording_events.each_with_index do |recording_event, idx|
-          if record[:record][:startTimestamp] > recording_event[:stop_timestamp]
-            recording_duration_past += recording_event[:stop_timestamp] - recording_event[:start_timestamp]
-          else
-            recording_duration_past += record[:record][:startTimestamp] - recording_event[:start_timestamp]
-            record[:record][:recordedSegment] = idx
-            record[:record][:recordedTimestamp] = recording_duration_past
-            record[:record][:recordedLink] = "#{playback_protocol}://#{playback_host}/playback/presentation/2.3/#{record_id}?t=#{MediaReporter.format_duration(recording_duration_past)}"
-          end
-        end
-
         file_path = Dir.glob("#{raw_dir}/**/#{File.basename(filename)}").first
         if record[:mediaFileExists]
           duration = nil
@@ -169,6 +157,27 @@ class MediaReporter
         else
           record[:record][:endTimestamp] = unpublished_event.at_xpath('@timestamp')&.text.to_i
           record[:record][:duration] = record[:record][:endTimestamp] - record[:record][:startTimestamp]
+
+          recording_duration_past = 0
+          recording_events.each_with_index do |recording_event, idx|
+            recorded_file = BigBlueButton.find_intersection([[record[:record][:startTimestamp], record[:record][:endTimestamp]]], [ { :start => recording_event[:start_timestamp], :stop => recording_event[:stop_timestamp] } ]) }
+
+            if recorded_file.empty?
+              recording_duration_past += recording_event[:stop_timestamp] - recording_event[:start_timestamp]
+            else
+              recording_invisible = 0
+              if record[:record][:startTimestamp] > recording_event[:start_timestamp]
+                recording_duration_past += record[:record][:startTimestamp] - recording_event[:start_timestamp]
+              else
+                recording_invisible = recording_event[:start_timestamp] - record[:record][:startTimestamp]
+              end
+              record[:record][:recordedSegment] = idx
+              record[:record][:recordedTimestamp] = recording_duration_past
+              record[:record][:recordedLink] = "#{playback_protocol}://#{playback_host}/playback/presentation/2.3/#{record_id}?t=#{MediaReporter.format_duration(recording_duration_past)}"
+              record[:record][:recordedInvisible] = recording_invisible
+              break
+            end
+          end
 
           if record[:type] == "audio"
             talking_events_considered = BigBlueButton.find_intersection([[record[:record][:startTimestamp], record[:record][:endTimestamp]]], talking_events.dig(userId, :events)&.map { |e| [e[:start], e[:stop]] }).map{ |e| { :start => e[0], :stop => e[1] } }
