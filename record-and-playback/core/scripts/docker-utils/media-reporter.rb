@@ -160,7 +160,7 @@ class MediaReporter
 
           recording_duration_past = 0
           recording_events.each_with_index do |recording_event, idx|
-            recorded_file = BigBlueButton.find_intersection([[record[:record][:startTimestamp], record[:record][:endTimestamp]]], [ { :start => recording_event[:start_timestamp], :stop => recording_event[:stop_timestamp] } ]) }
+            recorded_file = BigBlueButton.find_intersection( [ [ record[:record][:startTimestamp], record[:record][:endTimestamp] ] ], [ [ recording_event[:start_timestamp], recording_event[:stop_timestamp] ] ])
 
             if recorded_file.empty?
               recording_duration_past += recording_event[:stop_timestamp] - recording_event[:start_timestamp]
