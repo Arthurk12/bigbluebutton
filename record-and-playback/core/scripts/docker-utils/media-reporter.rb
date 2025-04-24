@@ -172,32 +172,46 @@ class MediaReporter
 
           if record[:type] == "audio"
             talking_events_considered = BigBlueButton.find_intersection([[record[:record][:startTimestamp], record[:record][:endTimestamp]]], talking_events.dig(userId, :events)&.map { |e| [e[:start], e[:stop]] }).map{ |e| { :start => e[0], :stop => e[1] } }
-            record[:talking] = {
-              :firstTimestamp => talking_events_considered.first[:start],
-              :lastTimestamp => talking_events_considered.last[:stop],
-              :duration => talking_events_considered.sum { |e| e[:stop] - e[:start] },
-              :eventsCount => talking_events_considered.length
-            }
-            record[:talking][:silenceAtBeginning] = record[:talking][:firstTimestamp] - record[:record][:startTimestamp]
-            record[:talking][:silenceAtEnd] = record[:record][:endTimestamp] - record[:talking][:lastTimestamp]
+            if talking_events_considered.empty?
+              record[:talking] = {
+                :duration => 0,
+                :eventsCount => 0,
+              }
+            else
+              record[:talking] = {
+                :firstTimestamp => talking_events_considered.first[:start],
+                :lastTimestamp => talking_events_considered.last[:stop],
+                :duration => talking_events_considered.sum { |e| e[:stop] - e[:start] },
+                :eventsCount => talking_events_considered.length
+              }
+              record[:talking][:silenceAtBeginning] = record[:talking][:firstTimestamp] - record[:record][:startTimestamp]
+              record[:talking][:silenceAtEnd] = record[:record][:endTimestamp] - record[:talking][:lastTimestamp]
+            end
 
             if ! record.dig(:file, :duration).nil?
               silence_events = BigBlueButton::EDL::Audio.get_silence(file_path)
               noise_events_considered = BigBlueButton.subtract_periods([[0, record[:file][:duration]]], silence_events.map { |e| [e[:start], e[:end]] }).map{ |e| { :start => e[0] + record[:record][:startTimestamp], :stop => e[1] + record[:record][:startTimestamp] } }
 
-              record[:noise] = {
-                :firstTimestamp => noise_events_considered.first[:start],
-                :lastTimestamp => noise_events_considered.last[:stop],
-                :duration => noise_events_considered.sum { |e| e[:stop] - e[:start] },
-                :eventsCount => noise_events_considered.length,
-              }
-              record[:noise][:silenceAtBeginning] = record[:noise][:firstTimestamp] - record[:record][:startTimestamp]
-              record[:noise][:silenceAtEnd] = record[:record][:endTimestamp] - record[:noise][:lastTimestamp]
+              if noise_events_considered.empty?
+                record[:noise] = {
+                  :duration => 0,
+                  :eventsCount => 0,
+                }
+              else
+                record[:noise] = {
+                  :firstTimestamp => noise_events_considered.first[:start],
+                  :lastTimestamp => noise_events_considered.last[:stop],
+                  :duration => noise_events_considered.sum { |e| e[:stop] - e[:start] },
+                  :eventsCount => noise_events_considered.length,
+                }
+                record[:noise][:silenceAtBeginning] = record[:noise][:firstTimestamp] - record[:record][:startTimestamp]
+                record[:noise][:silenceAtEnd] = record[:record][:endTimestamp] - record[:noise][:lastTimestamp]
 
-              if record[:talking][:eventsCount] > 0
-                intersect_talking_noise = BigBlueButton.find_intersection(talking_events_considered.map { |e| [e[:start], e[:stop]] }, noise_events_considered.map { |e| [e[:start], e[:stop]] }).map{ |e| { :start => e[0], :stop => e[1] } }
-                record[:talkingNoiseDuration] = intersect_talking_noise.sum { |e| e[:stop] - e[:start] }
-                record[:talkingNoiseRatio] = ( record[:talkingNoiseDuration] / record[:talking][:duration].to_f ).round(3)
+                if record[:talking][:eventsCount] > 0
+                  intersect_talking_noise = BigBlueButton.find_intersection(talking_events_considered.map { |e| [e[:start], e[:stop]] }, noise_events_considered.map { |e| [e[:start], e[:stop]] }).map{ |e| { :start => e[0], :stop => e[1] } }
+                  record[:talkingNoiseDuration] = intersect_talking_noise.sum { |e| e[:stop] - e[:start] }
+                  record[:talkingNoiseRatio] = ( record[:talkingNoiseDuration] / record[:talking][:duration].to_f ).round(3)
+                end
               end
             end
           end
