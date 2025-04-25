@@ -33,9 +33,11 @@ builder.perform(record_id)
 BigBlueButton.kill(monit_proc)
 BigBlueButton.wait(monit_proc, 300)
 
-reporter = MediaReporter.new
-reporter.logger = logger
-reporter.perform(record_id)
+if BigBlueButton.isset('MCONF_REC_NOTIFIER_ELASTIC_MEDIA_STATS_INDEX')
+  reporter = MediaReporter.new
+  reporter.logger = logger
+  reporter.perform(record_id)
+end
 
 s3_key = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_ACCESS_KEY_ID'] || ""
 s3_secret = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_SECRET_ACCESS_KEY'] || ""
