@@ -53,11 +53,11 @@ class MediaReporter
       stats_file = "#{File.dirname(filename)}/#{key}-stats.json"
       if obj[:statsFileExists] = File.exist?(stats_file)
         obj.merge!(File.open(stats_file) { |file| JSON.parse(file.read, :symbolize_names => true) })
-      end
 
-      # convert captureStats.tracks into an array, which will be better suitable for elasticsearch
-      if obj[:captureStats][:tracks].is_a?(Hash)
-        obj[:captureStats][:tracks] = obj[:captureStats][:tracks].values
+        # convert captureStats.tracks into an array, which will be better suitable for elasticsearch
+        if obj[:captureStats][:tracks].is_a?(Hash)
+          obj[:captureStats][:tracks] = obj[:captureStats][:tracks].values
+        end
       end
 
       media[key] = obj
