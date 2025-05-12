@@ -378,4 +378,81 @@ module BigBlueButton
     redis_password = props['redis_password']
     BigBlueButton.redis_publisher = BigBlueButton::RedisWrapper.new(redis_host, redis_port, redis_password)
   end
+
+  def self.find_intersection(periods1, periods2)
+    intersections = []
+
+    periods1.each do |start1, stop1|
+      periods2.each do |start2, stop2|
+        # Find the overlapping interval
+        overlap_start = [start1, start2].max
+        overlap_stop = [stop1, stop2].min
+
+        # If there is an overlap, add it to the intersections array
+        if overlap_start <= overlap_stop
+          intersections << [overlap_start, overlap_stop]
+        end
+      end
+    end
+
+    intersections
+  end
+
+  def self.merge_periods(periods)
+    return [] if periods.empty?
+
+    # Sort periods by start time
+    sorted_periods = periods.sort_by { |start, _| start }
+    merged = [sorted_periods[0]]
+
+    sorted_periods[1..-1].each do |current_start, current_stop|
+      last_start, last_stop = merged.last
+      if current_start <= last_stop
+        # Overlapping periods, merge them
+        merged[-1] = [last_start, [last_stop, current_stop].max]
+      else
+        # Non-overlapping, add to merged
+        merged << [current_start, current_stop]
+      end
+    end
+
+    merged
+  end
+
+  def self.subtract_periods(periods1, periods2)
+    # Merge both sets of periods to handle overlaps
+    merged_periods1 = self.merge_periods(periods1)
+    merged_periods2 = self.merge_periods(periods2)
+
+    result = []
+    merged_periods1.each do |start1, stop1|
+      # Start with the full period from periods1
+      current_start = start1
+      current_stop = stop1
+
+      merged_periods2.each do |start2, stop2|
+        # Skip if the period from periods2 is completely before or after the current period
+        next if stop2 < current_start || start2 > current_stop
+
+        # If the period from periods2 overlaps with the current period, split it
+        if start2 > current_start
+          # Add the non-overlapping part before the overlapping period
+          result << [current_start, start2]
+        end
+
+        # Update the current period to the remaining part after the overlapping period
+        current_start = [current_start, stop2].max
+
+        # If the current period is completely consumed, break
+        break if current_start >= current_stop
+      end
+
+      # Add the remaining part of the current period if it's not fully consumed
+      if current_start < current_stop
+        result << [current_start, current_stop]
+      end
+    end
+
+    result
+  end
 end

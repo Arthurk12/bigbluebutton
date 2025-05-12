@@ -11,11 +11,8 @@ require 'cgi'
 require 'logger'
 require 'optimist'
 
+require File.expand_path('../media-reporter', __FILE__)
 require File.expand_path('../../../lib/rec_builder', __FILE__)
-
-def isset(name)
-  ENV[name] && ENV[name] != '0' && ENV[name].strip != ''
-end
 
 logger = Logger.new(STDOUT)
 
@@ -36,6 +33,12 @@ builder.perform(record_id)
 BigBlueButton.kill(monit_proc)
 BigBlueButton.wait(monit_proc, 300)
 
+if BigBlueButton.isset('MCONF_REC_NOTIFIER_ELASTIC_MEDIA_STATS_INDEX')
+  reporter = MediaReporter.new
+  reporter.logger = logger
+  reporter.perform(record_id)
+end
+
 s3_key = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_ACCESS_KEY_ID'] || ""
 s3_secret = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_SECRET_ACCESS_KEY'] || ""
 s3_endpoint = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_ENDPOINT']
@@ -55,7 +58,7 @@ if s3_client
   )
   publisher = BigBlueButtonS3::Publisher.new(client: s3_client)
 
-  if isset('MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_NAME') and format == 'presentation'
+  if BigBlueButton.isset('MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_NAME') and format == 'presentation'
     bucket_notify = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_NOTIFY_NAME']
     temp_file = "/tmp/temp_s3.txt"
     FileUtils.touch temp_file
@@ -75,7 +78,7 @@ if s3_client
   end
 
   # publisher is using credentials for NOTIFY
-  if isset('MCONF_REC_WORKER_AWS_S3_BUCKET_STATS_NAME')
+  if BigBlueButton.isset('MCONF_REC_WORKER_AWS_S3_BUCKET_STATS_NAME')
     bucket_stats = ENV['MCONF_REC_WORKER_AWS_S3_BUCKET_STATS_NAME']
     [ "cpu.png", "memory.png" ].each do |f|
       stats_file = "/stats/#{f}"
