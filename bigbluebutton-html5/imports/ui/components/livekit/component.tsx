@@ -35,8 +35,8 @@ import {
 import { useIceServers } from '/imports/ui/components/livekit/hooks';
 import LKAutoplayModalContainer from '/imports/ui/components/livekit/autoplay-modal/container';
 import AudioGroupsPH from '/imports/ui/components/livekit/audio-groups/component';
-import SelectiveSubscription from '/imports/ui/components/livekit/selective-subscription/component';
 import connectionStatus, { MetricStatus } from '/imports/ui/core/graphql/singletons/connectionStatus';
+import SelectiveSubscription from '/imports/ui/components/livekit/selective-subscription/component';
 
 interface BBBLiveKitRoomProps {
   url?: string;

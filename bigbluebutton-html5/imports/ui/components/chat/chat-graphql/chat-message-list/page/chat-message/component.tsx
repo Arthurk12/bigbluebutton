@@ -642,7 +642,6 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
       $editing={editing}
       $keyboardFocused={keyboardFocused}
       $reactionPopoverIsOpen={isToolbarReactionPopoverOpen}
-      data-test="chatMessageItem"
       $emphasizedMessage={message.chatEmphasizedText}
       role="listitem"
     >
@@ -665,11 +664,11 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
         onReply={onReply}
       />
       {message.replyToMessage && !deleteTime && (
-      <ChatMessageReplied
-        message={message.replyToMessage.message || ''}
-        sequence={message.replyToMessage.messageSequence}
-        deletedByUser={message.replyToMessage.deletedBy?.name ?? null}
-      />
+        <ChatMessageReplied
+          message={message.replyToMessage.message || ''}
+          sequence={message.replyToMessage.messageSequence}
+          deletedByUser={message.replyToMessage.deletedBy?.name ?? null}
+        />
       )}
       {!deleteTime && (
         <MessageItemWrapper>
@@ -748,6 +747,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
 
   return (
     <Container
+      data-test="chatMessageItem"
       className={classNames('chat-message-container', {
         'chat-message-container-keyboard-focused': keyboardFocused,
       })}
@@ -836,6 +836,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
           description={intl.formatMessage(intlMessages.confirmationDescription)}
           confirmButtonColor="danger"
           priority="high"
+          confirmButtonDataTest="confirmDeleteChatMessageButton"
         />
       )}
     </Container>

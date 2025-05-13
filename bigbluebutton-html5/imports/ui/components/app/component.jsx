@@ -298,6 +298,7 @@ class App extends Component {
       selectedLayout,
       isNotificationEnabled,
       isNonMediaLayout,
+      isRaiseHandEnabled,
     } = this.props;
 
     const {
@@ -386,7 +387,7 @@ class App extends Component {
               !hideNotificationToasts
               && isNotificationEnabled) && <ToastContainer rtl /> }
             <ChatAlertContainerGraphql />
-            <RaiseHandNotifier />
+            {isRaiseHandEnabled && <RaiseHandNotifier />}
             <ManyWebcamsNotifier />
             <PollingContainer />
             <WakeLockContainer />

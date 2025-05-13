@@ -15,8 +15,8 @@ import { joinListenOnly } from './service';
 import Styled from './styles';
 import InputStreamLiveSelectorContainer from './input-stream-live-selector/component';
 import { UPDATE_ECHO_TEST_RUNNING } from './queries';
-import useIsAudioConnected from '/imports/ui/components/audio/audio-graphql/hooks/useIsAudioConnected';
 import connectionStatus from '/imports/ui/core/graphql/singletons/connectionStatus';
+import useIsAudioConnected from '/imports/ui/components/audio/audio-graphql/hooks/useIsAudioConnected';
 
 const intlMessages = defineMessages({
   joinAudio: {
@@ -173,7 +173,7 @@ export const AudioControlsContainer: React.FC = () => {
 
   return (
     <AudioControls
-      inAudio={(!!currentUser.voice && !isDeafened) ?? false}
+      inAudio={(!!currentUser.voice && !isDeafened)}
       isConnected={isConnected}
       disabled={(isConnecting || isHangingUp || !isClientConnected)}
       isEchoTest={isEchoTest}
