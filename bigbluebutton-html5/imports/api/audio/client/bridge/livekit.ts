@@ -379,6 +379,7 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
       await liveKitRoom.switchActiveDevice('audioinput', deviceId, false);
       if (this.publicationTrackStream) {
         this.originalStream = this.publicationTrackStream;
+        this.inputDeviceId = deviceId;
       } else {
         logger.warn({
           logCode: 'livekit_audio_switch_pub_stream_missing',
@@ -437,7 +438,10 @@ export default class LiveKitAudioBridge extends BaseAudioBridge {
             },
           }, 'Microphone device change rollback failed - the device may become silent');
 
-          backupStream?.getAudioTracks().forEach((track) => track.stop());
+          if (backupStream) {
+            backupStream.getAudioTracks().forEach((track) => track.stop());
+          }
+
           backupStream = null;
         });
       }

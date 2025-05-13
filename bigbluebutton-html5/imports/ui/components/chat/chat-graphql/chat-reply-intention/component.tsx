@@ -75,6 +75,7 @@ const ChatReplyIntention = () => {
 
   return (
     <Styled.Container
+      data-test="chatReplyIntentionContainer"
       $hidden={hidden}
       $animations={animations}
       onClick={() => {
@@ -108,6 +109,7 @@ const ChatReplyIntention = () => {
           tabIndex={hidden ? -1 : 0}
           aria-hidden={hidden}
           aria-label={intl.formatMessage(intlMessages.cancel, { 0: CANCEL_KEY })}
+          data-test="closeChatReplyIntentionButton"
         />
       </Tooltip>
     </Styled.Container>

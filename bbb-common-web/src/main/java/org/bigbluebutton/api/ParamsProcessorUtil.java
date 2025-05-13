@@ -152,6 +152,7 @@ public class ParamsProcessorUtil {
     private Boolean allowOverrideClientSettingsOnCreateCall = false;
 
     private Integer defaultMaxNumPages;
+    private String getJoinUrlUserdataBlocklist;
 
   	private String formatConfNum(String s) {
   		if (s.length() > 5) {
@@ -974,6 +975,10 @@ public class ParamsProcessorUtil {
         return graphqlApiUrl;
     }
 
+    public String getGetJoinUrlUserdataBlocklist() {
+        return getJoinUrlUserdataBlocklist;
+    }
+
 	public Boolean getUseDefaultLogo() {
 		return useDefaultLogo;
 	}
@@ -1710,5 +1715,9 @@ public class ParamsProcessorUtil {
 	}
 
     public void setMaxNumPages(Integer maxNumPages) { this.defaultMaxNumPages = maxNumPages; }
+
+    public void setGetJoinUrlUserdataBlocklist(String getJoinUrlUserdataBlocklist) {
+        this.getJoinUrlUserdataBlocklist = getJoinUrlUserdataBlocklist;
+    }
 
 }

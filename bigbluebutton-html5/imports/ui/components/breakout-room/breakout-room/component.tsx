@@ -38,6 +38,7 @@ interface BreakoutRoomProps {
   meetingId: string;
   setUpdateUsersWhileRunning: Dispatch<SetStateAction<boolean>>;
   audioBridge: string;
+  createdTime: number;
 }
 
 const intlMessages = defineMessages({
@@ -121,6 +122,7 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
   meetingId,
   setUpdateUsersWhileRunning,
   audioBridge,
+  createdTime,
 }) => {
   const [breakoutRoomEndAll] = useMutation(BREAKOUT_ROOM_END_ALL);
   const [breakoutRoomTransfer] = useMutation(USER_TRANSFER_VOICE_TO_MEETING);
@@ -214,6 +216,7 @@ const BreakoutRoom: React.FC<BreakoutRoomProps> = ({
           isModerator={isModerator}
           durationInSeconds={durationInSeconds}
           toggleShowChangeTimeForm={setShowChangeTimeForm}
+          createdTime={createdTime}
         />
         {isModerator ? <BreakoutMessageForm /> : null}
         {isModerator ? <Styled.Separator /> : null}
@@ -321,6 +324,7 @@ const BreakoutRoomContainer: React.FC = () => {
   } = useMeeting((m) => ({
     audioBridge: m.audioBridge,
     durationInSeconds: m.durationInSeconds,
+    createdTime: m.createdTime,
     meetingId: m.meetingId,
     componentsFlags: m.componentsFlags,
   }));
@@ -373,6 +377,7 @@ const BreakoutRoomContainer: React.FC = () => {
       meetingId={meetingData.meetingId ?? ''}
       setUpdateUsersWhileRunning={setUpdateUsersWhileRunning}
       audioBridge={meetingData.audioBridge ?? 'livekit'}
+      createdTime={meetingData.createdTime ?? 0}
     />
   )];
 
