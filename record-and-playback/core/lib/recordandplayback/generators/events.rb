@@ -1058,15 +1058,19 @@ module BigBlueButton
           talking = event.at_xpath("talking").text == 'true'
           if talking
             if events.any? && last_event[:stop].nil?
-              BigBlueButton.logger.info "Ignoring #{event_name} for #{participant} at timestamp #{event['timestamp'].to_i} because previous event has no stop"
+              BigBlueButton.logger.info "Ignoring #{event_name} (talking=#{talking}) for #{participant} at timestamp #{event['timestamp'].to_i} because previous event has no stop"
             else
               events << { start: event['timestamp'].to_i }
             end
           else
-            if events.any? && last_event[:stop].nil?
-              last_event[:stop] = event['timestamp'].to_i
+            if events.any?
+              if last_event[:stop].nil?
+                last_event[:stop] = event['timestamp'].to_i
+              else
+                BigBlueButton.logger.info "Ignoring #{event_name} (talking=#{talking}) for #{participant} at timestamp #{event['timestamp'].to_i} because previous event has already a stop (diff=#{event['timestamp'].to_i - last_event[:stop]})"
+              end
             else
-              BigBlueButton.logger.info "Ignoring #{event_name} for #{participant} at timestamp #{event['timestamp'].to_i} because previous event has already a stop"
+              BigBlueButton.logger.info "Ignoring #{event_name} (talking=#{talking}) for #{participant} at timestamp #{event['timestamp'].to_i} because there was no previous start event"
             end
           end
         when 'ParticipantMutedEvent'
