@@ -13,7 +13,7 @@ import {
   LAYOUT_ELEMENTS,
   PANELS,
 } from '../enums';
-import { isMobile, LAYOUTS_SYNC } from '../utils';
+import { isLayoutSupported, isMobile, LAYOUTS_SYNC } from '../utils';
 import { updateSettings, isKeepPushingLayoutEnabled } from '/imports/ui/components/settings/service';
 import Session from '/imports/ui/services/storage/in-memory';
 import usePreviousValue from '/imports/ui/hooks/usePreviousValue';
@@ -24,6 +24,7 @@ import useSettings from '/imports/ui/services/settings/hooks/useSettings';
 import { SETTINGS } from '/imports/ui/services/settings/enums';
 import {
   layoutDispatch,
+  layoutSelect,
   layoutSelectInput,
   layoutSelectOutput,
 } from '../context';
@@ -104,6 +105,7 @@ const PushLayoutEngine = (props) => {
     setPushLayout,
     hasMeetingLayout,
     isChatEnabled,
+    deviceType,
   } = props;
 
   useEffect(() => {
@@ -209,7 +211,7 @@ const PushLayoutEngine = (props) => {
 
     const replicateLayoutType = () => {
       let contextLayout = LAYOUT_TYPE[enforceLayoutResult] || meetingLayout;
-      if (isMobile()) {
+      if (!isLayoutSupported(deviceType, contextLayout)) {
         if (contextLayout === LAYOUT_TYPE.CUSTOM_LAYOUT) {
           contextLayout = LAYOUT_TYPE.SMART_LAYOUT;
         }
@@ -358,6 +360,7 @@ const PushLayoutEngine = (props) => {
 };
 
 const PushLayoutEngineContainer = (props) => {
+  const deviceType = layoutSelect((i) => i.deviceType);
   const cameraDockOutput = layoutSelectOutput((i) => i.cameraDock);
   const cameraDockInput = layoutSelectInput((i) => i.cameraDock);
   const presentationInput = layoutSelectInput((i) => i.presentation);
@@ -479,6 +482,7 @@ const PushLayoutEngineContainer = (props) => {
         setMeetingLayout,
         setPushLayout,
         hasMeetingLayout: !!meetingLayout,
+        deviceType,
         ...props,
       }}
     />

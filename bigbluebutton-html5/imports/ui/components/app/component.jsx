@@ -361,7 +361,6 @@ class App extends Component {
               !isNonMediaLayout
               && <ScreenshareContainer shouldShowScreenshare={shouldShowScreenshare} />
             }
-
             {isSharedNotesPinned
               ? (
                 <NotesContainer
@@ -370,9 +369,9 @@ class App extends Component {
               ) : null}
             <AudioCaptionsSpeechContainer />
             {this.renderAudioCaptions()}
-            { (
+            {(
               !hideNotificationToasts
-              && isNotificationEnabled) && <PresentationUploaderToastContainer intl={intl} /> }
+              && isNotificationEnabled) && <PresentationUploaderToastContainer intl={intl} />}
             <UploaderContainer />
             <BreakoutJoinConfirmationContainerGraphQL />
             <BBBLiveKitRoomContainer />
@@ -383,9 +382,9 @@ class App extends Component {
               setVideoPreviewModalIsOpen: this.setVideoPreviewModalIsOpen,
             }}
             />
-            { (
+            {(
               !hideNotificationToasts
-              && isNotificationEnabled) && <ToastContainer rtl /> }
+              && isNotificationEnabled) && <ToastContainer rtl />}
             <ChatAlertContainerGraphql />
             {isRaiseHandEnabled && <RaiseHandNotifier />}
             <ManyWebcamsNotifier />
