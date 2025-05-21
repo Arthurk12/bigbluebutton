@@ -705,7 +705,6 @@ export interface Stats {
   interval: number
   probes: number
   timeout: number
-  log: boolean
   logMediaStats: LogMediaStats
   notification: Notification
   loss: number[]
@@ -716,7 +715,7 @@ export interface Stats {
 
 export interface LogMediaStats {
   enabled: boolean;
-  statsTypes: StatsTypes;
+  additionalStatsTypes: StatsTypes;
 }
 
 export interface StatsTypes {
