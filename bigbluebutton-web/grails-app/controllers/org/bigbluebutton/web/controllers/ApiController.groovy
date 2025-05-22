@@ -514,22 +514,12 @@ class ApiController {
     }
 
     String meetingId = meeting.getInternalId()
-
     Boolean allowTransfer = meeting.getAllowTransfer()
     Boolean isTransfering = meeting.isTransfering()
-    if (allowTransfer && isTransfering) {
-      Boolean attendee = role == Meeting.ROLE_ATTENDEE
-      if (attendee && !us.bot && !joinViaTransfer) {
-        respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
-        return
-      }
-    }
 
-    if (hasReachedMaxParticipants(meeting, us) && !us.bot && !joinViaTransfer) {
-      if (allowTransfer) {
-        respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
-        return
-      }
+    Boolean maxParticipantsReached = hasReachedMaxParticipants(meeting, us) && !us.bot && !joinViaTransfer;
+
+    if (maxParticipantsReached && !allowTransfer) {
       // BEGIN - backward compatibility
       invalid("maxParticipantsReached", "The number of participants allowed for this meeting has been reached.", REDIRECT_RESPONSE);
       return
@@ -563,6 +553,14 @@ class ApiController {
         us.logoutUrl,
         meeting.getUserCustomData(us.externUserID)
     )
+
+    Boolean needsTransfer = allowTransfer &&
+      ((isTransfering && role == Meeting.ROLE_ATTENDEE && !us.bot && !joinViaTransfer) || maxParticipantsReached);
+
+    if (needsTransfer) {
+      respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
+      return
+    }
 
     session.setMaxInactiveInterval(paramsProcessorUtil.getDefaultHttpSessionTimeout())
 
