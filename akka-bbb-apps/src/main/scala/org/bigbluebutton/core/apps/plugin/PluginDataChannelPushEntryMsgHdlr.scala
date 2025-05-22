@@ -22,8 +22,8 @@ trait PluginDataChannelPushEntryMsgHdlr extends HandlerHelpers {
   }
 
   def handle(msg: PluginDataChannelPushEntryMsg, state: MeetingState2x, liveMeeting: LiveMeeting, bus: MessageBus): Unit = {
-    dataChannelCheckingLogic(liveMeeting, msg.header.userId, msg.body.pluginName, msg.body.channelName, (user, dc, meetingId) => {
-      val hasPermission = checkPermission(user, dc.pushPermission)
+    dataChannelCheckingLogic(liveMeeting, msg.header.userId, msg.body.pluginName, msg.body.channelName, (role, isPresenter, dc, meetingId) => {
+      val hasPermission = checkPermission(role, isPresenter, dc.pushPermission)
       if (!hasPermission.contains(true)) {
         println(s"No permission to write in plugin: '${msg.body.pluginName}', data channel: '${msg.body.channelName}'.")
       } else {

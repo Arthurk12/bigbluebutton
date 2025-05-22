@@ -9,8 +9,8 @@ import org.bigbluebutton.core.running.{ HandlerHelpers, LiveMeeting }
 trait PluginDataChannelResetMsgHdlr extends HandlerHelpers {
 
   def handle(msg: PluginDataChannelResetMsg, state: MeetingState2x, liveMeeting: LiveMeeting): Unit = {
-    dataChannelCheckingLogic(liveMeeting, msg.header.userId, msg.body.pluginName, msg.body.channelName, (user, dc, meetingId) => {
-      val hasPermission = checkPermission(user, dc.replaceOrDeletePermission)
+    dataChannelCheckingLogic(liveMeeting, msg.header.userId, msg.body.pluginName, msg.body.channelName, (role, isPresenter, dc, meetingId) => {
+      val hasPermission = checkPermission(role, isPresenter, dc.replaceOrDeletePermission)
 
       if (!hasPermission.contains(true)) {
         println(s"No permission to delete (reset) in plugin: '${msg.body.pluginName}', data channel: '${msg.body.channelName}'.")
