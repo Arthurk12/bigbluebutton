@@ -312,6 +312,7 @@ class App extends Component {
       return (
         <>
           <BreakoutRoomsAppObserver />
+          <WebRTCStatsObserver />
           <ScreenReaderAlertAdapter />
           <PluginsEngineManager pluginConfig={pluginConfig} />
           <FloatingWindowContainer />
