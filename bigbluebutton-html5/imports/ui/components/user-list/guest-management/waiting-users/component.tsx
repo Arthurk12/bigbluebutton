@@ -87,10 +87,11 @@ const WaitingUserSection: React.FC<WaitingUserSectionProps> = ({
   const isGuestLobbyMessageEnabled = window.meetingClientSettings.public.app.enableGuestLobbyMessage;
   const intl = useIntl();
   const { isChrome } = browserInfo;
-  const [waitingAuthedUsersVisible, setWaitingAuthedUsersVisible] = useState(false);
-  const [waitingUnauthedUsersVisible, setWaitingUnauthedUsersVisible] = useState(false);
+  const [waitingUsersVisible, setWaitingUsersVisible] = useState(false);
   const [submitApprovalStatus] = useMutation(SUBMIT_APPROVAL_STATUS);
   const [setLobbyMessagePrivate] = useMutation(SET_LOBBY_MESSAGE_PRIVATE);
+
+  const allGuestUsers = [...authedGuestUsers, ...unauthedGuestUsers];
 
   const guestUsersCall = useCallback((users: GuestWaitingUser[], status: string) => {
     const guests = users.map((user) => ({
@@ -120,22 +121,22 @@ const WaitingUserSection: React.FC<WaitingUserSectionProps> = ({
       .find((u: GuestWaitingUser) => u.user.userId === userId);
     if (!user) return '';
     return user.guestLobbyMessage === guestLobbyMessage ? '' : user.guestLobbyMessage;
-  }, [authedGuestUsers, unauthedGuestUsers]);
+  }, [authedGuestUsers, unauthedGuestUsers, guestLobbyMessage]);
 
   return (
     <Styled.Panel isChrome={isChrome}>
-      {authedGuestUsers.length > 0 && (
+      {allGuestUsers.length > 0 && (
         <>
           <Tooltip
             title={
-              waitingAuthedUsersVisible
+              waitingUsersVisible
                 ? intl.formatMessage(intlMessages.hideWaitingGuests)
                 : intl.formatMessage(intlMessages.showWaitingGuests)
             }
           >
-            <Styled.ToggleButton onClick={() => setWaitingAuthedUsersVisible(!waitingAuthedUsersVisible)}>
+            <Styled.ToggleButton onClick={() => setWaitingUsersVisible(!waitingUsersVisible)}>
               <Styled.ButtonContent>
-                <Styled.ExpandIcon $expanded={waitingAuthedUsersVisible}>
+                <Styled.ExpandIcon $expanded={waitingUsersVisible}>
                   <ExpandMoreIcon />
                 </Styled.ExpandIcon>
                 <Styled.TitleText>
@@ -143,15 +144,15 @@ const WaitingUserSection: React.FC<WaitingUserSectionProps> = ({
                 </Styled.TitleText>
                 <Avatar sx={{ bgcolor: '#F59240', width: '1.25rem', height: '1.25rem' }}>
                   <Styled.GuestNumberIndicator>
-                    {authedGuestUsers.length}
+                    {allGuestUsers.length}
                   </Styled.GuestNumberIndicator>
                 </Avatar>
               </Styled.ButtonContent>
             </Styled.ToggleButton>
           </Tooltip>
-          {waitingAuthedUsersVisible && (
+          {waitingUsersVisible && (
             renderPendingUsers(
-              authedGuestUsers,
+              allGuestUsers,
               guestUsersCall,
               setPrivateGuestLobbyMessage,
               getPrivateGuestLobbyMessage,
@@ -159,10 +160,10 @@ const WaitingUserSection: React.FC<WaitingUserSectionProps> = ({
               intl,
             )
           )}
-          {waitingAuthedUsersVisible && (
+          {waitingUsersVisible && (
             <Styled.AcceptDenyButtonsContainer>
               <Styled.AcceptAllButton
-                onClick={() => guestUsersCall(authedGuestUsers, ALLOW_STATUS)}
+                onClick={() => guestUsersCall(allGuestUsers, ALLOW_STATUS)}
                 data-test="allowAllGuests"
               >
                 <CheckCircle sx={{ width: '1rem', height: '1rem' }} />
@@ -171,66 +172,7 @@ const WaitingUserSection: React.FC<WaitingUserSectionProps> = ({
                 </Styled.AcceptDenyButtonText>
               </Styled.AcceptAllButton>
               <Styled.DenyAllButton
-                onClick={() => guestUsersCall(authedGuestUsers, DENY_STATUS)}
-                data-test="denyEveryone"
-              >
-                <CancelIcon sx={{ width: '1rem', height: '1rem' }} />
-                <Styled.AcceptDenyButtonText>
-                  {intl.formatMessage(intlMessages.denyEveryone)}
-                </Styled.AcceptDenyButtonText>
-              </Styled.DenyAllButton>
-            </Styled.AcceptDenyButtonsContainer>
-          )}
-        </>
-      )}
-      {unauthedGuestUsers.length > 0 && (
-        <>
-          <Tooltip
-            title={
-              waitingUnauthedUsersVisible
-                ? intl.formatMessage(intlMessages.hideWaitingGuests)
-                : intl.formatMessage(intlMessages.showWaitingGuests)
-            }
-          >
-            <Styled.ToggleButton onClick={() => setWaitingUnauthedUsersVisible(!waitingUnauthedUsersVisible)}>
-              <Styled.ButtonContent>
-                <Styled.ExpandIcon $expanded={waitingUnauthedUsersVisible}>
-                  <ExpandMoreIcon />
-                </Styled.ExpandIcon>
-                <Styled.TitleText>
-                  {intl.formatMessage(intlMessages.title)}
-                </Styled.TitleText>
-                <Avatar sx={{ bgcolor: '#F59240', width: '1.25rem', height: '1.25rem' }}>
-                  <Styled.GuestNumberIndicator>
-                    {unauthedGuestUsers.length}
-                  </Styled.GuestNumberIndicator>
-                </Avatar>
-              </Styled.ButtonContent>
-            </Styled.ToggleButton>
-          </Tooltip>
-          {waitingUnauthedUsersVisible && (
-            renderPendingUsers(
-              unauthedGuestUsers,
-              guestUsersCall,
-              setPrivateGuestLobbyMessage,
-              getPrivateGuestLobbyMessage,
-              isGuestLobbyMessageEnabled,
-              intl,
-            )
-          )}
-          {waitingUnauthedUsersVisible && (
-            <Styled.AcceptDenyButtonsContainer>
-              <Styled.AcceptAllButton
-                onClick={() => guestUsersCall(unauthedGuestUsers, ALLOW_STATUS)}
-                data-test="allowAllGuests"
-              >
-                <CheckCircle sx={{ width: '1rem', height: '1rem' }} />
-                <Styled.AcceptDenyButtonText>
-                  {intl.formatMessage(intlMessages.allowAllGuests)}
-                </Styled.AcceptDenyButtonText>
-              </Styled.AcceptAllButton>
-              <Styled.DenyAllButton
-                onClick={() => guestUsersCall(unauthedGuestUsers, DENY_STATUS)}
+                onClick={() => guestUsersCall(allGuestUsers, DENY_STATUS)}
                 data-test="denyEveryone"
               >
                 <CancelIcon sx={{ width: '1rem', height: '1rem' }} />

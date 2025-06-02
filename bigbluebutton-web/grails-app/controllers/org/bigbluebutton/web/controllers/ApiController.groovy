@@ -530,6 +530,14 @@ class ApiController {
       return;
     }
 
+    Boolean needsTransfer = allowTransfer &&
+      ((isTransfering && role == Meeting.ROLE_ATTENDEE && !us.bot && !joinViaTransfer) || maxParticipantsReached);
+
+    if (needsTransfer) {
+      // set guestStatus to allow so it doesn't appear in waiting user list
+      guestStatusVal = GuestPolicy.ALLOW;
+    }
+
     // Register user into the meeting.
     meetingService.registerUser(
         us.meetingID,
@@ -553,9 +561,6 @@ class ApiController {
         us.logoutUrl,
         meeting.getUserCustomData(us.externUserID)
     )
-
-    Boolean needsTransfer = allowTransfer &&
-      ((isTransfering && role == Meeting.ROLE_ATTENDEE && !us.bot && !joinViaTransfer) || maxParticipantsReached);
 
     if (needsTransfer) {
       respondWithTransfer(meetingId, internalUserID, fullName, userCustomData, externUserID, sessionToken)
