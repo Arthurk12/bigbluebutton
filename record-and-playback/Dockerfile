@@ -17,7 +17,7 @@ ENV DEBEMAIL="felipe@mconf.com"
 ENV UBUNTU_CODENAME=jammy
 ENV UBUNTU_VERSION=22.04
 # https://github.com/bigbluebutton/bbb-presentation-video/tags
-ENV VERSION=5.0.0-beta.2
+ENV VERSION=32c6def
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -35,7 +35,7 @@ RUN apt-get update \
  && mk-build-deps -i -r -t 'apt-get -y -o Debug::pkgProblemResolver=yes --no-install-recommends' \
  && gbp buildpackage --git-ignore-new --git-ignore-branch --no-sign
 
-FROM mconf/mconf-rec:proxy-s3-noauth-0.3.7-889fa1d AS mconf-rec
+FROM mconf/mconf-rec:proxy-s3-noauth-0.6.4-76daade AS mconf-rec
 
 FROM ubuntu:jammy
 
