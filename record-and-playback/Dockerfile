@@ -17,18 +17,22 @@ ENV DEBEMAIL="felipe@mconf.com"
 ENV UBUNTU_CODENAME=jammy
 ENV UBUNTU_VERSION=22.04
 # https://github.com/bigbluebutton/bbb-presentation-video/tags
-ENV VERSION=32c6def
+# https://github.com/bigbluebutton/bbb-presentation-video/pull/65
+ENV VERSION=b06d161
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update \
  && apt-get install --no-install-recommends -y software-properties-common \
  && add-apt-repository -y ppa:git-core/ppa \
- && apt-get install --no-install-recommends -y debhelper devscripts equivs git git-buildpackage pristine-tar \
- && git clone https://github.com/bigbluebutton/bbb-presentation-video source \
+ && apt-get install --no-install-recommends -y debhelper devscripts equivs git git-buildpackage libdistro-info-perl pristine-tar \
+ # && git clone https://github.com/bigbluebutton/bbb-presentation-video source \
+ && git clone https://github.com/germanocaumo/bbb-presentation-video.git source \
  && cd source \
  && git fetch --tags \
  && git checkout ${VERSION} \
+ # dch_version.sh fails if there's no tag in the repository
+ && git tag 5.0.0-rc.2 \
  && eval "$(./dch_version.sh)" \
  && dch --newversion "${DCH_VERSION}" --force-bad-version --distribution "${UBUNTU_CODENAME}" "Automatic Build" \
  && rm -r .github \
