@@ -12,6 +12,43 @@ import {
 export const LOG_MEDIA_STATS = () => (
   window.meetingClientSettings.public.stats.logMediaStats.enabled);
 
+export const LOG_SEPARATED_VIDEO_STATS = () => (
+  window.meetingClientSettings.public.stats.logSeparatedVideoStats.enabled);
+
+const prevStats = {
+  bytesSent: 0,
+  timestamp: 0,
+};
+
+export const formatVideoStats = (stats: Record<string, any> = {}) => {
+  const hardcodedStatsOfInterest = [
+    'targetBitrate',
+    'frameWidth',
+    'frameHeight',
+    'framesPerSecond',
+    'qpSum',
+    'bytesSent',
+  ];
+  const entry = Object.entries(stats).find(([_, videoStats]) => videoStats['outbound-rtp']);
+
+  if (!entry) return null;
+
+  const [peerId, videoStats] = entry;
+  const outbound = videoStats['outbound-rtp'];
+  const deltaBytes = outbound.bytesSent - prevStats.bytesSent;
+  const deltaTimestamp = outbound.timestamp - prevStats.timestamp;
+  const bitrateBps = deltaTimestamp > 0 ? (deltaBytes * 8) / (deltaTimestamp / 1000) : null;
+  prevStats.timestamp = outbound.timestamp;
+  prevStats.bytesSent = outbound.bytesSent;
+
+  const desiredStats = Object.fromEntries(
+    hardcodedStatsOfInterest.map((key) => [key, outbound[key] ?? null]),
+  );
+  desiredStats.bytesSentInBitsPerSecond = bitrateBps;
+  desiredStats.peerId = peerId;
+  return desiredStats;
+};
+
 export const buildData = (inboundRTP: RTCInboundRtpStreamStats) => {
   const builtData = {
     packets: {
