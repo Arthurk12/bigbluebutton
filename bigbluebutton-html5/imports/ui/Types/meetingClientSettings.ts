@@ -705,12 +705,17 @@ export interface Stats {
   interval: number
   probes: number
   timeout: number
+  logSeparatedVideoStats: LogSeparatedVideoStats
   logMediaStats: LogMediaStats
   notification: Notification
   loss: number[]
   rtt: number[]
   level: string[]
   help: string
+}
+
+export interface LogSeparatedVideoStats{
+  enabled: boolean;
 }
 
 export interface LogMediaStats {

@@ -979,6 +979,8 @@ public:
     interval: 10000
     timeout: 10000
     probes: 5
+    logSeparatedVideoStats:
+      enabled: false 
     # Client-side WebRTC stats logging. If enabled, the client will log periodic
     # WebRTC stats information to the configured logging transports.
     # Disabled by default. This log is verbose and may incur in additional network
