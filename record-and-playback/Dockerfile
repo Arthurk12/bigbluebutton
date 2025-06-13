@@ -18,7 +18,7 @@ ENV UBUNTU_CODENAME=jammy
 ENV UBUNTU_VERSION=22.04
 # https://github.com/bigbluebutton/bbb-presentation-video/tags
 # https://github.com/bigbluebutton/bbb-presentation-video/pull/65
-ENV VERSION=b06d161
+ENV VERSION=bf997ca
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -32,7 +32,7 @@ RUN apt-get update \
  && git fetch --tags \
  && git checkout ${VERSION} \
  # dch_version.sh fails if there's no tag in the repository
- && git tag 5.0.0-rc.2 \
+ && git tag 5.0.0-dev \
  && eval "$(./dch_version.sh)" \
  && dch --newversion "${DCH_VERSION}" --force-bad-version --distribution "${UBUNTU_CODENAME}" "Automatic Build" \
  && rm -r .github \
