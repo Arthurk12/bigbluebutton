@@ -9,7 +9,7 @@ import {
   calculateMetricsForNetworkData,
   formatVideoStats,
   LOG_MEDIA_STATS,
-  LOG_SEPARATED_VIDEO_STATS,
+  LOG_VIDEO_STATS,
 } from './service';
 import { Probe } from './types';
 import logger from '/imports/startup/client/logger';
@@ -41,8 +41,6 @@ const WebRTCStatsObserver = () => {
         || Object.keys(video).length > 0
         || Object.keys(screenshare).length > 0
       );
-    const shouldLogSeparatedVideoStats = LOG_SEPARATED_VIDEO_STATS()
-      && Object.keys(video).length > 0;
 
     if (shouldLogMediaStats) {
       logger.info({
@@ -53,11 +51,16 @@ const WebRTCStatsObserver = () => {
           screenshare: lastProbe.screenshare,
         },
       }, 'Media stats');
-    } else if (shouldLogSeparatedVideoStats) {
+    }
+
+    const shouldLogVideoStats = LOG_VIDEO_STATS()
+      && Object.keys(video).length > 0;
+
+    if (shouldLogVideoStats) {
       const formattedVideoStats = formatVideoStats(lastProbe.video);
       if (formattedVideoStats) {
         logger.info({
-          logCode: 'separated_video_stats',
+          logCode: 'video_stats',
           extraInfo: {
             video: formattedVideoStats,
           },
