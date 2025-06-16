@@ -1,0 +1,80 @@
+From a188a5fa8357dd7139b1a3fadfac295f868d04a5 Mon Sep 17 00:00:00 2001
+From: prlanzarin <4529051+prlanzarin@users.noreply.github.com>
+Date: Mon, 16 Jun 2025 17:10:54 +0000
+Subject: [PATCH] chore: add debug logs to worker lifecycle (create, close and
+ destroy)
+
+---
+ pkg/telemetry/statsworker.go      | 12 ++++++++++++
+ pkg/telemetry/telemetryservice.go | 25 +++++++++++++++++++++++++
+ 2 files changed, 37 insertions(+)
+
+diff --git a/pkg/telemetry/statsworker.go b/pkg/telemetry/statsworker.go
+index 0dec2c5c..364b067b 100644
+--- a/pkg/telemetry/statsworker.go
++++ b/pkg/telemetry/statsworker.go
+@@ -125,6 +125,18 @@ func (s *StatsWorker) Close() bool {
+ 	if ok {
+ 		s.closedAt = time.Now()
+ 	}
++
++	logger.Warnw("stats worker closed",
++		nil,
++		"ok", ok,
++		"closedAt", s.closedAt,
++		"participantID", s.participantID,
++		"roomID", s.roomID,
++		"roomName", s.roomName,
++		"identity", s.participantIdentity,
++		"isConnected", s.isConnected,
++	)
++
+ 	return ok
+ }
+ 
+diff --git a/pkg/telemetry/telemetryservice.go b/pkg/telemetry/telemetryservice.go
+index 431517e4..7de4b604 100644
+--- a/pkg/telemetry/telemetryservice.go
++++ b/pkg/telemetry/telemetryservice.go
+@@ -173,6 +173,16 @@ func (t *telemetryService) FlushStats() {
+ 		for reap != nil {
+ 			if reap == t.workers[reap.participantID] {
+ 				delete(t.workers, reap.participantID)
++				logger.Warnw("removed stats worker",
++					nil,
++					"workerCount", len(t.workers),
++					"workerClosed", reap.Closed(),
++					"workerIsConnected", reap.IsConnected(),
++					"workerParticipantID", reap.participantID,
++					"workerParticipantIdentity", reap.participantIdentity,
++					"workerRoomID", reap.roomID,
++					"workerRoomName", reap.roomName,
++				)
+ 			}
+ 			reap = reap.next
+ 		}
+@@ -231,6 +241,21 @@ func (t *telemetryService) getOrCreateWorker(
+ 	}
+ 
+ 	t.workers[participantID] = worker
++	logger.Warnw("created new stats worker",
++		nil,
++		"roomID", roomID,
++		"roomName", roomName,
++		"participantID", participantID,
++		"participantIdentity", participantIdentity,
++		"existingIsConnected", existingIsConnected,
++		"workerCount", len(t.workers),
++		"workerClosed", worker.Closed(),
++		"workerIsConnected", worker.IsConnected(),
++		"workerParticipantID", worker.participantID,
++		"workerParticipantIdentity", worker.participantIdentity,
++		"workerRoomID", worker.roomID,
++		"workerRoomName", worker.roomName,
++	)
+ 
+ 	worker.next = t.workerList
+ 	t.workerList = worker
+-- 
+2.34.1
+
