@@ -48,6 +48,16 @@ if [ -z "$LIVEKIT_DIR" ]; then
     exit 1
 fi
 
+# Apply patches if any. All patches end in .patch and are in the same directory as this script.
+for patch in "$BUILDDIR"/*.patch; do
+    if [ -f "$patch" ]; then
+        echo "Applying patch: $patch"
+        pushd "$LIVEKIT_DIR" > /dev/null
+        git apply "$patch"
+        popd > /dev/null
+    fi
+done
+
 # Build in an isolated shell as the GO* envs need to be overridden and I'd
 # prefer not to leak them to the main shell.- prlanzarin
 (
