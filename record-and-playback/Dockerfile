@@ -17,25 +17,29 @@ ENV DEBEMAIL="felipe@mconf.com"
 ENV UBUNTU_CODENAME=jammy
 ENV UBUNTU_VERSION=22.04
 # https://github.com/bigbluebutton/bbb-presentation-video/tags
-ENV VERSION=5.0.0-beta.2
+# https://github.com/bigbluebutton/bbb-presentation-video/pull/65
+ENV VERSION=bf997ca
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update \
  && apt-get install --no-install-recommends -y software-properties-common \
  && add-apt-repository -y ppa:git-core/ppa \
- && apt-get install --no-install-recommends -y debhelper devscripts equivs git git-buildpackage pristine-tar \
- && git clone https://github.com/bigbluebutton/bbb-presentation-video source \
+ && apt-get install --no-install-recommends -y debhelper devscripts equivs git git-buildpackage libdistro-info-perl pristine-tar \
+ # && git clone https://github.com/bigbluebutton/bbb-presentation-video source \
+ && git clone https://github.com/germanocaumo/bbb-presentation-video.git source \
  && cd source \
  && git fetch --tags \
  && git checkout ${VERSION} \
+ # dch_version.sh fails if there's no tag in the repository
+ && git tag 5.0.0-dev \
  && eval "$(./dch_version.sh)" \
  && dch --newversion "${DCH_VERSION}" --force-bad-version --distribution "${UBUNTU_CODENAME}" "Automatic Build" \
  && rm -r .github \
  && mk-build-deps -i -r -t 'apt-get -y -o Debug::pkgProblemResolver=yes --no-install-recommends' \
  && gbp buildpackage --git-ignore-new --git-ignore-branch --no-sign
 
-FROM mconf/mconf-rec:proxy-s3-noauth-0.3.7-889fa1d AS mconf-rec
+FROM mconf/mconf-rec:proxy-s3-noauth-0.6.4-76daade AS mconf-rec
 
 FROM ubuntu:jammy
 
