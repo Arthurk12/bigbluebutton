@@ -76,6 +76,16 @@ module BigBlueButton
           edl[i][:next_timestamp] = edl[i+1][:timestamp]
         end
       
+        # Remove entries where :next_timestamp == :timestamp
+        edl.reject! do |entry|
+          if entry[:next_timestamp] == entry[:timestamp]
+            BigBlueButton.logger.warn "Discarding EDL entry with zero duration (timestamp: #{entry[:timestamp]})"
+            true
+          else
+            false
+          end
+        end
+
         # Build a list of audio files to read information from
         edl.each do |entry|
           if entry[:audios]
