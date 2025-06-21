@@ -27,8 +27,14 @@ module BigBlueButton
     module Video
       FFMPEG_WF_CODEC = 'libx264'
       FFMPEG_WF_ARGS = [
-        '-codec', FFMPEG_WF_CODEC.to_s, '-preset', 'veryfast', '-crf', '30',
-        '-x264opts', 'stitchable=1', '-force_key_frames', 'expr:gte(t,n_forced*10)', '-pix_fmt', 'yuv420p',
+        '-codec', FFMPEG_WF_CODEC.to_s, '-threads', ENV['MCONF_REC_WORKER_FFMPEG_VIDEO_THREADS'] || '1',
+        # Use the faster preset, along with the film tune that reduces deblocking strength slightly to improve
+        # appearance of small text/shapes on slides. Adjust the subme option to the value from veryfast preset; without
+        # much motion it's not a big quality loss, but it is a big speed improvement. Adjust the bframes value +2 like
+        # the animation tune; we have a lot of frames which are very similar. Enable stitchable mode since we are
+        # concatenating video. Use crf to balance the file size vs video quality tradeoff.
+        '-preset', 'faster', '-tune', 'film', '-x264opts', 'subme=2:bframes=5:stitchable=1', '-crf', ENV['MCONF_REC_WORKER_FFMPEG_VIDEO_CRF'] || '30',
+        '-force_key_frames', 'expr:gte(t,n_forced*10)', '-pix_fmt', 'yuv420p',
       ]
       WF_EXT = 'mp4'
       # Max PTS gap in ms to trigger video resampling
