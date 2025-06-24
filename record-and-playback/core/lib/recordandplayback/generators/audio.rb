@@ -283,17 +283,20 @@ module BigBlueButton
     
           # Mark each user in "senders" as belonging to this group
           # => remove that user's microphone track(s) from main if they are active
+          changed = false
           senders.each do |uid|
             old_count = user_in_groups[uid].size
             user_in_groups[uid].add(group_id)
             # If user just went from 0 groups => remove the mic track(s) from main
             if old_count == 0
+              before = main_active_filenames.size
               main_active_filenames.delete_if do |fn|
                 filename_to_user_id[fn] == uid && filename_to_source[fn] == 'microphone'
               end
-              rebuild_main_edl_entry.call(event_ts)
+              changed = true if main_active_filenames.size < before
             end
           end
+          rebuild_main_edl_entry.call(event_ts) if changed
     
         when 'AudioGroupUpdatedEvent'
           group_id = event.at_xpath('groupId')&.text
