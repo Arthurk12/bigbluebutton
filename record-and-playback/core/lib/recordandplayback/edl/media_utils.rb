@@ -38,7 +38,8 @@ module BigBlueButton
           status = IO.popen(ffprobe_cmd) do |io|
             io.each_line do |line|
               line.strip!
-              next if line.empty? || line == "N/A" # Skip empty lines or "N/A"
+              # ignore lines that do not look like a valid float number
+              next if ! /^\d+(?:\.\d+)?$/.match(line)
               begin
                 pts_times << Float(line)
               rescue ArgumentError

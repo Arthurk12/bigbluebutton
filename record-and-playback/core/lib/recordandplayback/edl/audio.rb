@@ -76,6 +76,16 @@ module BigBlueButton
           edl[i][:next_timestamp] = edl[i+1][:timestamp]
         end
       
+        # Remove entries where :next_timestamp == :timestamp
+        edl.reject! do |entry|
+          if entry[:next_timestamp] == entry[:timestamp]
+            BigBlueButton.logger.warn "Discarding EDL entry with zero duration (timestamp: #{entry[:timestamp]})"
+            true
+          else
+            false
+          end
+        end
+
         # Build a list of audio files to read information from
         edl.each do |entry|
           if entry[:audios]
@@ -127,8 +137,6 @@ module BigBlueButton
             if gap_details
               BigBlueButton.logger.info "Audio file '#{File.basename(audio_filename)}' identified with large PTS gap between #{gap_details[0].round(3)}s and #{gap_details[1].round(3)}s. Marking for resampling."
               audio_files_to_resample << audio_filename
-            else
-              BigBlueButton.logger.debug "No large PTS gaps found in '#{File.basename(audio_filename)}'."
             end
           end
 
