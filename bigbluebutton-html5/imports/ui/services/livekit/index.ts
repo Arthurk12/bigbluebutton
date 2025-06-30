@@ -36,28 +36,29 @@ export const lkIsCameraSource = (track: TrackPublication | RemoteTrack): boolean
 };
 
 export const lkToggleMuteCameras = (mute: boolean): void => {
-  const { videoTrackPublications } = liveKitRoom?.localParticipant;
+  const localParticipant = liveKitRoom?.localParticipant;
 
-  if (videoTrackPublications == null || videoTrackPublications.size === 0) {
+  if (!localParticipant?.videoTrackPublications || localParticipant.videoTrackPublications.size === 0) {
     return;
   }
 
-  videoTrackPublications.forEach((publication: LocalTrackPublication) => {
+  localParticipant.videoTrackPublications.forEach((publication: LocalTrackPublication) => {
     if (lkIsCameraSource(publication) && publication.isMuted !== mute) {
       if (mute) {
         publication.mute();
       } else {
         publication.unmute();
       }
-    }
 
-    logger.info({
-      logCode: 'livekit_camera_toggle_mute',
-      extraInfo: {
-        trackName: publication?.trackName,
-        trackSid: publication?.trackSid,
-      },
-    }, `LiveKit: camera track ${mute ? 'muted' : 'unmuted'} - ${publication?.trackSid}`);
+      logger.info({
+        logCode: 'livekit_camera_toggle_mute',
+        extraInfo: {
+          trackName: publication?.trackName,
+          trackSid: publication?.trackSid,
+          mute,
+        },
+      }, `LiveKit: camera track ${mute ? 'muted' : 'unmuted'} - ${publication?.trackSid}`);
+    }
   });
 };
 
