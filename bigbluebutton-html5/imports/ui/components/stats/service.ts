@@ -12,8 +12,8 @@ import {
 export const LOG_MEDIA_STATS = () => (
   window.meetingClientSettings.public.stats.logMediaStats.enabled);
 
-export const LOG_SEPARATED_VIDEO_STATS = () => (
-  window.meetingClientSettings.public.stats.logSeparatedVideoStats.enabled);
+export const LOG_VIDEO_STATS = () => (
+  window.meetingClientSettings.public.stats.logVideoStats.enabled);
 
 const prevStats = {
   bytesSent: 0,
@@ -29,24 +29,51 @@ export const formatVideoStats = (stats: Record<string, any> = {}) => {
     'qpSum',
     'bytesSent',
   ];
-  const entry = Object.entries(stats).find(([_, videoStats]) => videoStats['outbound-rtp']);
 
-  if (!entry) return null;
+  try {
+    const firstOutboundPeer = Object.entries(stats)
+      .filter(([peerId, videoStats]) => peerId !== null && videoStats)
+      .map(([peerId, videoStats]) => ({
+        peerId,
+        outbound: videoStats?.['outbound-rtp'],
+      }))
+      .find(({ outbound }) => outbound !== undefined);
 
-  const [peerId, videoStats] = entry;
-  const outbound = videoStats['outbound-rtp'];
-  const deltaBytes = outbound.bytesSent - prevStats.bytesSent;
-  const deltaTimestamp = outbound.timestamp - prevStats.timestamp;
-  const bitrateBps = deltaTimestamp > 0 ? (deltaBytes * 8) / (deltaTimestamp / 1000) : null;
-  prevStats.timestamp = outbound.timestamp;
-  prevStats.bytesSent = outbound.bytesSent;
+    if (!firstOutboundPeer) return null;
 
-  const desiredStats = Object.fromEntries(
-    hardcodedStatsOfInterest.map((key) => [key, outbound[key] ?? null]),
-  );
-  desiredStats.bytesSentInBitsPerSecond = bitrateBps;
-  desiredStats.peerId = peerId;
-  return desiredStats;
+    const { peerId = null, outbound = {} } = firstOutboundPeer;
+    if (!peerId || !outbound) return null;
+
+    const { bytesSent = null, timestamp = null } = outbound;
+    if (typeof bytesSent !== 'number' || typeof timestamp !== 'number') return null;
+
+    const deltaBytes = bytesSent - prevStats.bytesSent;
+    const deltaTimestamp = timestamp - prevStats.timestamp;
+    const bitrateBps = (deltaBytes * 8) / (deltaTimestamp / 1000);
+    prevStats.timestamp = timestamp;
+    prevStats.bytesSent = bytesSent;
+
+    const desiredStats = Object.fromEntries(
+      hardcodedStatsOfInterest
+        .filter((key) => outbound[key] !== undefined)
+        .map((key) => [key, outbound[key]]),
+    );
+    desiredStats.bytesSentInBitsPerSecond = Math.round(bitrateBps);
+    desiredStats.peerId = peerId;
+    return desiredStats;
+  } catch (error: unknown) {
+    const e = error as Error;
+    logger.warn(
+      {
+        logCode: 'format_video_stats_failed',
+        extraInfo: {
+          errorMessage: e.message,
+        },
+      },
+      'Exception thrown during video stats formatting.',
+    );
+    return null;
+  }
 };
 
 export const buildData = (inboundRTP: RTCInboundRtpStreamStats) => {
