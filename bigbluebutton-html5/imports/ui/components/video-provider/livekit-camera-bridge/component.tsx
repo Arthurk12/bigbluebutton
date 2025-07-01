@@ -205,7 +205,7 @@ const LiveKitCameraBridge: React.FC<LiveKitCameraBridgeProps> = ({
       if (!videoTrackPublications || !track) return;
 
       videoTrackPublications.forEach((publication: LocalTrackPublication) => {
-        if (lkIsCameraSource(publication) && publication.track) {
+        if (lkIsCameraSource(publication) && publication.track && track.sid === publication.track.sid) {
           liveKitRoom.localParticipant.unpublishTrack(publication.track)
             .then(() => {
               logger.debug({
@@ -518,6 +518,16 @@ const LiveKitCameraBridge: React.FC<LiveKitCameraBridgeProps> = ({
       const newTracks = mediaStream.getVideoTracks();
       track.replaceTrack(newTracks[0]).then(() => {
         attachLiveKitStream(streamId);
+      }).catch((error) => {
+        logger.error({
+          logCode: 'livekit_camera_replace_track_error',
+          extraInfo: {
+            cameraId: streamId,
+            trackSid: track?.sid,
+            errorMessage: error.message,
+            errorStack: error.stack,
+          },
+        }, `LiveKit: failed to replace camera track - ${error.message}`);
       });
     }
   };
