@@ -9,7 +9,7 @@ type VideoPlayerWrapperProps = {
 };
 
 type ContainerProps = {
-  isResizing: boolean;
+  preventInteraction: boolean;
   isMinimized: boolean;
 };
 
@@ -20,7 +20,7 @@ export const Container = styled.span<ContainerProps>`
   overflow: hidden;
   border-radius: ${lgBorderRadius};
 
-  ${({ isResizing }) => isResizing && `
+  ${({ preventInteraction }) => preventInteraction && `
     pointer-events: none;
   `}
   ${({ isMinimized }) => isMinimized && `

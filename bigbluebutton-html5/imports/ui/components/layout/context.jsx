@@ -66,8 +66,9 @@ const reducer = (state, action) => {
     case ACTIONS.SET_FOCUSED_CAMERA_ID: {
       const { cameraDock } = state.input;
       const { focusedId } = cameraDock;
+      const { value, isLocalChange = true } = action;
 
-      if (focusedId === action.value) return state;
+      if (focusedId === value) return state;
 
       return {
         ...state,
@@ -75,7 +76,8 @@ const reducer = (state, action) => {
           ...state.input,
           cameraDock: {
             ...cameraDock,
-            focusedId: action.value,
+            focusedId: value,
+            isLocalChange,
           },
         },
       };
@@ -86,18 +88,6 @@ const reducer = (state, action) => {
       return {
         ...state,
         input: typeof action.value === 'function' ? action.value(state.input) : action.value,
-      };
-    }
-
-    case ACTIONS.SET_AUTO_ARRANGE_LAYOUT: {
-      const { autoarrAngeLayout } = state.input;
-      if (autoarrAngeLayout === action.value) return state;
-      return {
-        ...state,
-        input: {
-          ...state.input,
-          autoarrAngeLayout: action.value,
-        },
       };
     }
 
@@ -753,7 +743,8 @@ const reducer = (state, action) => {
     }
     case ACTIONS.SET_CAMERA_DOCK_IS_RESIZING: {
       const { cameraDock } = state.input;
-      if (cameraDock.isResizing === action.value) {
+      const { value, isLocalChange = true } = action;
+      if (cameraDock.isResizing === value) {
         return state;
       }
       return {
@@ -762,14 +753,16 @@ const reducer = (state, action) => {
           ...state.input,
           cameraDock: {
             ...cameraDock,
-            isResizing: action.value,
+            isResizing: value,
+            isLocalChange,
           },
         },
       };
     }
     case ACTIONS.SET_CAMERA_DOCK_POSITION: {
       const { cameraDock } = state.input;
-      if (cameraDock.position === action.value) {
+      const { value, isLocalChange = true } = action;
+      if (cameraDock.position === value) {
         return state;
       }
       return {
@@ -778,15 +771,17 @@ const reducer = (state, action) => {
           ...state.input,
           cameraDock: {
             ...cameraDock,
-            position: action.value,
+            position: value,
+            isLocalChange,
           },
         },
       };
     }
     case ACTIONS.SET_CAMERA_DOCK_SIZE: {
+      const { value, isLocalChange = true } = action;
       const {
         width, height, browserWidth, browserHeight,
-      } = action.value;
+      } = value;
       const { cameraDock } = state.input;
       if (cameraDock.width === width
         && cameraDock.height === height
@@ -804,6 +799,7 @@ const reducer = (state, action) => {
             height,
             browserWidth,
             browserHeight,
+            isLocalChange,
           },
         },
       };

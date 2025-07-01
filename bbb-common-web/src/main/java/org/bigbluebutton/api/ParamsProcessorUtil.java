@@ -98,6 +98,7 @@ public class ParamsProcessorUtil {
     private Integer defaultMaxPinnedCameras = 3;
     private boolean defaultMuteOnStart = false;
     private boolean defaultAllowModsToUnmuteUsers = false;
+    private boolean defaultRequireUserConsentBeforeUnmuting = false;
     private boolean defaultAllowModsToEjectCameras = false;
     private Boolean defaultAllowTransfer;
     private String defaultTransferURL;
@@ -924,6 +925,12 @@ public class ParamsProcessorUtil {
         }
         meeting.setAllowModsToUnmuteUsers(allowModsToUnmuteUsers);
 
+        Boolean requireUserConsentBeforeUnmuting = defaultRequireUserConsentBeforeUnmuting;
+        if (!StringUtils.isEmpty(params.get(ApiParams.REQUIRE_USER_CONSENT_BEFORE_UNMUTING))) {
+            requireUserConsentBeforeUnmuting = Boolean.parseBoolean(params.get(ApiParams.REQUIRE_USER_CONSENT_BEFORE_UNMUTING));
+        }
+        meeting.setRequireUserConsentBeforeUnmuting(requireUserConsentBeforeUnmuting);
+
         if (!StringUtils.isEmpty(params.get(ApiParams.ALLOW_REQUESTS_WITHOUT_SESSION))) {
             meeting.setAllowRequestsWithoutSession(Boolean.parseBoolean(params.get(ApiParams.ALLOW_REQUESTS_WITHOUT_SESSION)));
         }
@@ -1553,6 +1560,14 @@ public class ParamsProcessorUtil {
 
 	public Boolean getAllowModsToUnmuteUsers() {
 		return defaultAllowModsToUnmuteUsers;
+	}
+
+    public void setRequireUserConsentBeforeUnmuting(Boolean value) {
+		defaultRequireUserConsentBeforeUnmuting = value;
+	}
+
+	public Boolean getRequireUserConsentBeforeUnmuting() {
+		return defaultRequireUserConsentBeforeUnmuting;
 	}
 
   public void setAllowModsToEjectCameras(Boolean value) {

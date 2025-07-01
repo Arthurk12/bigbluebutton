@@ -6,14 +6,17 @@ import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedS
 
 interface PadContentProps {
   content: string;
+  isOnMediaArea: boolean;
 }
 
 interface PadContentContainerProps {
   externalId: string;
+  isOnMediaArea: boolean;
 }
 
 const PadContent: React.FC<PadContentProps> = ({
   content,
+  isOnMediaArea,
 }) => {
   const contentSplit = content.split('<body>');
   const contentStyle = `
@@ -31,12 +34,13 @@ const PadContent: React.FC<PadContentProps> = ({
         title="shared notes viewing mode"
         srcDoc={contentWithStyle}
         data-test="sharedNotesViewingMode"
+        isOnMediaArea={isOnMediaArea}
       />
     </Styled.Wrapper>
   );
 };
 
-const PadContentContainer: React.FC<PadContentContainerProps> = ({ externalId }) => {
+const PadContentContainer: React.FC<PadContentContainerProps> = ({ externalId, isOnMediaArea }) => {
   const [content, setContent] = useState('');
   const { data: contentDiffData } = useDeduplicatedSubscription<GetPadContentDiffStreamResponse>(
     GET_PAD_CONTENT_DIFF_STREAM,
@@ -54,7 +58,7 @@ const PadContentContainer: React.FC<PadContentContainerProps> = ({ externalId })
   }, [contentDiffData]);
 
   return (
-    <PadContent content={content} />
+    <PadContent content={content} isOnMediaArea={isOnMediaArea} />
   );
 };
 

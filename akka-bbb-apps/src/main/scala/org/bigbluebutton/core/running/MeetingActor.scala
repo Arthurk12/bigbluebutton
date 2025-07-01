@@ -568,6 +568,8 @@ class MeetingActor(
       case m: MuteAllExceptPresentersCmdMsg =>
         handleMuteAllExceptPresentersCmdMsg(m)
         updateUserLastActivity(m.body.mutedBy)
+      case m: UnmuteRequestAnswerEvtMsg =>
+        handleUnmuteRequestAnswer(m)
       case m: DeafenUserCmdMsg =>
         handleDeafenUserCmdMsg(m)
         updateUserLastActivity(m.body.deafenedBy)

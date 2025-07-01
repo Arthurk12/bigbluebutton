@@ -8,6 +8,7 @@ import UserListParticipantsPageContainer from './page/component';
 import IntersectionWatcher from './intersection-watcher/intersectionWatcher';
 import { setLocalUserList } from '/imports/ui/core/hooks/useLoadedUserList';
 import roveBuilder from '/imports/ui/core/utils/keyboardRove';
+import { USERS_PER_USER_LIST_PAGE } from '/imports/ui/components/user-list/user-list-participants/constants';
 
 interface UserListParticipantsContainerProps {
   count: number;
@@ -77,7 +78,7 @@ const UserListParticipants: React.FC<UserListParticipantsProps> = ({
   }, []);
   // --- End of plugin related code ---
 
-  const amountOfPages = Math.ceil(count / 50);
+  const amountOfPages = Math.ceil(count / USERS_PER_USER_LIST_PAGE);
   return (
     (
       <Styled.UserListColumn
@@ -91,7 +92,7 @@ const UserListParticipants: React.FC<UserListParticipantsProps> = ({
           {
             Array.from({ length: amountOfPages }).map((_, i) => {
               const isLastItem = amountOfPages === (i + 1);
-              const restOfUsers = count % 50;
+              const restOfUsers = count % USERS_PER_USER_LIST_PAGE;
               const key = i;
               return i === 0
                 ? (
@@ -99,7 +100,7 @@ const UserListParticipants: React.FC<UserListParticipantsProps> = ({
                     key={key}
                     index={i}
                     isLastItem={isLastItem}
-                    restOfUsers={isLastItem ? restOfUsers : 50}
+                    restOfUsers={isLastItem ? restOfUsers : USERS_PER_USER_LIST_PAGE}
                     setVisibleUsers={setVisibleUsers}
                   />
                 )
@@ -109,13 +110,13 @@ const UserListParticipants: React.FC<UserListParticipantsProps> = ({
                     key={i}
                     ParentRef={userListRef}
                     isLastItem={isLastItem}
-                    restOfUsers={isLastItem ? restOfUsers : 50}
+                    restOfUsers={isLastItem ? restOfUsers : USERS_PER_USER_LIST_PAGE}
                   >
                     <UserListParticipantsPageContainer
                       key={key}
                       index={i}
                       isLastItem={isLastItem}
-                      restOfUsers={isLastItem ? restOfUsers : 50}
+                      restOfUsers={isLastItem ? restOfUsers : USERS_PER_USER_LIST_PAGE}
                       setVisibleUsers={setVisibleUsers}
                     />
                   </IntersectionWatcher>

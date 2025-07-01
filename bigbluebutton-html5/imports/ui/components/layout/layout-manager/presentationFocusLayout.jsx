@@ -56,6 +56,7 @@ const PresentationFocusLayout = (props) => {
   const prevDeviceType = usePrevious(deviceType);
   const isTabletLandscape = deviceType === DEVICE_TYPE.TABLET_LANDSCAPE;
   const { isPresentationEnabled, prevLayout } = props;
+  const isSidebarlessClient = getFromUserSettings('bbb_hide_sidebar_navigation', false);
 
   const throttledCalculatesLayout = throttle(() => calculatesLayout(),
     50, { trailing: true, leading: true });
@@ -121,9 +122,6 @@ const PresentationFocusLayout = (props) => {
               isOpen: overrideOpenSidebarPanel,
               sidebarContentPanel: sidebarContentPanelOverride,
             },
-            SidebarContentHorizontalResizer: {
-              isOpen: false,
-            },
             presentation: {
               isOpen: presentation.isOpen,
               slidesLength: presentation.slidesLength,
@@ -132,6 +130,7 @@ const PresentationFocusLayout = (props) => {
               },
             },
             cameraDock: {
+              position: cameraDock.position || CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM,
               numCameras: cameraDock.numCameras,
               height: 0,
               width: 0,
@@ -241,9 +240,11 @@ const PresentationFocusLayout = (props) => {
       cameraDockBounds.minHeight = cameraDockMinHeight;
       cameraDockBounds.height = mediaAreaBounds.height - mediaBounds.height;
       cameraDockBounds.maxHeight = mediaAreaBounds.height - mediaBounds.height;
-    } else if (isTabletLandscape && presentationInput.isOpen) {
+    } else if ((isSidebarlessClient || isTabletLandscape) && presentationInput.isOpen) {
       // don't show camera dock if presentation is open in tablet landscape mode
       // the sidebar height gets too small, so only one or the other is shown
+      // Also, make camera dock and presentation mutually exclusive on
+      // sidebarless clients.
       cameraDockBounds.top = 0;
       cameraDockBounds.left = 0;
       cameraDockBounds.right = 0;

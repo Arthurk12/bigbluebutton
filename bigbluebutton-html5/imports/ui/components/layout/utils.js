@@ -34,6 +34,9 @@ const suportedLayouts = [
     layoutKey: LAYOUT_TYPE.CUSTOM_LAYOUT,
     layoutName: 'Custom Layout',
     suportedDevices: [
+      DEVICE_TYPE.TABLET,
+      DEVICE_TYPE.TABLET_PORTRAIT,
+      DEVICE_TYPE.TABLET_LANDSCAPE,
       DEVICE_TYPE.DESKTOP,
     ],
   },

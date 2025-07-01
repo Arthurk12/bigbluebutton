@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { lgBorderRadius } from '../../stylesheets/styled-components/general';
 
 type ContainerProps = {
-  isResizing: boolean;
+  preventInteraction: boolean;
   isMinimized: boolean;
 };
 
@@ -13,7 +13,7 @@ export const Container = styled.div<ContainerProps>`
   z-index: 5;
   display: grid;
   border-radius: ${lgBorderRadius};
-  ${({ isResizing }) => isResizing && `
+  ${({ preventInteraction }) => preventInteraction && `
     pointer-events: none;
   `}
   ${({ isMinimized }) => isMinimized && `

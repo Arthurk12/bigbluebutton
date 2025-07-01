@@ -34,11 +34,12 @@ const Pad = styled.div`
   width: 100%;
 `;
 
-const IFrame = styled.iframe<{amIPresenter: boolean}>`
+const IFrame = styled.iframe<{amIPresenter: boolean, preventInteraction: boolean}>`
   width: 100%;
   height: auto;
   overflow: hidden;
   border-style: none;
+  pointer-events: ${({ preventInteraction }) => (preventInteraction ? 'none' : 'inherit')};
   border-bottom: 1px solid ${colorGrayLightest};
   border-radius: ${({ amIPresenter }) => (amIPresenter
     ? `0 0 ${lgBorderRadius} ${lgBorderRadius}`

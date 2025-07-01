@@ -24,8 +24,10 @@ interface PadContainerGraphqlProps {
   externalId: string;
   hasPermission: boolean;
   isResizing: boolean;
+  isLocalChange: boolean;
   isRTL: boolean;
   amIPresenter: boolean;
+  isOnMediaArea?: boolean;
 }
 
 interface PadGraphqlProps extends Omit<PadContainerGraphqlProps, 'hasPermission'> {
@@ -33,6 +35,7 @@ interface PadGraphqlProps extends Omit<PadContainerGraphqlProps, 'hasPermission'
   sessionIds: Array<string>;
   padId: string | undefined;
   amIPresenter: boolean;
+  isOnMediaArea: boolean;
 }
 
 const PadGraphql: React.FC<PadGraphqlProps> = (props) => {
@@ -40,10 +43,12 @@ const PadGraphql: React.FC<PadGraphqlProps> = (props) => {
     externalId,
     hasSession,
     isResizing,
+    isLocalChange,
     isRTL,
     sessionIds,
     padId,
     amIPresenter,
+    isOnMediaArea,
   } = props;
   const [padURL, setPadURL] = useState<string | undefined>();
   const intl = useIntl();
@@ -57,7 +62,7 @@ const PadGraphql: React.FC<PadGraphqlProps> = (props) => {
   }, [isRTL, hasSession, intl.locale]);
 
   if (!hasSession) {
-    return <PadContent externalId={externalId} />;
+    return <PadContent externalId={externalId} isOnMediaArea={isOnMediaArea} />;
   }
 
   return (
@@ -66,10 +71,8 @@ const PadGraphql: React.FC<PadGraphqlProps> = (props) => {
         title="pad"
         src={padURL}
         aria-describedby="padEscapeHint"
-        style={{
-          pointerEvents: isResizing ? 'none' : 'inherit',
-        }}
         amIPresenter={amIPresenter}
+        preventInteraction={isResizing && isLocalChange}
       />
       <Styled.Hint
         id="padEscapeHint"
@@ -87,7 +90,9 @@ const PadContainerGraphql: React.FC<PadContainerGraphqlProps> = (props) => {
     hasPermission,
     isRTL,
     isResizing,
+    isLocalChange,
     amIPresenter,
+    isOnMediaArea = false,
   } = props;
 
   const { data: hasPadData } = useDeduplicatedSubscription<HasPadSubscriptionResponse>(
@@ -117,9 +122,11 @@ const PadContainerGraphql: React.FC<PadContainerGraphqlProps> = (props) => {
       externalId={externalId}
       isRTL={isRTL}
       isResizing={isResizing}
+      isLocalChange={isLocalChange}
       sessionIds={Array.from(sessionIds)}
       padId={session?.sharedNotes?.padId}
       amIPresenter={amIPresenter}
+      isOnMediaArea={isOnMediaArea}
     />
   );
 };
