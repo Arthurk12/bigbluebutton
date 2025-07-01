@@ -8,6 +8,7 @@ export interface GenericContentMainAreaContainerProps {
 
 export interface GenericContentMainAreaProps {
     isResizing: boolean;
+    isLocalChange: boolean;
     genericContentId: string;
     genericContentLayoutInformation: GenericContentMainAreaLayout;
     renderFunctionComponents: GenericContentMainArea[];

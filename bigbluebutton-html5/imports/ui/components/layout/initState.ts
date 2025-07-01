@@ -62,6 +62,7 @@ export const INITIAL_INPUT_STATE = {
     browserHeight: 0,
     isDragging: false,
     isResizing: false,
+    isLocalChange: true,
     cameraOptimalGridSize: {
       width: 0,
       height: 0,

@@ -56,6 +56,7 @@ const VideoFocusLayout = (props) => {
   const prevDeviceType = usePrevious(deviceType);
   const isTabletLandscape = deviceType === DEVICE_TYPE.TABLET_LANDSCAPE;
   const { isPresentationEnabled } = props;
+  const isSidebarlessClient = getFromUserSettings('bbb_hide_sidebar_navigation', false);
 
   const throttledCalculatesLayout = throttle(() => calculatesLayout(), 50, {
     trailing: true,
@@ -121,9 +122,6 @@ const VideoFocusLayout = (props) => {
             sidebarContent: {
               isOpen: overrideOpenSidebarPanel,
               sidebarContentPanel: sidebarContentPanelOverride,
-            },
-            SidebarContentHorizontalResizer: {
-              isOpen: false,
             },
             presentation: {
               isOpen: isTabletLandscape ? false : presentation.isOpen,
@@ -244,9 +242,11 @@ const VideoFocusLayout = (props) => {
     cameraDockBounds.maxWidth = mediaAreaBounds.width;
     cameraDockBounds.zIndex = 1;
 
-    if (isTabletLandscape && presentationInput.isOpen) {
+    if ((isSidebarlessClient || isTabletLandscape) && presentationInput.isOpen) {
       // don't show camera dock if presentation is open in tablet landscape mode
       // the sidebar height gets too small, so only one or the other is shown
+      // Also, make camera dock and presentation mutually exclusive on
+      // sidebarless clients.
       cameraDockBounds.width = 0;
       cameraDockBounds.height = 0;
       cameraDockBounds.minWidth = 0;
@@ -290,8 +290,8 @@ const VideoFocusLayout = (props) => {
       mediaBounds.top = mediaAreaBounds.top + cameraDockBounds.height;
       mediaBounds.width = mediaAreaBounds.width;
     } else if (presentationInput.isOpen) {
-      // in tablet landscape, the presentation is shown in the media area
-      if (isTabletLandscape) {
+      // in tablet landscape or sidebarless client, the presentation is shown in the media area
+      if (isTabletLandscape || isSidebarlessClient) {
         mediaBounds.height = mediaAreaBounds.height;
         mediaBounds.width = mediaAreaBounds.width;
         mediaBounds.top = DEFAULT_VALUES.navBarHeight + bannerAreaHeight();

@@ -5,6 +5,7 @@ import GenericContentItem from '../generic-content-item/component';
 
 const GenericMainContent: React.FC<GenericContentMainAreaProps> = ({
   isResizing,
+  isLocalChange,
   genericContentLayoutInformation,
   renderFunctionComponents,
   genericContentId,
@@ -29,7 +30,7 @@ const GenericMainContent: React.FC<GenericContentMainAreaProps> = ({
         left,
         right,
       }}
-      isResizing={isResizing}
+      preventInteraction={isResizing && isLocalChange}
       isMinimized={isMinimized}
     >
       <GenericContentItem

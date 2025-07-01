@@ -149,6 +149,7 @@ const PushLayoutEngine = (props) => {
         layoutContextDispatch({
           type: ACTIONS.SET_CAMERA_DOCK_POSITION,
           value: meetingLayoutCameraPosition || 'contentTop',
+          isLocalChange: false,
         });
         if (shouldOpenChat && !hasLayoutEngineLoadedOnce) {
           layoutContextDispatch({
@@ -247,6 +248,7 @@ const PushLayoutEngine = (props) => {
         layoutContextDispatch({
           type: ACTIONS.SET_FOCUSED_CAMERA_ID,
           value: meetingLayoutFocusedCamera,
+          isLocalChange: false,
         });
       }
     };
@@ -257,6 +259,7 @@ const PushLayoutEngine = (props) => {
         layoutContextDispatch({
           type: ACTIONS.SET_CAMERA_DOCK_POSITION,
           value: meetingLayoutCameraPosition,
+          isLocalChange: false,
         });
       }
     };
@@ -277,6 +280,7 @@ const PushLayoutEngine = (props) => {
           layoutContextDispatch({
             type: ACTIONS.SET_CAMERA_DOCK_IS_RESIZING,
             value: isMeetingLayoutResizing,
+            isLocalChange: false,
           });
         }
 
@@ -288,6 +292,7 @@ const PushLayoutEngine = (props) => {
             browserWidth: window.innerWidth,
             browserHeight: window.innerHeight,
           },
+          isLocalChange: false,
         });
       }
     };

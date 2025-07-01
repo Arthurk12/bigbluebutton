@@ -47,6 +47,7 @@ interface NotesGraphqlProps extends NotesContainerGraphqlProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   layoutContextDispatch: (action: any) => void;
   isResizing: boolean;
+  isLocalChange: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sidebarContent: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,6 +67,7 @@ const NotesGraphql: React.FC<NotesGraphqlProps> = (props) => {
     isRTL,
     layoutContextDispatch,
     isResizing,
+    isLocalChange,
     area,
     sidebarContent,
     sharedNotesOutput,
@@ -164,9 +166,11 @@ const NotesGraphql: React.FC<NotesGraphqlProps> = (props) => {
         </>
       ) : renderHeaderOnMedia()}
       <PadContainer
+        isOnMediaArea={isOnMediaArea}
         externalId={NOTES_CONFIG.id}
         hasPermission={hasPermission}
         isResizing={isResizing}
+        isLocalChange={isLocalChange}
         isRTL={isRTL}
         amIPresenter={amIPresenter}
       />
@@ -191,7 +195,7 @@ const NotesContainerGraphql: React.FC<NotesContainerGraphqlProps> = (props) => {
   const sharedNotesOutput = layoutSelectOutput((i) => i.sharedNotes);
   // @ts-ignore Until everything in Typescript
   const sidebarContent = layoutSelectInput((i) => i.sidebarContent);
-  const { isResizing } = cameraDock;
+  const { isResizing, isLocalChange } = cameraDock;
   const layoutContextDispatch = layoutDispatch();
   const amIPresenter = !!currentUserData?.presenter;
 
@@ -224,6 +228,7 @@ const NotesContainerGraphql: React.FC<NotesContainerGraphqlProps> = (props) => {
       hasPermission={hasPermission}
       layoutContextDispatch={layoutContextDispatch}
       isResizing={isResizing}
+      isLocalChange={isLocalChange}
       sidebarContent={sidebarContent}
       sharedNotesOutput={sharedNotesOutput}
       amIPresenter={amIPresenter}

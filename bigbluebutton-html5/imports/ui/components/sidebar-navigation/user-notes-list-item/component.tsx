@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import Icon from '/imports/ui/components/common/icon/component';
 import NotesService from '/imports/ui/components/notes/service';
-import lockContextContainer from '/imports/ui/components/lock-viewers/context/container';
 import { PANELS } from '/imports/ui/components/layout/enums';
 import { notify } from '/imports/ui/services/notification';
 import { layoutSelectInput, layoutDispatch } from '/imports/ui/components/layout/context';
@@ -55,7 +54,6 @@ const intlMessages = defineMessages({
 
 interface UserNotesGraphqlProps {
   isPinned: boolean,
-  disableNotes: boolean,
   sidebarContentPanel: string,
   layoutContextDispatch: DispatcherFunction,
   hasUnreadNotes: boolean,
@@ -65,15 +63,9 @@ interface UserNotesGraphqlProps {
   isEnabled: boolean,
 }
 
-interface UserNotesContainerGraphqlProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  userLocks: any;
-}
-
 const UserNotesGraphql: React.FC<UserNotesGraphqlProps> = (props) => {
   const {
     isPinned,
-    disableNotes,
     sidebarContentPanel,
     layoutContextDispatch,
     isEnabled,
@@ -116,11 +108,7 @@ const UserNotesGraphql: React.FC<UserNotesGraphqlProps> = (props) => {
 
   const renderNotes = () => {
     let tooltipMessage = '';
-    if (disableNotes) {
-      tooltipMessage = `${intl.formatMessage(intlMessages.sharedNotes)}`
-        + ` ${intl.formatMessage(intlMessages.locked)}`
-        + ` ${intl.formatMessage(intlMessages.byModerator)}`;
-    } else if (isPinned) {
+    if (isPinned) {
       tooltipMessage = intl.formatMessage(intlMessages.sharedNotesPinned);
     } else {
       tooltipMessage = intl.formatMessage(intlMessages.sharedNotes);
@@ -139,7 +127,7 @@ const UserNotesGraphql: React.FC<UserNotesGraphqlProps> = (props) => {
           tabIndex={0}
           active={notesOpen}
           data-test="sharedNotesSidebarButton"
-          onClick={() => (!(isPinned || disableNotes)
+          onClick={() => (!isPinned
             ? toggleNotesPanel(sidebarContentPanel, layoutContextDispatch)
             : null)}
           // @ts-ignore
@@ -149,7 +137,7 @@ const UserNotesGraphql: React.FC<UserNotesGraphqlProps> = (props) => {
             }
           }}
           hasNotification={unread && !isPinned}
-          $disabled={isPinned || disableNotes}
+          $disabled={isPinned}
         >
           <Icon iconName="shared_notes" />
         </Styled.ListItem>
@@ -162,9 +150,7 @@ const UserNotesGraphql: React.FC<UserNotesGraphqlProps> = (props) => {
   return renderNotes();
 };
 
-const UserNotesListItemContainerGraphql: React.FC<UserNotesContainerGraphqlProps> = (props) => {
-  const { userLocks } = props;
-  const disableNotes = userLocks.userNotes;
+const UserNotesListItemContainerGraphql: React.FC = () => {
   const { data: pinnedPadData } = useDeduplicatedSubscription(
     PINNED_PAD_SUBSCRIPTION,
   );
@@ -186,7 +172,6 @@ const UserNotesListItemContainerGraphql: React.FC<UserNotesContainerGraphqlProps
   const isPinned = !!pinnedPadData && pinnedPadData?.sharedNotes[0]?.sharedNotesExtId === NOTES_CONFIG.id;
   return (
     <UserNotesGraphql
-      disableNotes={disableNotes}
       isPinned={isPinned}
       layoutContextDispatch={layoutContextDispatch}
       sidebarContentPanel={sidebarContentPanel}
@@ -198,4 +183,4 @@ const UserNotesListItemContainerGraphql: React.FC<UserNotesContainerGraphqlProps
   );
 };
 
-export default lockContextContainer(UserNotesListItemContainerGraphql);
+export default UserNotesListItemContainerGraphql;

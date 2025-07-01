@@ -14,6 +14,7 @@ import { layoutSelect } from '/imports/ui/components/layout/context';
 import { Layout } from '/imports/ui/components/layout/layoutTypes';
 import SkeletonUserListItem from '../list-item/skeleton/component';
 import { PluginsContext } from '/imports/ui/components/components-data/plugin-context/context';
+import USERS_PER_USER_LIST_PAGE from '../constants';
 
 interface UserListParticipantsContainerProps {
   index: number;
@@ -79,8 +80,8 @@ const UserListParticipantsPageContainer: React.FC<UserListParticipantsContainerP
   restOfUsers,
   setVisibleUsers,
 }) => {
-  const offset = index * 50;
-  const limit = useRef(50);
+  const offset = index * USERS_PER_USER_LIST_PAGE;
+  const limit = useRef(USERS_PER_USER_LIST_PAGE);
 
   const {
     data: meetingData,
@@ -147,7 +148,7 @@ const UserListParticipantsPageContainer: React.FC<UserListParticipantsContainerP
   }, []);
 
   if (usersLoading || meetingLoading || currentUserLoading || presentationLoading) {
-    return Array.from({ length: isLastItem ? restOfUsers : 50 }).map((_, i) => (
+    return Array.from({ length: isLastItem ? restOfUsers : USERS_PER_USER_LIST_PAGE }).map((_, i) => (
       <Styled.UserListItem key={`not-visible-item-${i + 1}`}>
         {/* eslint-disable-next-line */}
         <SkeletonUserListItem enableAnimation={true} />

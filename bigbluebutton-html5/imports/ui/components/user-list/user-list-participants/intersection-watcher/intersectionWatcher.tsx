@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import useIntersectionObserver from '/imports/ui/hooks/useIntersectionObserver';
 import SkeletonUserListItem from '../list-item/skeleton/component';
+import USERS_PER_USER_LIST_PAGE from '/imports/ui/components/user-list/user-list-participants/constants';
 
 const MOUNT_DELAY = 1000;
 
@@ -48,13 +49,16 @@ const IntersectionWatcher: React.FC<IntersectionWatcherProps> = ({
     }
   }, [intersecting]);
 
+  if (renderPage) {
+    return children;
+  }
+
   return (
     <div ref={childRefProxy}>
       {
-        renderPage ? children
-          : Array.from({ length: isLastItem ? restOfUsers : 50 }).map((_, index) => (
-            <SkeletonUserListItem key={`not-visible-item-${index + 1}`} enableAnimation={intersecting} />
-          ))
+        Array.from({ length: isLastItem ? restOfUsers : USERS_PER_USER_LIST_PAGE }).map((_, index) => (
+          <SkeletonUserListItem key={`not-visible-item-${index + 1}`} enableAnimation={intersecting} />
+        ))
       }
     </div>
   );

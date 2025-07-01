@@ -74,7 +74,7 @@ const GenericContentMainAreaContainer: React.FC<GenericContentMainAreaContainerP
   );
 
   const cameraDock = layoutSelectInput((i: Input) => i.cameraDock);
-  const { isResizing } = cameraDock;
+  const { isResizing, isLocalChange } = cameraDock;
 
   if (!genericContainerContentExtensibleArea
     || genericContainerContentExtensibleArea.length === 0
@@ -84,6 +84,7 @@ const GenericContentMainAreaContainer: React.FC<GenericContentMainAreaContainerP
       genericContentId={genericMainContentId}
       renderFunctionComponents={genericContainerContentExtensibleArea}
       isResizing={isResizing}
+      isLocalChange={isLocalChange}
       genericContentLayoutInformation={genericContentLayoutInformation}
     />
   );
