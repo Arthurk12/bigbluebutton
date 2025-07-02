@@ -320,9 +320,9 @@ class AudioManager {
     this.userData = userData;
     this.inputDeviceId = getStoredAudioInputDeviceId() || DEFAULT_INPUT_DEVICE_ID;
     this.outputDeviceId = getCurrentAudioSinkId();
-    this._applyCachedOutputDeviceId();
     this._trackPermissionStatus();
     this.loadBridges(bridges, userData);
+    this._applyCachedOutputDeviceId();
     this.transparentListenOnlySupported = this.supportsTransparentListenOnly();
     this.audioEventHandler = audioEventHandler;
     this.observeVoiceActivity();
