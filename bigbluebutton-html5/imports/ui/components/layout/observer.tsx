@@ -227,8 +227,8 @@ const LayoutObserver: React.FC = () => {
       });
       const Settings = getSettingsSingletonInstance();
       updateSettings({
-        application: {
-          ...Settings.application,
+        layout: {
+          ...Settings.layout,
           selectedLayout: LAYOUT_TYPE.SMART_LAYOUT,
         },
       }, null, setLocalSettings);
