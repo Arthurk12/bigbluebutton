@@ -198,7 +198,8 @@ const PushLayoutEngine = (props) => {
   useEffect(() => {
     if (!selectedLayout) return () => { };
     const meetingLayoutDidChange = meetingLayout !== prevProps.meetingLayout;
-    const pushLayoutMeetingDidChange = pushLayoutMeeting !== prevProps.pushLayoutMeeting;
+    const pushLayoutMeetingDidChange = prevProps.pushLayoutMeeting !== undefined
+      && pushLayoutMeeting !== prevProps.pushLayoutMeeting;
     const enforceLayoutDidChange = enforceLayoutResult !== prevProps.enforceLayoutResult;
     const shouldSwitchLayout = isPresenter
       ? meetingLayoutDidChange || enforceLayoutDidChange
