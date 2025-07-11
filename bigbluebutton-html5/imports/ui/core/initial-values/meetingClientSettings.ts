@@ -118,8 +118,11 @@ export const meetingClientSettingsInitialValues: MeetingClientSettings = {
       enableCopyNetworkStatsButton: true,
       userSettingsStorage: 'session',
       defaultSettings: {
-        application: {
+        layout: {
           selectedLayout: 'custom',
+          pushLayout: false,
+        },
+        application: {
           animations: true,
           chatAudioAlerts: false,
           chatPushAlerts: false,

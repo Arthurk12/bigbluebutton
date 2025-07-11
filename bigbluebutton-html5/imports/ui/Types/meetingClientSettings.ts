@@ -184,14 +184,18 @@ export interface Transcription {
 }
 
 export interface DefaultSettings {
+  layout: LayoutSettings
   application: Application
   audio: Audio
   dataSaving: DataSaving
   transcription: Transcription
 }
+export interface LayoutSettings {
+  selectedLayout: string
+  pushLayout: boolean
+}
 
 export interface Application {
-  selectedLayout: string
   animations: boolean
   chatAudioAlerts: boolean
   chatPushAlerts: boolean
