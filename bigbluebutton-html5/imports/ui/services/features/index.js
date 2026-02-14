@@ -136,6 +136,13 @@ export function useIsChatMessageReactionsEnabled() {
   );
 }
 
+export function useIsPinChatMessageEnabled() {
+  return (
+    useDisabledFeatures().indexOf('pinChatMessage') === -1
+    && window.meetingClientSettings.public.chat.toolbar.includes('pin')
+  );
+}
+
 export function useIsPrivateChatEnabled() {
   return useDisabledFeatures().indexOf('privateChat') === -1;
 }

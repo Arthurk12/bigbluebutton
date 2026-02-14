@@ -74,6 +74,8 @@ trait SystemConfiguration {
   lazy val transcriptWords = Try(config.getInt("transcript.words")).getOrElse(8)
   lazy val transcriptLines = Try(config.getInt("transcript.lines")).getOrElse(2)
 
+  lazy val maxPinnedChatMessages = Try(config.getInt("chat.maxPinnedChatMessages")).getOrElse(3)
+
   lazy val reduceDuplicatedPick = Try(config.getBoolean("apps.reduceDuplicatedPick")).getOrElse(false)
 
   // Redis server configuration

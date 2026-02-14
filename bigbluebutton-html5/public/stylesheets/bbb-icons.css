@@ -402,3 +402,15 @@
 .icon-bbb-mobile:before {
   content: "\e97E";
 }
+.icon-bbb-pin_filled:before {
+  content: "\e97F";
+}
+.icon-bbb-arrow_forward_down:before {
+  content: "\e980";
+}
+.icon-bbb-arrow_forward_up:before {
+  content: "\e981";
+}
+.icon-bbb-visibility_off:before {
+  content: "\e982";
+}

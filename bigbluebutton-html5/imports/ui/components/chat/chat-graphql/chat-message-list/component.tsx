@@ -38,6 +38,7 @@ import { CHAT_DELETE_REACTION_MUTATION, CHAT_SEND_REACTION_MUTATION } from './pa
 import logger from '/imports/startup/client/logger';
 import { ChatLoading } from '../component';
 import Storage from '/imports/ui/services/storage/in-memory';
+import PinnedChatMessageContainer from './pinned-chat-message/container';
 
 const PAGE_SIZE = 50;
 const CLEANUP_TIMEOUT = 3000;
@@ -561,6 +562,9 @@ const ChatMessageList: React.FC<ChatListProps> = ({
       {
         [
           <Content key="message-list-content">
+            <PinnedChatMessageContainer
+              openChatId={chatId}
+            />
             <MessageList
               id="chat-list"
               key="message-list-wrapper"

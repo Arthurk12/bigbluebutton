@@ -89,6 +89,7 @@ const messagePropsToCompare = [
   'recipientHasSeen',
   'message',
   'reactions.length',
+  'message.pinnedAt',
 ] as const;
 
 const areChatPagesEqual = (prevProps: ChatListPageProps, nextProps: ChatListPageProps) => {

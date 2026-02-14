@@ -2,6 +2,7 @@ const colorWhite = 'var(--color-white, #FFF)';
 const colorOffWhite = 'var(--color-off-white, #F3F6F9)';
 
 const colorBlack = 'var(--color-black, #000000)';
+const colorNeutral2 = 'var(--color-neutral2, #717C91)';
 
 const colorGray = 'var(--color-gray, #4E5A66)';
 const colorGrayDark = 'var(--color-gray-dark, #06172A)';
@@ -176,6 +177,7 @@ export {
   colorWhite,
   colorOffWhite,
   colorBlack,
+  colorNeutral2,
   colorGray,
   colorGrayDark,
   colorGrayLight,

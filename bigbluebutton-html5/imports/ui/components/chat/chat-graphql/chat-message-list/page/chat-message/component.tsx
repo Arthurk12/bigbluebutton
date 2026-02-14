@@ -48,7 +48,8 @@ import Auth from '/imports/ui/services/auth';
 import KEYS from '/imports/utils/keys';
 import ConfirmationModal from '/imports/ui/components/common/modal/confirmation/component';
 import logger from '/imports/startup/client/logger';
-import { CHAT_DELETE_MESSAGE_MUTATION } from './mutations';
+import useMeeting from '/imports/ui/core/hooks/useMeeting';
+import { CHAT_DELETE_MESSAGE_MUTATION, CHAT_SET_PINNED_MUTATION } from './mutations';
 import { Popover } from '@mui/material';
 import { EmojiPicker, EmojiPickerWrapper } from './message-toolbar/styles';
 import { isMobile } from '/imports/utils/deviceInfo';
@@ -129,6 +130,22 @@ const intlMessages = defineMessages({
     id: 'app.chat.toolbar.edit.edited',
     description: 'edited message label',
   },
+  pin: {
+    id: 'app.chat.toolbar.pin',
+    description: 'pin message label',
+  },
+  pinConfirmationTitle: {
+    id: 'app.chat.toolbar.pin.confirmationTitle',
+    description: '',
+  },
+  pinConfirmationDescription: {
+    id: 'app.chat.toolbar.pin.confirmationDescription',
+    description: '',
+  },
+  pinConfirmationDisclaimer: {
+    id: 'app.chat.toolbar.pin.disclaimer',
+    description: 'Shown in the pin confirmation modal to warn that the oldest pinned message will be unpinned when the limit is reached',
+  },
   delete: {
     id: 'app.chat.toolbar.delete',
     description: 'delete label',
@@ -137,11 +154,11 @@ const intlMessages = defineMessages({
     id: 'app.chat.toolbar.delete.cancelLabel',
     description: '',
   },
-  confirmationTitle: {
+  deleteConfirmationTitle: {
     id: 'app.chat.toolbar.delete.confirmationTitle',
     description: '',
   },
-  confirmationDescription: {
+  deleteConfirmationDescription: {
     id: 'app.chat.toolbar.delete.confirmationDescription',
     description: '',
   },
@@ -195,10 +212,14 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
   focused,
 }, ref) => {
   const intl = useIntl();
+  const { data: currentMeeting } = useMeeting((m) => ({
+    chat: { maxPinnedChatMessages: m.chat?.maxPinnedChatMessages },
+  }));
   const chatMessageContentWrapperRef = React.useRef<HTMLDivElement>(null);
   const messageContentRef = React.useRef<HTMLDivElement>(null);
   const [isToolbarReactionPopoverOpen, setIsToolbarReactionPopoverOpen] = React.useState(false);
   const [keyboardFocused, setKeyboardFocused] = React.useState(false);
+  const [isTryingToPinMessage, setIsTryingToPinMessage] = React.useState(false);
   const [isTryingToDelete, setIsTryingToDelete] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const animationInitialTimestamp = React.useRef(0);
@@ -206,6 +227,26 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
   const animationScrollPositionDiff = React.useRef(0);
   const animationInitialBgColor = React.useRef('');
   const onFocusTrapDeactivation = React.useRef<(() => void) | null>(null);
+
+  const [chatSetPinned] = useMutation(CHAT_SET_PINNED_MUTATION);
+  const togglePinMessage = useCallback(() => {
+    const isPinned = !!(message.pinnedBy?.name);
+    chatSetPinned({
+      variables: {
+        chatId: message.chatId,
+        messageId: message.messageId,
+        pinned: !isPinned,
+      },
+    }).catch((e) => {
+      logger.error({
+        logCode: 'chat_set_pinned_error',
+        extraInfo: {
+          errorName: e?.name,
+          errorMessage: e?.message,
+        },
+      }, `Pinning the message failed: ${e?.message}`);
+    });
+  }, [chatSetPinned, message.pinnedBy, message.chatId, message.messageId]);
 
   const [chatDeleteMessage] = useMutation(CHAT_DELETE_MESSAGE_MUTATION);
   const onDeleteConfirmation = useCallback(() => {
@@ -225,6 +266,15 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
     });
   }, [chatDeleteMessage, message.chatId, message.messageId]);
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
+
+  const {
+    isOpen: isTryingToPinMessageModalOpen,
+    close: tryingToPinMessageModalClose,
+    open: tryingToPinMessageModalOpen,
+  } = useModalRegistration({
+    id: 'chatMessageTryingToPinMessageModal',
+    priority: 'high',
+  });
 
   const {
     isOpen: isTryingToDeleteModalOpen,
@@ -418,6 +468,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
   });
   const editTime = message.editedAt ? new Date(message.editedAt) : null;
   const deleteTime = message.deletedAt ? new Date(message.deletedAt) : null;
+  const isPinned = !!(message?.pinnedBy?.name);
 
   const msgTime = formattedTime;
   const clearMessage = `${msgTime} ${intl.formatMessage(intlMessages.chatClear)}`;
@@ -688,6 +739,27 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
     }
   }, [messageId, chatId, message, deactivateFocusTrap, keyboardFocused]);
 
+  const togglePin = useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
+    if (isPinned) {
+      // no modal confirmation needed to unpin a message
+      togglePinMessage();
+      return;
+    }
+
+    const handler = () => {
+      setIsTryingToPinMessage(true);
+      tryingToPinMessageModalOpen();
+    };
+
+    if (keyboardFocused) {
+      onFocusTrapDeactivation.current = handler;
+      deactivateFocusTrap();
+    } else {
+      handler();
+    }
+  }, [deactivateFocusTrap, keyboardFocused, isPinned, togglePinMessage]);
+
   const onDelete = useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
 
@@ -746,6 +818,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
         hasToolbar={hasToolbar && messageContent.showToolbar}
         locked={locked}
         deleted={!!deleteTime}
+        isPinned={isPinned}
         own={message.user?.userId === currentUserId}
         amIModerator={currentUserIsModerator}
         isBreakoutRoom={isBreakoutRoom}
@@ -759,6 +832,8 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
         onDelete={onDelete}
         onEdit={onEdit}
         onReply={onReply}
+        togglePin={togglePin}
+        isPublicChat={isPublicChat}
       />
       {message.replyToMessage && !deleteTime && (
         <ChatMessageReplied
@@ -941,6 +1016,41 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
           </>
         )}
       </ChatWrapper>
+      {isTryingToPinMessageModalOpen && (
+        <ConfirmationModal
+          isOpen={isTryingToPinMessage}
+          setIsOpen={(value: boolean) => {
+            setIsTryingToPinMessage(value);
+            if (value) {
+              tryingToPinMessageModalOpen();
+            } else {
+              tryingToPinMessageModalClose();
+            }
+          }}
+          onRequestClose={() => {
+            setIsTryingToPinMessage(false);
+            tryingToPinMessageModalClose();
+          }}
+          onConfirm={togglePinMessage}
+          title={intl.formatMessage(intlMessages.pinConfirmationTitle)}
+          confirmButtonLabel={intl.formatMessage(intlMessages.pin)}
+          cancelButtonLabel={intl.formatMessage(intlMessages.cancelLabel)}
+          description={
+            intl.formatMessage(intlMessages.pinConfirmationDescription)
+            + ((currentMeeting?.chat?.maxPinnedChatMessages) != null
+              ? ` ${
+                intl.formatMessage(
+                  intlMessages.pinConfirmationDisclaimer,
+                  { max: currentMeeting?.chat?.maxPinnedChatMessages },
+                )
+              }`
+              : '')
+          }
+          confirmButtonColor="primary"
+          priority="high"
+          confirmButtonDataTest="confirmPinChatMessageButton"
+        />
+      )}
       {isTryingToDeleteModalOpen && (
         <ConfirmationModal
           isOpen={isTryingToDelete}
@@ -957,10 +1067,10 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
             tryingToDeleteModalClose();
           }}
           onConfirm={onDeleteConfirmation}
-          title={intl.formatMessage(intlMessages.confirmationTitle)}
+          title={intl.formatMessage(intlMessages.deleteConfirmationTitle)}
           confirmButtonLabel={intl.formatMessage(intlMessages.delete)}
           cancelButtonLabel={intl.formatMessage(intlMessages.cancelLabel)}
-          description={intl.formatMessage(intlMessages.confirmationDescription)}
+          description={intl.formatMessage(intlMessages.deleteConfirmationDescription)}
           confirmButtonColor="danger"
           priority="high"
           confirmButtonDataTest="confirmDeleteChatMessageButton"
@@ -981,6 +1091,7 @@ const propsToCompare = [
   'chatEditEnabled',
   'chatReactionsEnabled',
   'chatReplyEnabled',
+  'chatPinEnabled',
   'focused',
   'editing',
   'keyboardFocused',
@@ -991,6 +1102,7 @@ const propsToCompare = [
   'message.user.currentlyInMeeting',
   'message.reactions.length',
   'message.replyToMessage.message',
+  'message.pinnedAt',
 ] as const;
 
 function areChatMessagesEqual(prevProps: ChatMessageProps, nextProps: ChatMessageProps) {
