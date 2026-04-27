@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { defineMessages } from 'react-intl';
 import PropTypes from 'prop-types';
+import GenericModal from '/imports/ui/components/common/modal/generic/component';
 import Styled from './styles';
 
 const messages = defineMessages({
@@ -75,15 +76,36 @@ class ConfirmationModal extends Component {
     const hasCheckbox = !!checkboxMessageId;
 
     return (
-      <Styled.ConfirmationModal
-        onRequestClose={() => setIsOpen(false)}
+      <GenericModal
+        onRequestClose={onRequestClose ?? (() => setIsOpen(false))}
         contentLabel={title}
         title={title}
-        {...{
-          isOpen,
-          onRequestClose,
-          priority,
-        }}
+        isOpen={isOpen}
+        priority={priority}
+        noFooter={false}
+        footerContent={(
+          <Styled.Footer>
+            <div ref={this.cancelButtonRef}>
+              <Styled.CancelButton
+                color="secondary"
+                label={cancelButtonLabel || intl.formatMessage(messages.noLabel)}
+                onClick={() => setIsOpen(false)}
+              />
+            </div>
+            {!hideConfirmButton && (
+              <Styled.ConfirmationButton
+                color={confirmButtonColor}
+                label={confirmButtonLabel || intl.formatMessage(messages.yesLabel)}
+                disabled={disableConfirmButton}
+                data-test={confirmButtonDataTest}
+                onClick={() => {
+                  onConfirm(confirmParam, checked);
+                  setIsOpen(false);
+                }}
+              />
+            )}
+          </Styled.Footer>
+        )}
       >
         <Styled.Container>
           <Styled.Description>
@@ -103,30 +125,8 @@ class ConfirmationModal extends Component {
               </Styled.Label>
             ) : null }
           </Styled.Description>
-
-          <Styled.Footer>
-            {!hideConfirmButton && (
-              <Styled.ConfirmationButton
-                color={confirmButtonColor}
-                label={confirmButtonLabel || intl.formatMessage(messages.yesLabel)}
-                disabled={disableConfirmButton}
-                data-test={confirmButtonDataTest}
-                onClick={() => {
-                  onConfirm(confirmParam, checked);
-                  setIsOpen(false);
-                }}
-              />
-            )}
-            <div ref={this.cancelButtonRef}>
-              <Styled.CancelButton
-                color="secondary"
-                label={cancelButtonLabel || intl.formatMessage(messages.noLabel)}
-                onClick={() => setIsOpen(false)}
-              />
-            </div>
-          </Styled.Footer>
         </Styled.Container>
-      </Styled.ConfirmationModal>
+      </GenericModal>
     );
   }
 }

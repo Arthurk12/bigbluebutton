@@ -26,13 +26,10 @@ const TooManyPinnedAppsModal = ({ setError, pinnedAppsNumber }: TooManypinnedApp
   const intl = useIntl();
   return (
     <Styled.Modal
-      hideBorder
       priority="medium"
-      shouldShowCloseButton
       isOpen
       onRequestClose={() => setError(false)}
-      headerPosition="top"
-      title={<Styled.Title>{intl.formatMessage(intlMessages.title)}</Styled.Title>}
+      title={intl.formatMessage(intlMessages.title)}
       data-test="pinnedAppsWarningModal"
     >
       <Styled.ModalContent>

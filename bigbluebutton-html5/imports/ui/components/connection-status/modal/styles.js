@@ -1,8 +1,7 @@
 import styled from 'styled-components';
-import ModalSimple from '/imports/ui/components/common/modal/simple/component';
+import GenericModal from '/imports/ui/components/common/modal/generic/component';
 import {
   colorOffWhite,
-  colorGrayDark,
   colorGrayLightest,
   colorPrimary,
   colorWhite,
@@ -14,14 +13,10 @@ import {
   smPaddingX,
   smPaddingY,
   mdPaddingY,
-  lgPaddingY,
-  titlePositionLeft,
   mdPaddingX,
-  borderSizeLarge,
 } from '/imports/ui/stylesheets/styled-components/general';
 import {
   fontSizeSmall,
-  fontSizeXL,
 } from '/imports/ui/stylesheets/styled-components/typography';
 import {
   hasPhoneDimentions,
@@ -184,34 +179,14 @@ const CopyContainer = styled.div`
   padding: ${mdPaddingX} 0 0 0;
 `;
 
-const ConnectionStatusModal = styled(ModalSimple)`
-  padding: 1rem;
+const ConnectionStatusModal = styled(GenericModal)`
   height: 28rem;
-
 `;
 
 const Container = styled.div`
-  padding: 0 calc(${mdPaddingX} / 2 + ${borderSizeLarge});
-`;
-
-const Header = styled.div`
-  margin: 0;
-  padding: 0;
-  border: none;
-  line-height: ${titlePositionLeft};
-  margin-bottom: ${lgPaddingY};
-`;
-
-const Title = styled.h2`
-  color: ${colorGrayDark};
-  font-weight: 500;
-  font-size: ${fontSizeXL};
-  text-align: left;
-  margin: 0;
-
-  [dir="rtl"] & {
-    text-align: right;
-  }
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 `;
 
 const Content = styled.div`
@@ -417,8 +392,6 @@ export default {
   ConnectionStatusModal,
   ClientNotRespondingText,
   Container,
-  Header,
-  Title,
   Content,
   Wrapper,
   Status,

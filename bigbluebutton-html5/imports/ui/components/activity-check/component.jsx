@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { defineMessages } from 'react-intl';
 
 import Button from '/imports/ui/components/common/button/component';
-import ModalSimple from '/imports/ui/components/common/modal/simple/component';
+import GenericModal from '/imports/ui/components/common/modal/generic/component';
 import Styled from './styles';
 
 const propTypes = {
@@ -87,11 +87,10 @@ class ActivityCheck extends Component {
     const { responseDelay } = this.state;
 
     return (
-      <ModalSimple
-        hideBorder
+      <GenericModal
         onRequestClose={() => userActivitySign()}
         shouldCloseOnOverlayClick={false}
-        shouldShowCloseButton={false}
+        shouldCloseOnEsc={false}
         priority="high"
         isOpen
       >
@@ -107,7 +106,7 @@ class ActivityCheck extends Component {
             size="lg"
           />
         </Styled.ActivityModalContent>
-      </ModalSimple>
+      </GenericModal>
     );
   }
 }
