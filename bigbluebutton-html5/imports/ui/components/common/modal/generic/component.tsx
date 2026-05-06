@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef } from 'react';
+import React, { useId, useLayoutEffect, useRef } from 'react';
 import { BBBModal } from '@mconf/bbb-ui-components-react';
 
 export type ModalPriority = 'low' | 'medium' | 'high';
@@ -85,15 +85,19 @@ const GenericModal: React.FC<GenericModalProps> = ({
   const overlaySnapshotRef = useRef<Set<Element>>(new Set());
 
   // Snapshot taken in the render phase (before BBBModal portal is added to DOM),
-  // so the new overlay can be identified by diff in the useEffect below.
+  // so the new overlay can be identified by diff in the useLayoutEffect below.
   if (isOpen && !prevIsOpenRef.current) {
+    overlayRef.current = null; // force re-discovery on every (re-)open
     overlaySnapshotRef.current = new Set(
       Array.from(document.body.querySelectorAll('.ReactModal__Overlay')),
     );
   }
   prevIsOpenRef.current = isOpen;
 
-  useEffect(() => {
+  // useLayoutEffect fires synchronously after the DOM commit, so react-modal's
+  // portal (added via createPortal in the same commit) is already in the DOM.
+  // This eliminates the MutationObserver race window present with useEffect.
+  useLayoutEffect(() => {
     if (!isOpen) {
       overlayRef.current = null;
       document.getElementById(styleTagId)?.remove();
@@ -129,12 +133,13 @@ const GenericModal: React.FC<GenericModalProps> = ({
       }
     };
 
-    // If the overlay for this instance was already identified (modal already open,
-    // effect re-running because a dep changed), reuse it.
-    if (overlayRef.current) {
+    // If the overlay for this instance was already identified and is still in
+    // the DOM, reuse it (effect re-running because a dep like contentStyle changed).
+    if (overlayRef.current && document.body.contains(overlayRef.current)) {
       applyToOverlay(overlayRef.current);
       return undefined;
     }
+    overlayRef.current = null; // discard stale ref if element was removed
 
     // Find the overlay that appeared after isOpen became true (diff with snapshot).
     const tryApplyNow = () => {
@@ -148,6 +153,7 @@ const GenericModal: React.FC<GenericModalProps> = ({
     if (tryApplyNow()) return undefined;
 
     // Overlay not yet committed — observe until it appears.
+    // This is a fallback for cases where BBBModal defers its portal.
     const observer = new MutationObserver(() => {
       if (tryApplyNow()) observer.disconnect();
     });
