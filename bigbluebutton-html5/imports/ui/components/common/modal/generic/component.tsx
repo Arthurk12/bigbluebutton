@@ -1,4 +1,4 @@
-import React, { useId, useLayoutEffect, useRef } from 'react';
+import React, { useId, useLayoutEffect } from 'react';
 import { BBBModal } from '@mconf/bbb-ui-components-react';
 
 export type ModalPriority = 'low' | 'medium' | 'high';
@@ -78,86 +78,56 @@ const GenericModal: React.FC<GenericModalProps> = ({
   'data-test': dataTest,
 }) => {
   const uid = useId().replace(/:/g, '');
-  const modalClass = `modal-uid-${uid}`;
+  // Unique attribute used as a DOM marker rendered inside the modal body.
+  // Since the marker is always a descendant of its own ReactModal__Overlay,
+  // we can use closest() to find the overlay without any snapshot/diff logic.
+  const markerAttr = `data-bbb-modal-${uid}`;
   const styleTagId = `modal-style-${uid}`;
-  const overlayRef = useRef<Element | null>(null);
-  const prevIsOpenRef = useRef(false);
-  const overlaySnapshotRef = useRef<Set<Element>>(new Set());
 
-  // Snapshot taken in the render phase (before BBBModal portal is added to DOM),
-  // so the new overlay can be identified by diff in the useLayoutEffect below.
-  if (isOpen && !prevIsOpenRef.current) {
-    overlayRef.current = null; // force re-discovery on every (re-)open
-    overlaySnapshotRef.current = new Set(
-      Array.from(document.body.querySelectorAll('.ReactModal__Overlay')),
-    );
-  }
-  prevIsOpenRef.current = isOpen;
-
-  // useLayoutEffect fires synchronously after the DOM commit, so react-modal's
-  // portal (added via createPortal in the same commit) is already in the DOM.
-  // This eliminates the MutationObserver race window present with useEffect.
   useLayoutEffect(() => {
     if (!isOpen) {
-      overlayRef.current = null;
       document.getElementById(styleTagId)?.remove();
       return undefined;
     }
 
-    const applyToOverlay = (overlay: Element) => {
-      overlayRef.current = overlay;
+    // Inject the contentStyle CSS rule immediately — before the overlay appears.
+    // We use :has([markerAttr]) so the rule self-targets the right content element
+    // without needing to reference the overlay element at all.
+    // When react-modal's ModalPortal does its async setState({isOpen:true}) and
+    // adds the overlay to the DOM, the rule is already in <head> → zero flash.
+    if (contentStyle) {
+      let styleEl = document.getElementById(styleTagId) as HTMLStyleElement | null;
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = styleTagId;
+        document.head.appendChild(styleEl);
+      }
+      const rules = (Object.entries(contentStyle) as [string, string][])
+        .map(([k, v]) => `${k.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}: ${v} !important;`)
+        .join(' ');
+      // :has() targets the .ReactModal__Content that contains our unique marker span.
+      styleEl.textContent = `.ReactModal__Content:has([${markerAttr}]) { ${rules} }`;
+    }
 
-      // Priority class for z-index management via modals.css.
+    // priority class and data-test still require the overlay element to exist.
+    if (!priority && !dataTest) return undefined;
+
+    const applyClasses = (): boolean => {
+      const marker = document.querySelector(`[${markerAttr}]`);
+      if (!marker) return false;
+      const overlay = marker.closest('.ReactModal__Overlay');
+      if (!overlay) return false;
       if (priority) overlay.classList.add(`modal-${priority}`);
-
       const content = overlay.querySelector<HTMLElement>('.ReactModal__Content');
       if (content && dataTest) content.setAttribute('data-test', dataTest);
-
-      if (contentStyle) {
-        // Scope the style rule to this specific overlay instance.
-        overlay.classList.add(modalClass);
-
-        // BBBModal hardcodes style:h with maxWidth:'90vw' via react-modal, so
-        // Object.assign on inline styles would be overridden on every re-render.
-        // Injecting CSS with !important is the only reliable override.
-        let styleEl = document.getElementById(styleTagId) as HTMLStyleElement | null;
-        if (!styleEl) {
-          styleEl = document.createElement('style');
-          styleEl.id = styleTagId;
-          document.head.appendChild(styleEl);
-        }
-        const rules = (Object.entries(contentStyle) as [string, string][])
-          .map(([k, v]) => `${k.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}: ${v} !important;`)
-          .join(' ');
-        styleEl.textContent = `.${modalClass} .ReactModal__Content { ${rules} }`;
-      }
+      return true;
     };
 
-    // If the overlay for this instance was already identified and is still in
-    // the DOM, reuse it (effect re-running because a dep like contentStyle changed).
-    if (overlayRef.current && document.body.contains(overlayRef.current)) {
-      applyToOverlay(overlayRef.current);
-      return undefined;
-    }
-    overlayRef.current = null; // discard stale ref if element was removed
-
-    // Find the overlay that appeared after isOpen became true (diff with snapshot).
-    const tryApplyNow = () => {
-      const all = Array.from(document.body.querySelectorAll('.ReactModal__Overlay'));
-      const newOnes = all.filter((el) => !overlaySnapshotRef.current.has(el));
-      const target = newOnes[newOnes.length - 1];
-      if (target) { applyToOverlay(target); return true; }
-      return false;
-    };
-
-    if (tryApplyNow()) return undefined;
-
-    // Overlay not yet committed — observe until it appears.
-    // This is a fallback for cases where BBBModal defers its portal.
     const observer = new MutationObserver(() => {
-      if (tryApplyNow()) observer.disconnect();
+      if (applyClasses()) observer.disconnect();
     });
     observer.observe(document.body, { childList: true, subtree: true });
+    applyClasses();
 
     // eslint-disable-next-line consistent-return
     return () => observer.disconnect();
@@ -178,6 +148,9 @@ const GenericModal: React.FC<GenericModalProps> = ({
         footerContent={footerContent}
         stickyFooter={stickyFooter}
       >
+        {/* Hidden marker used to locate this instance's overlay via closest(). */}
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+        <span aria-hidden="true" style={{ display: 'none' }} {...{ [markerAttr]: '' }} />
         {children}
       </BBBModal>
     </div>
