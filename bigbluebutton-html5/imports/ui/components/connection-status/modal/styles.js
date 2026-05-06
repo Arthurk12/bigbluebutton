@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import {
   colorOffWhite,
   colorGrayLightest,
@@ -179,7 +179,7 @@ const CopyContainer = styled.div`
   padding: ${mdPaddingX} 0 0 0;
 `;
 
-const ConnectionStatusModal = styled(GenericModal)`
+const ConnectionStatusModal = styled(ModalSimple)`
   height: 28rem;
 `;
 

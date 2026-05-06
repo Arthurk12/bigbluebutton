@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { defineMessages, FormattedMessage } from 'react-intl';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Styled from './styles';
 
 const propTypes = {
@@ -41,12 +42,11 @@ const RequestUnmuteComponent = ({
   }, []);
 
   return (
-    <Styled.RequestModal
+    <ModalSimple
       isOpen
       priority="high"
       title={intl.formatMessage(intlMessages.modalTitle)}
       onRequestClose={handleDeny}
-      shouldShowCloseButton
     >
       <Styled.Subtitle>
         <FormattedMessage {...intlMessages.modalSubtitle} />
@@ -68,7 +68,7 @@ const RequestUnmuteComponent = ({
           ghost
         />
       </Styled.RequestModalContent>
-    </Styled.RequestModal>
+    </ModalSimple>
   );
 };
 

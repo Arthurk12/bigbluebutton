@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { defineMessages } from 'react-intl';
 import PropTypes from 'prop-types';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Styled from './styles';
 
 const messages = defineMessages({
@@ -76,7 +76,7 @@ class ConfirmationModal extends Component {
     const hasCheckbox = !!checkboxMessageId;
 
     return (
-      <GenericModal
+      <ModalSimple
         onRequestClose={onRequestClose ?? (() => setIsOpen(false))}
         contentLabel={title}
         title={title}
@@ -126,7 +126,7 @@ class ConfirmationModal extends Component {
             ) : null }
           </Styled.Description>
         </Styled.Container>
-      </GenericModal>
+      </ModalSimple>
     );
   }
 }

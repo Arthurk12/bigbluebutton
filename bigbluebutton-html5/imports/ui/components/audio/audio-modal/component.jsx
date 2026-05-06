@@ -236,6 +236,12 @@ const AudioModal = ({
     }
   }, [autoplayBlocked]);
 
+  useEffect(() => {
+    const handleCloseModalAudio = () => closeModal();
+    document.addEventListener('CLOSE_MODAL_AUDIO', handleCloseModalAudio);
+    return () => document.removeEventListener('CLOSE_MODAL_AUDIO', handleCloseModalAudio);
+  }, [closeModal]);
+
   const handleJoinAudioError = (err) => {
     const { type, errCode, errMessage } = err;
 
@@ -717,37 +723,35 @@ const AudioModal = ({
     : null;
 
   return (
-    <Styled.Background isBlurred={Session.getItem('audioModalIsOpen')}>
-      <Styled.AudioModal
-        modalName="AUDIO"
-        onRequestClose={closeModal}
-        data-test="audioModal"
-        contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
-        title={title}
-        {...{
-          setIsOpen,
-          isOpen,
-          priority,
-          modalIsOpen: isOpen,
-        }}
-      >
-        {isIE ? (
-          <Styled.BrowserWarning>
-            <FormattedMessage
-              id="app.audioModal.unsupportedBrowserLabel"
-              description="Warning when someone joins with a browser that isn't supported"
-              values={{
-                supportedBrowser1: <a href="https://www.google.com/chrome/">Chrome</a>,
-                supportedBrowser2: <a href="https://getfirefox.com">Firefox</a>,
-              }}
-            />
-          </Styled.BrowserWarning>
-        ) : null}
-        <Styled.Content>
-          {renderContent()}
-        </Styled.Content>
-      </Styled.AudioModal>
-    </Styled.Background>
+    <Styled.AudioModal
+      modalName="AUDIO"
+      onRequestClose={closeModal}
+      data-test="audioModal"
+      contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
+      title={title}
+      {...{
+        setIsOpen,
+        isOpen,
+        priority,
+        modalIsOpen: isOpen,
+      }}
+    >
+      {isIE ? (
+        <Styled.BrowserWarning>
+          <FormattedMessage
+            id="app.audioModal.unsupportedBrowserLabel"
+            description="Warning when someone joins with a browser that isn't supported"
+            values={{
+              supportedBrowser1: <a href="https://www.google.com/chrome/">Chrome</a>,
+              supportedBrowser2: <a href="https://getfirefox.com">Firefox</a>,
+            }}
+          />
+        </Styled.BrowserWarning>
+      ) : null}
+      <Styled.Content>
+        {renderContent()}
+      </Styled.Content>
+    </Styled.AudioModal>
   );
 };
 

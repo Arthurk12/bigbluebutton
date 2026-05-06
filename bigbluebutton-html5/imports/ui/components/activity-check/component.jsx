@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { defineMessages } from 'react-intl';
 
 import Button from '/imports/ui/components/common/button/component';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Styled from './styles';
 
 const propTypes = {
@@ -87,16 +87,15 @@ class ActivityCheck extends Component {
     const { responseDelay } = this.state;
 
     return (
-      <GenericModal
+      <ModalSimple
+        title={intl.formatMessage(intlMessages.activityCheckTitle)}
         onRequestClose={() => userActivitySign()}
         shouldCloseOnOverlayClick={false}
         shouldCloseOnEsc={false}
         priority="high"
         isOpen
-      >
-        <Styled.ActivityModalContent>
-          <h1>{intl.formatMessage(intlMessages.activityCheckTitle)}</h1>
-          <p>{intl.formatMessage(intlMessages.activityCheckLabel, { responseDelay })}</p>
+        noFooter={false}
+        footerContent={(
           <Button
             color="primary"
             disabled={responseDelay <= 0}
@@ -105,8 +104,12 @@ class ActivityCheck extends Component {
             role="button"
             size="lg"
           />
+        )}
+      >
+        <Styled.ActivityModalContent>
+          <p>{intl.formatMessage(intlMessages.activityCheckLabel, { responseDelay })}</p>
         </Styled.ActivityModalContent>
-      </GenericModal>
+      </ModalSimple>
     );
   }
 }

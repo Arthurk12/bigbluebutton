@@ -25,24 +25,11 @@ import Icon from '/imports/ui/components/common/icon/component';
 
 const LockViewersModal = styled(ModalSimple)`
   padding: 0;
-  border-radius: 1rem;
   min-width: 55rem;
 
   @media ${smallOnly} {
     min-width: auto;
     width: 100%;
-  }
-
-  & > div {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  & > div > div:last-child {
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
   }
 `;
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import { defineMessages, useIntl } from 'react-intl';
 import FallbackView from '../fallback-view/component';
 
@@ -13,7 +13,7 @@ const intlMessages = defineMessages({
 const FallbackModal = ({ error }) => {
   const intl = useIntl();
   return (
-    <GenericModal
+    <ModalSimple
       priority="medium"
       shouldCloseOnEsc={false}
       shouldCloseOnOverlayClick={false}
@@ -22,7 +22,7 @@ const FallbackModal = ({ error }) => {
       isOpen={!!error}
     >
       <FallbackView {...{ error }} />
-    </GenericModal>
+    </ModalSimple>
   );
 };
 

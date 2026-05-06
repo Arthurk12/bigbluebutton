@@ -13,8 +13,7 @@ const Container = styled.div`
   align-items: flex-start;
   flex-direction: column;
   padding: 0;
-  margin-top: 0;
-  margin: auto;
+  width: 100%;
 `;
 
 const Description = styled.div`
@@ -22,6 +21,7 @@ const Description = styled.div`
   line-height: ${lineHeightBase};
   color: ${colorGray};
   margin-bottom: ${jumboPaddingY};
+  width: 100%;
 `;
 
 const DescriptionText = styled.span`

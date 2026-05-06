@@ -2,8 +2,6 @@ import styled from 'styled-components';
 import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import { colorGrayDark } from '/imports/ui/stylesheets/styled-components/palette';
 import {
-  jumboPaddingY,
-  minModalHeight,
   mdPaddingX,
 } from '/imports/ui/stylesheets/styled-components/general';
 import {
@@ -11,11 +9,7 @@ import {
   headingsFontWeight,
 } from '/imports/ui/stylesheets/styled-components/typography';
 
-const ScreenShareModal = styled(ModalSimple)`
-  padding: ${jumboPaddingY};
-  min-height: ${minModalHeight};
-  text-align: center;
-`;
+const ScreenShareModal = styled(ModalSimple)``;
 
 const Title = styled.h3`
   font-weight: ${headingsFontWeight};

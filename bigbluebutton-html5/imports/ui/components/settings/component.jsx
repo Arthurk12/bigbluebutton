@@ -109,7 +109,7 @@ const propTypes = {
     microphoneConstraints: PropTypes.objectOf(Object),
   }).isRequired,
   updateSettings: PropTypes.func.isRequired,
-  availableLocales: PropTypes.objectOf(PropTypes.array).isRequired,
+  availableLocales: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.shape({}))).isRequired,
   isReactionsEnabled: PropTypes.bool.isRequired,
   transcription: PropTypes.shape({
     partialUtterances: PropTypes.bool,
@@ -416,6 +416,7 @@ class Settings extends Component {
           callback: this.handleClose,
         }}
         onRequestClose={this.handleClose}
+        contentStyle={{ width: modalWidth, height: modalHeight, maxWidth: modalWidth }}
       >
         {this.renderModalContent()}
         <Styled.ActionsContainer>

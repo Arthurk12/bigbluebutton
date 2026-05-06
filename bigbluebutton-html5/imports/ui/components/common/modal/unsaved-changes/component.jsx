@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { defineMessages, useIntl } from 'react-intl';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Styled from './styles';
 
 const intlMessages = defineMessages({
@@ -31,7 +31,7 @@ const UnsavedChangesModal = ({ isOpen, onCancel, onConfirm }) => {
   const intl = useIntl();
 
   return (
-    <GenericModal
+    <ModalSimple
       title={intl.formatMessage(intlMessages.title)}
       isOpen={isOpen}
       onRequestClose={onCancel}
@@ -55,7 +55,7 @@ const UnsavedChangesModal = ({ isOpen, onCancel, onConfirm }) => {
           {intl.formatMessage(intlMessages.ignoreMessage)}
         </Styled.IgnoreText>
       </Styled.Content>
-    </GenericModal>
+    </ModalSimple>
   );
 };
 

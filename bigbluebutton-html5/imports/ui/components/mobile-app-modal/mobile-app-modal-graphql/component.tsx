@@ -4,7 +4,7 @@ import { defineMessages, useIntl } from 'react-intl';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import getBaseUrl from '/imports/ui/core/utils/getBaseUrl';
 import Auth from '/imports/ui/services/auth';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Button from '/imports/ui/components/common/button/component';
 import Styled from './styles';
 
@@ -95,7 +95,7 @@ const MobileAppModalGraphql: React.FC<MobileAppModalGraphqlProps> = (props) => {
   }, []);
 
   return (
-    <GenericModal
+    <ModalSimple
       title={intl.formatMessage(intlMessages.title)}
       isOpen={isOpen}
       onRequestClose={onRequestClose}
@@ -139,7 +139,7 @@ const MobileAppModalGraphql: React.FC<MobileAppModalGraphqlProps> = (props) => {
           </Styled.ButtonContainer>
         )}
       </Styled.Center>
-    </GenericModal>
+    </ModalSimple>
   );
 };
 

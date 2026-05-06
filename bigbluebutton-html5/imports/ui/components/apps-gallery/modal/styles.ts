@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Button from '/imports/ui/components/common/button/component';
 import { appsPanelTextColor } from '/imports/ui/stylesheets/styled-components/palette';
 import {
@@ -11,7 +11,7 @@ import {
 } from '/imports/ui/stylesheets/styled-components/general';
 import { titlesFontWeight } from '/imports/ui/stylesheets/styled-components/typography';
 
-const Modal = styled(GenericModal)`
+const Modal = styled(ModalSimple)`
   padding: ${appsModalPadding} ${appsModalPadding} ${appsModalPaddingBottom} ${appsModalPadding};
   color: ${appsPanelTextColor};
 `;

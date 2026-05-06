@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import GenericModal, { ModalPriority } from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
+import { ModalPriority } from '/imports/ui/components/common/modal/generic/component';
 import { useQuery } from '@apollo/client';
 import { GET_WELCOME_MESSAGE, WelcomeMsgsResponse } from './queries';
 import Styled from './styles';
@@ -87,7 +88,7 @@ const SessionDetails: React.FC<SessionDetailsProps> = (props) => {
   const { isMobile } = deviceInfo;
 
   return (
-    <GenericModal
+    <ModalSimple
       title={intl.formatMessage(intlMessages.title)}
       data-test="sessionDetailsModal"
       isOpen={isOpen}
@@ -154,7 +155,7 @@ const SessionDetails: React.FC<SessionDetailsProps> = (props) => {
           )}
         </div>
       </Styled.Container>
-    </GenericModal>
+    </ModalSimple>
   );
 };
 

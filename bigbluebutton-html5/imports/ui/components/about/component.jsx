@@ -1,6 +1,6 @@
 import React from 'react';
 import { defineMessages, injectIntl, useIntl } from 'react-intl';
-import GenericModal from '/imports/ui/components/common/modal/generic/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 
 const intlMessages = defineMessages({
   title: {
@@ -42,7 +42,7 @@ const AboutComponent = (props) => {
   );
 
   return (
-    <GenericModal
+    <ModalSimple
       data-test="aboutModalTitleLabel"
       title={intl.formatMessage(intlMessages.title)}
       isOpen={isOpen}
@@ -54,7 +54,7 @@ const AboutComponent = (props) => {
       {`${intl.formatMessage(intlMessages.version)} ${html5ClientBuild}`}
       {displayBbbServerVersion ? showLabelVersion() : null}
 
-    </GenericModal>
+    </ModalSimple>
   );
 };
 

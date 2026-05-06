@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { BBBModal } from '@mconf/bbb-ui-components-react';
 
 export type ModalPriority = 'low' | 'medium' | 'high';
@@ -33,6 +33,8 @@ export interface GenericModalProps {
    * Maps to the BBB portal class (`modal-low`, `modal-medium`, `modal-high`).
    */
   priority?: ModalPriority;
+  /** Custom inline styles applied directly to the modal content element. */
+  contentStyle?: React.CSSProperties;
   /** Test identifier propagated to the modal wrapper for automated testing. */
   'data-test'?: string;
 }
@@ -72,38 +74,91 @@ const GenericModal: React.FC<GenericModalProps> = ({
   stickyFooter = true,
   children,
   priority,
+  contentStyle,
   'data-test': dataTest,
 }) => {
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const uid = useId().replace(/:/g, '');
+  const modalClass = `modal-uid-${uid}`;
+  const styleTagId = `modal-style-${uid}`;
+  const overlayRef = useRef<Element | null>(null);
+  const prevIsOpenRef = useRef(false);
+  const overlaySnapshotRef = useRef<Set<Element>>(new Set());
 
-  // Propagate data-test to the rendered modal portal after it opens.
+  // Snapshot taken in the render phase (before BBBModal portal is added to DOM),
+  // so the new overlay can be identified by diff in the useEffect below.
+  if (isOpen && !prevIsOpenRef.current) {
+    overlaySnapshotRef.current = new Set(
+      Array.from(document.body.querySelectorAll('.ReactModal__Overlay')),
+    );
+  }
+  prevIsOpenRef.current = isOpen;
+
   useEffect(() => {
-    if (!isOpen || !dataTest) return;
+    if (!isOpen) {
+      overlayRef.current = null;
+      document.getElementById(styleTagId)?.remove();
+      return undefined;
+    }
 
-    const timer = setTimeout(() => {
-      const el = document.querySelector('.ReactModal__Content');
-      if (el) el.setAttribute('data-test', dataTest);
-    }, 0);
+    const applyToOverlay = (overlay: Element) => {
+      overlayRef.current = overlay;
+
+      // Priority class for z-index management via modals.css.
+      if (priority) overlay.classList.add(`modal-${priority}`);
+
+      const content = overlay.querySelector<HTMLElement>('.ReactModal__Content');
+      if (content && dataTest) content.setAttribute('data-test', dataTest);
+
+      if (contentStyle) {
+        // Scope the style rule to this specific overlay instance.
+        overlay.classList.add(modalClass);
+
+        // BBBModal hardcodes style:h with maxWidth:'90vw' via react-modal, so
+        // Object.assign on inline styles would be overridden on every re-render.
+        // Injecting CSS with !important is the only reliable override.
+        let styleEl = document.getElementById(styleTagId) as HTMLStyleElement | null;
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = styleTagId;
+          document.head.appendChild(styleEl);
+        }
+        const rules = (Object.entries(contentStyle) as [string, string][])
+          .map(([k, v]) => `${k.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}: ${v} !important;`)
+          .join(' ');
+        styleEl.textContent = `.${modalClass} .ReactModal__Content { ${rules} }`;
+      }
+    };
+
+    // If the overlay for this instance was already identified (modal already open,
+    // effect re-running because a dep changed), reuse it.
+    if (overlayRef.current) {
+      applyToOverlay(overlayRef.current);
+      return undefined;
+    }
+
+    // Find the overlay that appeared after isOpen became true (diff with snapshot).
+    const tryApplyNow = () => {
+      const all = Array.from(document.body.querySelectorAll('.ReactModal__Overlay'));
+      const newOnes = all.filter((el) => !overlaySnapshotRef.current.has(el));
+      const target = newOnes[newOnes.length - 1];
+      if (target) { applyToOverlay(target); return true; }
+      return false;
+    };
+
+    if (tryApplyNow()) return undefined;
+
+    // Overlay not yet committed — observe until it appears.
+    const observer = new MutationObserver(() => {
+      if (tryApplyNow()) observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     // eslint-disable-next-line consistent-return
-    return () => clearTimeout(timer);
-  }, [isOpen, dataTest]);
-
-  // Propagate priority class for z-index management via modals.css.
-  useEffect(() => {
-    if (!isOpen || !priority) return;
-
-    const timer = setTimeout(() => {
-      const portal = document.querySelector('.ReactModal__Overlay');
-      if (portal) portal.classList.add(`modal-${priority}`);
-    }, 0);
-
-    // eslint-disable-next-line consistent-return
-    return () => clearTimeout(timer);
-  }, [isOpen, priority]);
+    return () => observer.disconnect();
+  }, [isOpen, priority, dataTest, contentStyle]);
 
   return (
-    <div ref={wrapperRef}>
+    <div>
       <BBBModal
         isOpen={isOpen}
         onRequestClose={onRequestClose}

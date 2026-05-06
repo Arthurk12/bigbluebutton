@@ -4,6 +4,8 @@ import { USER_LEAVE_MEETING } from '/imports/ui/core/graphql/mutations/userMutat
 import { useMutation } from '@apollo/client';
 import Session from '/imports/ui/services/storage/in-memory';
 import logger from '/imports/startup/client/logger';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
+import { ModalPriority } from '/imports/ui/components/common/modal/generic/component';
 
 import Styled from './styles';
 
@@ -41,7 +43,7 @@ interface RecordingNotifyModalProps {
   toggleShouldNotify: () => void;
   closeModal: () => void;
   isOpen: boolean;
-  priority: string;
+  priority: ModalPriority;
 }
 
 const RecordingNotifyModal: React.FC<RecordingNotifyModalProps> = ({
@@ -74,21 +76,17 @@ const RecordingNotifyModal: React.FC<RecordingNotifyModalProps> = ({
   }, []);
 
   return (
-    <Styled.RecordingNotifyModal
+    <ModalSimple
       contentLabel={intl.formatMessage(intlMessages.title)}
-      shouldShowCloseButton={false}
       title={intl.formatMessage(intlMessages.title)}
-      {...{
-        isOpen,
-        priority,
-        modalIsOpen: isOpen,
-      }}
-    >
-      <Styled.Container>
-        <Styled.Description>
-          {intl.formatMessage(intlMessages.description)}
-        </Styled.Description>
-        <Styled.Footer>
+      isOpen={isOpen}
+      onRequestClose={closeModal}
+      priority={priority}
+      shouldCloseOnOverlayClick={false}
+      shouldCloseOnEsc={false}
+      noFooter={false}
+      footerContent={(
+        <>
           <Styled.NotifyButton
             color="primary"
             label={intl.formatMessage(intlMessages.continue)}
@@ -100,9 +98,13 @@ const RecordingNotifyModal: React.FC<RecordingNotifyModalProps> = ({
             onClick={skipButtonHandle}
             aria-label={intl.formatMessage(intlMessages.leaveAriaLabel)}
           />
-        </Styled.Footer>
-      </Styled.Container>
-    </Styled.RecordingNotifyModal>
+        </>
+      )}
+    >
+      <Styled.Description>
+        {intl.formatMessage(intlMessages.description)}
+      </Styled.Description>
+    </ModalSimple>
   );
 };
 
