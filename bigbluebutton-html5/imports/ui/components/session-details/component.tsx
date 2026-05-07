@@ -16,23 +16,23 @@ const intlMessages = defineMessages({
   },
   joinByUrlLabel: {
     id: 'app.sessionDetails.joinByUrl',
-    description: 'adds descriptive context to dissmissLabel',
+    description: 'Label for the join by URL option',
   },
   joinByPhoneLabel: {
     id: 'app.sessionDetails.joinByPhone',
-    description: 'adds descriptive context to dissmissLabel',
+    description: 'Label for the join by phone option',
   },
   copyUrlTooltip: {
     id: 'app.sessionDetails.copyUrlTooltip',
-    description: 'adds descriptive context to dissmissLabel',
+    description: 'Tooltip for copy URL button',
   },
   copyPhoneTooltip: {
     id: 'app.sessionDetails.copyPhoneTooltip',
-    description: 'adds descriptive context to dissmissLabel',
+    description: 'Tooltip for copy phone number button',
   },
   phonePinLabel: {
     id: 'app.sessionDetails.phonePin',
-    description: 'adds descriptive context to dissmissLabel',
+    description: 'Label for the phone PIN field',
   },
   copied: {
     id: 'app.sessionDetails.copied',

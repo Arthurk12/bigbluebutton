@@ -34,14 +34,6 @@ const intlMessages = defineMessages({
     id: 'app.mobileAppModal.obtainUrlErrorMsg',
     description: 'Obtain URL error message',
   },
-  dismissLabel: {
-    id: 'app.mobileAppModal.dismissLabel',
-    description: 'Dismiss button label',
-  },
-  dismissDesc: {
-    id: 'app.mobileAppModal.dismissDesc',
-    description: 'adds descriptive context to dissmissLabel',
-  },
 });
 
 interface MobileAppModalGraphqlContainerProps {
