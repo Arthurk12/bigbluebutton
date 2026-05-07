@@ -33,7 +33,6 @@ const LKAutoplayModal: React.FC<LKAutoplayModalProps> = ({
   return (
     <ModalSimple
       onRequestClose={onRequestClose}
-      contentLabel={intl.formatMessage(intlMessages.title)}
       title={intl.formatMessage(intlMessages.title)}
       isOpen={isOpen}
       priority={priority}

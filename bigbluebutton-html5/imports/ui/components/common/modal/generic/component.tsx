@@ -134,26 +134,24 @@ const GenericModal: React.FC<GenericModalProps> = ({
   }, [isOpen, priority, dataTest, contentStyle]);
 
   return (
-    <div>
-      <BBBModal
-        isOpen={isOpen}
-        onRequestClose={onRequestClose}
-        title={title}
-        contentLabel={contentLabel ?? title}
-        showDividers={showDividers}
-        shouldCloseOnOverlayClick={shouldCloseOnOverlayClick}
-        shouldCloseOnEsc={shouldCloseOnEsc}
-        allowScroll={allowScroll}
-        noFooter={noFooter}
-        footerContent={footerContent}
-        stickyFooter={stickyFooter}
-      >
-        {/* Hidden marker used to locate this instance's overlay via closest(). */}
-        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-        <span aria-hidden="true" style={{ display: 'none' }} {...{ [markerAttr]: '' }} />
-        {children}
-      </BBBModal>
-    </div>
+    <BBBModal
+      isOpen={isOpen}
+      onRequestClose={onRequestClose}
+      title={title}
+      contentLabel={contentLabel ?? title}
+      showDividers={showDividers}
+      shouldCloseOnOverlayClick={shouldCloseOnOverlayClick}
+      shouldCloseOnEsc={shouldCloseOnEsc}
+      allowScroll={allowScroll}
+      noFooter={noFooter}
+      footerContent={footerContent}
+      stickyFooter={stickyFooter}
+    >
+      {/* Hidden marker used to locate this instance's overlay via closest(). */}
+      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+      <span aria-hidden="true" style={{ display: 'none' }} {...{ [markerAttr]: '' }} />
+      {children}
+    </BBBModal>
   );
 };
 
