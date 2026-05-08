@@ -34,6 +34,7 @@
 ### Relationships:
 - `breakoutPolicies: Object` [Type meeting_breakoutPolicies](#type-meeting_breakoutPolicies)
 - `clientSettings: Object` [Type meeting_clientSettings](#type-meeting_clientSettings)
+- `chat: Object` [Type meeting_chat](#type-meeting_chat)
 - `componentsFlags: Object` **Type meeting_componentsFlags**
   - `hasBreakoutRoom: Boolean`
   - `hasCameraAsContent: Boolean`
@@ -44,6 +45,7 @@
   - `hasScreenshare: Boolean`
   - `hasTimer: Boolean`
   - `isSharedNotesPinned: Boolean`
+  - `isEtherpadSharedNotes: Boolean`
   - `showRemainingTime: Boolean`
 - `externalVideo: Object` [Type externalVideo](#type-externalVideo)
 - `groups: Array` [Type meeting_group](#type-meeting_group)
@@ -304,6 +306,7 @@ Permission: Restricted to User Viewing Self-Related Data
 - `hasScreenshare`
 - `hasTimer`
 - `isSharedNotesPinned`
+- `isEtherpadSharedNotes`
 - `showRemainingTime`
 
 ## Type: pres_page
@@ -568,6 +571,7 @@ Permission: Restricted to Presenter
 - `totalMessages`
 - `totalUnread`
 - `visible`
+- `pinnedMessageId`
 ### Relationships:
 - `participant: Object` [Type User](#type-user)
 
@@ -736,6 +740,7 @@ Permission: Restricted to User Viewing Self-Related Data
 - `lastRev`
 - `model`
 - `name`
+- `sharedNotesEditor`
 - `padId`
 - `pinned`
 - `sharedNotesExtId`

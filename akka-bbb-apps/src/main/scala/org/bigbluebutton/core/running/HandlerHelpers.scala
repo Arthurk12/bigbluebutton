@@ -101,16 +101,34 @@ trait HandlerHelpers extends SystemConfiguration {
             val event = UserJoinedMeetingEvtMsgBuilder.build(liveMeeting.props.meetingProp.intId, newUser)
             outGW.send(event)
 
-            val notifyEvent = MsgBuilder.buildNotifyAllInMeetingEvtMsg(
-              liveMeeting.props.meetingProp.intId,
-              "info",
-              "user",
-              "app.notification.userJoinPushAlert",
-              "Notification for a user joins the meeting",
-              Map("userName"->s"${newUser.name}")
-            )
-            outGW.send(notifyEvent)
-            NotificationDAO.insert(notifyEvent)
+            if (MeetingStatus2x.getPermissions(liveMeeting.status).hideUserList && newUser.role != Roles.MODERATOR_ROLE) {
+              Users2x.findAll(liveMeeting.users2x)
+                .filter(r => !r.userLeftFlag.left && (!r.locked || r.role == Roles.MODERATOR_ROLE))
+                .foreach { r =>
+                  val notifyEvent = MsgBuilder.buildNotifyUserInMeetingEvtMsg(
+                    r.intId,
+                    liveMeeting.props.meetingProp.intId,
+                    "info",
+                    "user",
+                    "app.notification.userJoinPushAlert",
+                    "Notification for a user joins the meeting",
+                    Map("userName" -> newUser.name)
+                  )
+                  outGW.send(notifyEvent)
+                  NotificationDAO.insert(notifyEvent)
+                }
+            } else {
+              val notifyEvent = MsgBuilder.buildNotifyAllInMeetingEvtMsg(
+                liveMeeting.props.meetingProp.intId,
+                "info",
+                "user",
+                "app.notification.userJoinPushAlert",
+                "Notification for a user joins the meeting",
+                Map("userName" -> newUser.name)
+              )
+              outGW.send(notifyEvent)
+              NotificationDAO.insert(notifyEvent)
+            }
 
             val newState = startRecordingIfAutoStart2x(outGW, liveMeeting, state)
             if (!Users2x.hasPresenter(liveMeeting.users2x)) {
@@ -344,6 +362,25 @@ trait HandlerHelpers extends SystemConfiguration {
     val event = GroupChatMessageDeletedEvtMsg(header, body)
     BbbCommonEnvCoreMsg(envelope, event)
   }
+
+  def buildGroupChatMessagePinEvtMsg(meetingId: String, chatId: String, userId: String, messageId: String): BbbCommonEnvCoreMsg = {
+    val routing = Routing.addMsgToClientRouting(MessageTypes.BROADCAST_TO_MEETING, meetingId, userId)
+    val envelope = BbbCoreEnvelope(PinGroupChatMessageEvtMsg.NAME, routing)
+    val header = BbbClientMsgHeader(PinGroupChatMessageEvtMsg.NAME, meetingId, userId)
+    val body = PinGroupChatMessageEvtMsgBody(chatId, messageId)
+    val event = PinGroupChatMessageEvtMsg(header, body)
+    BbbCommonEnvCoreMsg(envelope, event)
+  }
+
+  def buildGroupChatMessageUnpinEvtMsg(meetingId: String, chatId: String, userId: String, messageId: String): BbbCommonEnvCoreMsg = {
+    val routing = Routing.addMsgToClientRouting(MessageTypes.BROADCAST_TO_MEETING, meetingId, userId)
+    val envelope = BbbCoreEnvelope(UnpinGroupChatMessageEvtMsg.NAME, routing)
+    val header = BbbClientMsgHeader(UnpinGroupChatMessageEvtMsg.NAME, meetingId, userId)
+    val body = UnpinGroupChatMessageEvtMsgBody(chatId, messageId)
+    val event = UnpinGroupChatMessageEvtMsg(header, body)
+    BbbCommonEnvCoreMsg(envelope, event)
+  }
+
 
   def buildGroupChatMessageReactionSentEvtMsg(meetingId: String, userId: String, chatId: String, messageId: String, reactionEmoji: String): BbbCommonEnvCoreMsg = {
     val routing = Routing.addMsgToClientRouting(MessageTypes.BROADCAST_TO_MEETING, meetingId, userId)

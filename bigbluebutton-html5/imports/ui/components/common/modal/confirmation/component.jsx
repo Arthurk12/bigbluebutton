@@ -20,6 +20,7 @@ const propTypes = {
   disableConfirmButton: PropTypes.bool,
   description: PropTypes.string,
   hideConfirmButton: PropTypes.bool,
+  hideCancelButton: PropTypes.bool,
 };
 
 const defaultProps = {
@@ -27,6 +28,7 @@ const defaultProps = {
   disableConfirmButton: false,
   description: '',
   hideConfirmButton: false,
+  hideCancelButton: false,
 };
 
 class ConfirmationModal extends Component {
@@ -60,6 +62,7 @@ class ConfirmationModal extends Component {
       confirmButtonLabel,
       cancelButtonLabel,
       hideConfirmButton,
+      hideCancelButton,
       confirmButtonDataTest,
       confirmParam,
       disableConfirmButton,
@@ -75,9 +78,11 @@ class ConfirmationModal extends Component {
 
     const hasCheckbox = !!checkboxMessageId;
 
+    const handleClose = onRequestClose || (() => setIsOpen(false));
+
     return (
       <ModalSimple
-        onRequestClose={onRequestClose ?? (() => setIsOpen(false))}
+        onRequestClose={handleClose}
         contentLabel={title}
         title={title}
         isOpen={isOpen}
@@ -85,13 +90,15 @@ class ConfirmationModal extends Component {
         noFooter={false}
         footerContent={(
           <Styled.Footer>
-            <div ref={this.cancelButtonRef}>
-              <Styled.CancelButton
-                color="secondary"
-                label={cancelButtonLabel || intl.formatMessage(messages.noLabel)}
-                onClick={() => setIsOpen(false)}
-              />
-            </div>
+            {!hideCancelButton && (
+              <div ref={this.cancelButtonRef}>
+                <Styled.CancelButton
+                  color="secondary"
+                  label={cancelButtonLabel || intl.formatMessage(messages.noLabel)}
+                  onClick={handleClose}
+                />
+              </div>
+            )}
             {!hideConfirmButton && (
               <Styled.ConfirmationButton
                 color={confirmButtonColor}
