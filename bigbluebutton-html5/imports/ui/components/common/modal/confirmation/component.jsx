@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { defineMessages } from 'react-intl';
 import PropTypes from 'prop-types';
-import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Styled from './styles';
 
 const messages = defineMessages({
@@ -81,7 +80,7 @@ class ConfirmationModal extends Component {
     const handleClose = onRequestClose || (() => setIsOpen(false));
 
     return (
-      <ModalSimple
+      <Styled.ConfirmationModal
         onRequestClose={handleClose}
         contentLabel={title}
         title={title}
@@ -90,15 +89,6 @@ class ConfirmationModal extends Component {
         noFooter={false}
         footerContent={(
           <Styled.Footer>
-            {!hideCancelButton && (
-              <div ref={this.cancelButtonRef}>
-                <Styled.CancelButton
-                  color="secondary"
-                  label={cancelButtonLabel || intl.formatMessage(messages.noLabel)}
-                  onClick={handleClose}
-                />
-              </div>
-            )}
             {!hideConfirmButton && (
               <Styled.ConfirmationButton
                 color={confirmButtonColor}
@@ -110,6 +100,15 @@ class ConfirmationModal extends Component {
                   setIsOpen(false);
                 }}
               />
+            )}
+            {!hideCancelButton && (
+              <div ref={this.cancelButtonRef}>
+                <Styled.CancelButton
+                  color="secondary"
+                  label={cancelButtonLabel || intl.formatMessage(messages.noLabel)}
+                  onClick={handleClose}
+                />
+              </div>
             )}
           </Styled.Footer>
         )}
@@ -133,7 +132,7 @@ class ConfirmationModal extends Component {
             ) : null }
           </Styled.Description>
         </Styled.Container>
-      </ModalSimple>
+      </Styled.ConfirmationModal>
     );
   }
 }

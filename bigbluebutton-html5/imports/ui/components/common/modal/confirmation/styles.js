@@ -1,19 +1,25 @@
 import styled from 'styled-components';
 import Button from '/imports/ui/components/common/button/component';
+import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import {
   smPaddingX,
+  mdPaddingX,
   lgPaddingY,
   jumboPaddingY,
 } from '/imports/ui/stylesheets/styled-components/general';
 import { colorGray } from '/imports/ui/stylesheets/styled-components/palette';
 import { lineHeightBase } from '/imports/ui/stylesheets/styled-components/typography';
 
+const ConfirmationModal = styled(ModalSimple)`
+  padding: ${mdPaddingX};
+`;
+
 const Container = styled.div`
   display: flex;
   align-items: flex-start;
   flex-direction: column;
   padding: 0;
-  width: 100%;
+  margin: 0;
 `;
 
 const Description = styled.div`
@@ -21,7 +27,6 @@ const Description = styled.div`
   line-height: ${lineHeightBase};
   color: ${colorGray};
   margin-bottom: ${jumboPaddingY};
-  width: 100%;
 `;
 
 const DescriptionText = styled.span`
@@ -47,10 +52,6 @@ const Footer = styled.div`
 const ConfirmationButton = styled(Button)`
   padding-right: ${jumboPaddingY};
   padding-left: ${jumboPaddingY};
-  margin: 0;
-`;
-
-const CancelButton = styled(ConfirmationButton)`
   margin: 0 ${smPaddingX} 0 0;
 
   [dir="rtl"] & {
@@ -58,11 +59,16 @@ const CancelButton = styled(ConfirmationButton)`
   }
 `;
 
+const CancelButton = styled(ConfirmationButton)`
+  margin: 0;
+`;
+
 const Label = styled.label`
   display: block;
 `;
 
 export default {
+  ConfirmationModal,
   Container,
   Description,
   DescriptionText,
