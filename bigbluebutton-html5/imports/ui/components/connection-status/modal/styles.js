@@ -179,9 +179,7 @@ const CopyContainer = styled.div`
   padding: ${mdPaddingX} 0 0 0;
 `;
 
-const ConnectionStatusModal = styled(ModalSimple)`
-  height: 28rem;
-`;
+const ConnectionStatusModal = styled(ModalSimple)``;
 
 const Container = styled.div`
   display: flex;

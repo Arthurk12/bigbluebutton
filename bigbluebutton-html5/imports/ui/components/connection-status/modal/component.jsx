@@ -511,6 +511,7 @@ class ConnectionStatusComponent extends PureComponent {
         isOpen={isModalOpen}
         contentLabel={intl.formatMessage(intlMessages.ariaTitle)}
         data-test="connectionStatusModal"
+        allowScroll={false}
       >
         <Styled.Container>
           <Styled.ConnectionTabs
