@@ -98,10 +98,7 @@ const ConnectingAnimation = styled.span`
   }
 `;
 
-const AudioModal = styled(ModalSimple)`
-  padding: 1rem;
-  min-height: 20rem;
-`;
+const AudioModal = styled(ModalSimple)``;
 
 const BrowserWarning = styled.p`
   margin: ${lineHeightComputed};

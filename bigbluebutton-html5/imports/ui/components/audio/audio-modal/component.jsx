@@ -729,6 +729,7 @@ const AudioModal = ({
       data-test="audioModal"
       contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
       title={title}
+      contentStyle={{ minHeight: '20rem' }}
       {...{
         setIsOpen,
         isOpen,
