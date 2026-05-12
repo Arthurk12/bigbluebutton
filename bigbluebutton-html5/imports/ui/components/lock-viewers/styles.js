@@ -23,15 +23,7 @@ import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints
 import ModalSimple from '/imports/ui/components/common/modal/simple/component';
 import Icon from '/imports/ui/components/common/icon/component';
 
-const LockViewersModal = styled(ModalSimple)`
-  padding: 0;
-  min-width: 55rem;
-
-  @media ${smallOnly} {
-    min-width: auto;
-    width: 100%;
-  }
-`;
+const LockViewersModal = styled(ModalSimple)``;
 
 const SettingsTabs = styled(Tabs)`
   display: flex;

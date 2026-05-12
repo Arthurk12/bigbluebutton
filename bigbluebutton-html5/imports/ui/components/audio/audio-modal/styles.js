@@ -60,8 +60,12 @@ const AudioDial = styled(Button)`
 `;
 
 const Connecting = styled.div`
-  margin-top: auto;
-  margin-bottom: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 3rem;
   font-size: 2rem;
   text-align: center;
 `;

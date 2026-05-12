@@ -599,6 +599,7 @@ class LockViewersComponent extends Component {
       <Styled.LockViewersModal
         contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
         title={intl.formatMessage(intlMessages.lockViewersTitle)}
+        contentStyle={{ minWidth: '55rem' }}
         {...{
           isOpen,
           onRequestClose: this.handleClose,
