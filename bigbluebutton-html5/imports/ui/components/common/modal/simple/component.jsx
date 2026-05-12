@@ -57,7 +57,6 @@ const ModalSimple = ({
   height,
   // eslint-disable-next-line no-unused-vars
   padding,
-  // eslint-disable-next-line no-unused-vars
   anchorElement,
   // eslint-disable-next-line no-unused-vars
   setIsOpen,
@@ -76,6 +75,7 @@ const ModalSimple = ({
       shouldCloseOnEsc={shouldCloseOnEsc}
       priority={priority}
       data-test={dataTest}
+      anchorElement={anchorElement}
       {...otherProps}
     >
       {children}

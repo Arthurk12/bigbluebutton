@@ -37,6 +37,12 @@ export interface GenericModalProps {
   contentStyle?: React.CSSProperties;
   /** Test identifier propagated to the modal wrapper for automated testing. */
   'data-test'?: string;
+  /**
+   * When provided, positions the modal content directly below this element
+   * (popover / anchored style). The dark backdrop is preserved.
+   * Pass `null` to use the default centred layout (e.g. on mobile).
+   */
+  anchorElement?: HTMLElement | null;
 }
 
 /**
@@ -75,6 +81,7 @@ const GenericModal: React.FC<GenericModalProps> = ({
   children,
   priority,
   contentStyle,
+  anchorElement,
   'data-test': dataTest,
 }) => {
   const uid = useId().replace(/:/g, '');
@@ -90,23 +97,42 @@ const GenericModal: React.FC<GenericModalProps> = ({
       return undefined;
     }
 
-    // Inject the contentStyle CSS rule immediately — before the overlay appears.
-    // We use :has([markerAttr]) so the rule self-targets the right content element
-    // without needing to reference the overlay element at all.
-    // When react-modal's ModalPortal does its async setState({isOpen:true}) and
-    // adds the overlay to the DOM, the rule is already in <head> → zero flash.
+    // Build CSS rules for both contentStyle overrides and anchor positioning.
+    const cssRules: string[] = [];
+
     if (contentStyle) {
+      const rules = (Object.entries(contentStyle) as [string, string][])
+        .map(([k, v]) => `${k.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}: ${v} !important;`)
+        .join(' ');
+      cssRules.push(`.ReactModal__Content:has([${markerAttr}]) { ${rules} }`);
+    }
+
+    if (anchorElement) {
+      // Position the modal content directly below the anchor element (popover style).
+      // position:fixed removes the content from the overlay's flex flow so the
+      // overlay's align-items/justify-content no longer affects placement.
+      const anchorRect = anchorElement.getBoundingClientRect();
+      const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+      const modalWidth = 600;
+      const left = anchorCenterX - modalWidth / 2;
+      cssRules.push(`
+        .ReactModal__Content:has([${markerAttr}]) {
+          position: fixed !important;
+          top: ${anchorRect.bottom + 10}px !important;
+          left: ${left}px !important;
+          overflow: visible !important;
+        }
+      `);
+    }
+
+    if (cssRules.length > 0) {
       let styleEl = document.getElementById(styleTagId) as HTMLStyleElement | null;
       if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = styleTagId;
         document.head.appendChild(styleEl);
       }
-      const rules = (Object.entries(contentStyle) as [string, string][])
-        .map(([k, v]) => `${k.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}: ${v} !important;`)
-        .join(' ');
-      // :has() targets the .ReactModal__Content that contains our unique marker span.
-      styleEl.textContent = `.ReactModal__Content:has([${markerAttr}]) { ${rules} }`;
+      styleEl.textContent = cssRules.join('\n');
     }
 
     // priority class and data-test still require the overlay element to exist.
@@ -131,7 +157,7 @@ const GenericModal: React.FC<GenericModalProps> = ({
 
     // eslint-disable-next-line consistent-return
     return () => observer.disconnect();
-  }, [isOpen, priority, dataTest, contentStyle]);
+  }, [isOpen, priority, dataTest, contentStyle, anchorElement]);
 
   return (
     <BBBModal

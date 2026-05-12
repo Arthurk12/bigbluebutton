@@ -52,6 +52,7 @@ interface SessionDetailsProps extends SessionDetailsContainerProps {
   loginUrl: string,
   formattedDialNum: string,
   formattedTelVoice: string,
+  anchorElement: HTMLElement | null,
 }
 
 const COPY_MESSAGE_TIMEOUT = 3000;
@@ -66,6 +67,7 @@ const SessionDetails: React.FC<SessionDetailsProps> = (props) => {
     loginUrl,
     formattedDialNum,
     formattedTelVoice,
+    anchorElement,
   } = props;
   const intl = useIntl();
   const [copyingJoinUrl, setCopyingJoinUrl] = useState(false);
@@ -94,7 +96,9 @@ const SessionDetails: React.FC<SessionDetailsProps> = (props) => {
       isOpen={isOpen}
       onRequestClose={onRequestClose}
       priority={priority}
+      anchorElement={anchorElement}
     >
+      <Styled.Chevron />
       <Styled.Container
         isFullWidth={isMobile || !(loginUrl || (formattedDialNum && formattedTelVoice))}
       >
@@ -207,6 +211,11 @@ const SessionDetailsContainer: React.FC<SessionDetailsContainerProps> = ({
     loginUrl = '';
   }
 
+  // On mobile the modal stays centred; on desktop anchor it below the session title.
+  const anchorElement = deviceInfo.isMobile
+    ? null
+    : document.getElementById('presentationTitle') as HTMLElement | null;
+
   return (
     <SessionDetails
       isOpen={isOpen}
@@ -217,6 +226,7 @@ const SessionDetailsContainer: React.FC<SessionDetailsContainerProps> = ({
       welcomeMsgForModerators={welcomeData.user_welcomeMsgs[0]?.welcomeMsgForModerators ?? ''}
       formattedDialNum={formattedDialNum}
       formattedTelVoice={formattedTelVoice}
+      anchorElement={anchorElement}
     />
   );
 };
