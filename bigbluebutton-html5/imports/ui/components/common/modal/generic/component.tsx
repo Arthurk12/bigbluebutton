@@ -1,4 +1,4 @@
-import React, { useId, useLayoutEffect } from 'react';
+import React, { useCallback } from 'react';
 import { BBBModal } from '@mconf/bbb-ui-components-react';
 
 export type ModalPriority = 'low' | 'medium' | 'high';
@@ -84,80 +84,42 @@ const GenericModal: React.FC<GenericModalProps> = ({
   anchorElement,
   'data-test': dataTest,
 }) => {
-  const uid = useId().replace(/:/g, '');
-  // Unique attribute used as a DOM marker rendered inside the modal body.
-  // Since the marker is always a descendant of its own ReactModal__Overlay,
-  // we can use closest() to find the overlay without any snapshot/diff logic.
-  const markerAttr = `data-bbb-modal-${uid}`;
-  const styleTagId = `modal-style-${uid}`;
-
-  useLayoutEffect(() => {
-    if (!isOpen) {
-      document.getElementById(styleTagId)?.remove();
-      return undefined;
-    }
-
-    // Build CSS rules for both contentStyle overrides and anchor positioning.
-    const cssRules: string[] = [];
+  // contentRef: applied directly to the ReactModal content element via the
+  // BBBModal v2.1.0 API (ModalProps now extends ReactModal.Props).
+  const contentRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return;
 
     if (contentStyle) {
-      const rules = (Object.entries(contentStyle) as [string, string][])
-        .map(([k, v]) => `${k.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}: ${v} !important;`)
-        .join(' ');
-      cssRules.push(`.ReactModal__Content:has([${markerAttr}]) { ${rules} }`);
+      Object.assign(node.style, contentStyle);
     }
 
     if (anchorElement) {
-      // Position the modal content directly below the anchor element (popover style).
-      // position:fixed removes the content from the overlay's flex flow so the
-      // overlay's align-items/justify-content no longer affects placement.
+      // Position the modal content directly below the anchor element.
+      // position:fixed removes the element from the overlay's flex flow so
+      // align-items/justify-content no longer affect placement.
       const anchorRect = anchorElement.getBoundingClientRect();
       const anchorCenterX = anchorRect.left + anchorRect.width / 2;
       const modalWidth = 600;
-      const left = anchorCenterX - modalWidth / 2;
-      cssRules.push(`
-        .ReactModal__Content:has([${markerAttr}]) {
-          position: fixed !important;
-          top: ${anchorRect.bottom + 10}px !important;
-          left: ${left}px !important;
-          overflow: visible !important;
-        }
-      `);
+      const left = Math.max(0, anchorCenterX - modalWidth / 2);
+      Object.assign(node.style, {
+        position: 'fixed',
+        top: `${anchorRect.bottom + 10}px`,
+        left: `${left}px`,
+        overflow: 'visible',
+      });
     }
 
-    if (cssRules.length > 0) {
-      let styleEl = document.getElementById(styleTagId) as HTMLStyleElement | null;
-      if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = styleTagId;
-        document.head.appendChild(styleEl);
-      }
-      styleEl.textContent = cssRules.join('\n');
+    if (dataTest) {
+      node.setAttribute('data-test', dataTest);
     }
+  }, [anchorElement, contentStyle, dataTest]);
 
-    // priority class and data-test still require the overlay element to exist.
-    if (!priority && !dataTest) return undefined;
-
-    const applyClasses = (): boolean => {
-      const marker = document.querySelector(`[${markerAttr}]`);
-      if (!marker) return false;
-      const overlay = marker.closest('.ReactModal__Overlay');
-      if (!overlay) return false;
-      if (priority) overlay.classList.add(`modal-${priority}`);
-      const content = overlay.querySelector<HTMLElement>('.ReactModal__Content');
-      if (content && dataTest) content.setAttribute('data-test', dataTest);
-      return true;
-    };
-
-    const observer = new MutationObserver(() => {
-      if (applyClasses()) observer.disconnect();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    applyClasses();
-
-    // eslint-disable-next-line consistent-return
-    return () => observer.disconnect();
-  }, [isOpen, priority, dataTest, contentStyle, anchorElement]);
+  // overlayRef: applied directly to the ReactModal overlay element via the
+  // BBBModal v2.1.0 API — used to set the priority z-index class.
+  const overlayRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (!node || !priority) return;
+    node.classList.add(`modal-${priority}`);
+  }, [priority]);
 
   return (
     <BBBModal
@@ -172,10 +134,9 @@ const GenericModal: React.FC<GenericModalProps> = ({
       noFooter={noFooter}
       footerContent={footerContent}
       stickyFooter={stickyFooter}
+      contentRef={contentRefCallback}
+      overlayRef={overlayRefCallback}
     >
-      {/* Hidden marker used to locate this instance's overlay via closest(). */}
-      {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-      <span aria-hidden="true" style={{ display: 'none' }} {...{ [markerAttr]: '' }} />
       {children}
     </BBBModal>
   );
