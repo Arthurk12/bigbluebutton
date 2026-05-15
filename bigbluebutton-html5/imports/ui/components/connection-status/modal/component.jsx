@@ -512,6 +512,8 @@ class ConnectionStatusComponent extends PureComponent {
         contentLabel={intl.formatMessage(intlMessages.ariaTitle)}
         data-test="connectionStatusModal"
         allowScroll={false}
+        noFooter={false}
+        footerContent={this.renderCopyDataButton()}
       >
         <Styled.Container>
           <Styled.ConnectionTabs
@@ -535,7 +537,6 @@ class ConnectionStatusComponent extends PureComponent {
             <Styled.ConnectionTabPanel selectedClassName="is-selected">
               <div>
                 {this.renderNetworkData()}
-                {this.renderCopyDataButton()}
               </div>
             </Styled.ConnectionTabPanel>
             <Styled.ConnectionTabPanel selectedClassName="is-selected">
