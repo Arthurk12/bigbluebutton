@@ -38,11 +38,11 @@ const UnsavedChangesModal = ({ isOpen, onCancel, onConfirm }) => {
       noFooter={false}
       footerContent={(
         <Styled.ActionsContainer>
-          <Styled.ActionButton onClick={onConfirm} data-test="unsavedChangesIgnore">
-            {intl.formatMessage(intlMessages.ignoreButtonLabel)}
-          </Styled.ActionButton>
           <Styled.ActionButton onClick={onCancel} data-test="unsavedChangesCancel">
             {intl.formatMessage(intlMessages.cancelLabel)}
+          </Styled.ActionButton>
+          <Styled.ActionButton onClick={onConfirm} data-test="unsavedChangesIgnore">
+            {intl.formatMessage(intlMessages.ignoreButtonLabel)}
           </Styled.ActionButton>
         </Styled.ActionsContainer>
       )}

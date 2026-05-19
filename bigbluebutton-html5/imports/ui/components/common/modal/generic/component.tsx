@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { BBBModal } from '@mconf/bbb-ui-components-react';
+import type { ModalPriority } from '@mconf/bbb-ui-components-react';
 
-export type ModalPriority = 'low' | 'medium' | 'high';
+export type { ModalPriority };
 
 export interface GenericModalProps {
   /** Controls whether the modal is open. */
@@ -114,17 +115,6 @@ const GenericModal: React.FC<GenericModalProps> = ({
     }
   }, [anchorElement, contentStyle, dataTest]);
 
-  // overlayRef: applied directly to the ReactModal overlay element via the
-  // BBBModal v2.1.0 API — used to set the priority z-index class.
-  // We also override the inline zIndex set by BBBModal (100) so that the CSS
-  // class values (.modal-low/medium/high) are respected.
-  const overlayRefCallback = useCallback((node: HTMLDivElement | null) => {
-    if (!node || !priority) return;
-    node.classList.add(`modal-${priority}`);
-    const PRIORITY_Z_INDEX: Record<ModalPriority, number> = { low: 1001, medium: 1002, high: 1003 };
-    Object.assign(node.style, { zIndex: String(PRIORITY_Z_INDEX[priority]) });
-  }, [priority]);
-
   return (
     <BBBModal
       isOpen={isOpen}
@@ -139,7 +129,7 @@ const GenericModal: React.FC<GenericModalProps> = ({
       footerContent={footerContent}
       stickyFooter={stickyFooter}
       contentRef={contentRefCallback}
-      overlayRef={overlayRefCallback}
+      priority={priority}
     >
       {children}
     </BBBModal>

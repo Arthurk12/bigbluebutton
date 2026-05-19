@@ -53,12 +53,12 @@ const ActionButton = styled.button`
   color: ${colorWhite};
 
   &:first-child {
-    background-color: ${colorPrimary};
+    background-color: transparent;
+    color: #ccc;
   }
 
   &:last-child {
-    background-color: transparent;
-    color: #ccc;
+    background-color: ${colorPrimary};
   }
 
   &:hover {

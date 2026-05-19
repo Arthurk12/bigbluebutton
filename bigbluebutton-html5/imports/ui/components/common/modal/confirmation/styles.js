@@ -52,15 +52,15 @@ const Footer = styled.div`
 const ConfirmationButton = styled(Button)`
   padding-right: ${jumboPaddingY};
   padding-left: ${jumboPaddingY};
+  margin: 0;
+`;
+
+const CancelButton = styled(ConfirmationButton)`
   margin: 0 ${smPaddingX} 0 0;
 
   [dir="rtl"] & {
     margin: 0 0 0 ${smPaddingX};
   }
-`;
-
-const CancelButton = styled(ConfirmationButton)`
-  margin: 0;
 `;
 
 const Label = styled.label`
