@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { BBBModal } from '@mconf/bbb-ui-components-react';
-import type { ModalPriority } from '@mconf/bbb-ui-components-react';
+import type { ModalPriority } from '/imports/ui/core/singletons/modalController';
 
 export type { ModalPriority };
 
@@ -129,7 +129,8 @@ const GenericModal: React.FC<GenericModalProps> = ({
       footerContent={footerContent}
       stickyFooter={stickyFooter}
       contentRef={contentRefCallback}
-      priority={priority}
+      parentSelector={() => document.querySelector<HTMLElement>('#modals-container') ?? document.body}
+      portalClassName={priority ? `modal-${priority}` : undefined}
     >
       {children}
     </BBBModal>

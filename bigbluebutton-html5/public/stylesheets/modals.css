@@ -46,14 +46,17 @@
 }
 
 .modal-low {
+  position: relative;
   z-index: 1001;
 }
 
 .modal-medium {
+  position: relative;
   z-index: 1002;
 }
 
 .modal-high {
+  position: relative;
   z-index: 1003;
 }
 
