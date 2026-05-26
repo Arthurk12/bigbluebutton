@@ -70,7 +70,7 @@
     "@mantine/hooks": "^8.3.11",
     "@mantine/utils": "^6.0.22",
     "@mconf/bbb-diff": "^1.2.0",
-    "@mconf/bbb-ui-components-react": "file:../bbb-ui-components-react/mconf-bbb-ui-components-react-2.1.0.tgz",
+    "@mconf/bbb-ui-components-react": "^2.1.0",
     "@mui/base": "^5.0.0-beta.58",
     "@mui/icons-material": "^7.3.11",
     "@mui/material": "^7.3.11",

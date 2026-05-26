@@ -205,6 +205,11 @@ const ToastifyGlobalStyle = createGlobalStyle`
     --toastify-toast-width: 100%;
   }
 
+  /* react-toastify resets border-radius to 0 on mobile (max-width: 480px); restore it */
+  .Toastify__toast {
+    border-radius: var(--toastify-toast-bd-radius) !important;
+  }
+
   [dir="rtl"] .Toastify__toast-container {
     right: auto !important;
     left: ${jumboPaddingY} !important;

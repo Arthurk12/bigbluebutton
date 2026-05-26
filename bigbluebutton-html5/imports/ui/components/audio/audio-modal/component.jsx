@@ -236,12 +236,6 @@ const AudioModal = ({
     }
   }, [autoplayBlocked]);
 
-  useEffect(() => {
-    const handleCloseModalAudio = () => closeModal();
-    document.addEventListener('CLOSE_MODAL_AUDIO', handleCloseModalAudio);
-    return () => document.removeEventListener('CLOSE_MODAL_AUDIO', handleCloseModalAudio);
-  }, [closeModal]);
-
   const handleJoinAudioError = (err) => {
     const { type, errCode, errMessage } = err;
 
@@ -404,6 +398,9 @@ const AudioModal = ({
     return joinListenOnly().then(() => {
       setDisableActions(false);
       disableAwayMode();
+      if (!autoplayBlocked) {
+        closeModal();
+      }
     }).catch((err) => {
       handleJoinAudioError(err);
     });
@@ -418,6 +415,7 @@ const AudioModal = ({
 
     joinMicrophone().then(() => {
       setDisableActions(false);
+      closeModal();
     }).catch((err) => {
       handleJoinAudioError(err);
     });

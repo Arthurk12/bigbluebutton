@@ -46,6 +46,7 @@ const Checkbox = styled.input`
 
 const Footer = styled.div`
   display:flex;
+  gap: ${smPaddingX};
   margin-bottom: ${lgPaddingY};
 `;
 
@@ -56,11 +57,7 @@ const ConfirmationButton = styled(Button)`
 `;
 
 const CancelButton = styled(ConfirmationButton)`
-  margin: 0 ${smPaddingX} 0 0;
-
-  [dir="rtl"] & {
-    margin: 0 0 0 ${smPaddingX};
-  }
+  margin: 0;
 `;
 
 const Label = styled.label`

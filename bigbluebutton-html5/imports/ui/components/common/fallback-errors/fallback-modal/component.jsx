@@ -1,6 +1,6 @@
 import React from 'react';
 import ModalSimple from '/imports/ui/components/common/modal/simple/component';
-import { defineMessages, useIntl } from 'react-intl';
+import { defineMessages, injectIntl } from 'react-intl';
 import FallbackView from '../fallback-view/component';
 
 const intlMessages = defineMessages({
@@ -10,20 +10,17 @@ const intlMessages = defineMessages({
   },
 });
 
-const FallbackModal = ({ error }) => {
-  const intl = useIntl();
-  return (
-    <ModalSimple
-      priority="medium"
-      shouldCloseOnEsc={false}
-      shouldCloseOnOverlayClick={false}
-      onRequestClose={() => {}}
-      contentLabel={intl.formatMessage(intlMessages.ariaTitle)}
-      isOpen={!!error}
-    >
-      <FallbackView {...{ error }} />
-    </ModalSimple>
-  );
-};
+const FallbackModal = ({ error, intl }) => (
+  <ModalSimple
+    priority="medium"
+    shouldCloseOnEsc={false}
+    shouldCloseOnOverlayClick={false}
+    onRequestClose={() => {}}
+    contentLabel={intl.formatMessage(intlMessages.ariaTitle)}
+    isOpen={!!error}
+  >
+    <FallbackView {...{ error }} />
+  </ModalSimple>
+);
 
-export default FallbackModal;
+export default injectIntl(FallbackModal);

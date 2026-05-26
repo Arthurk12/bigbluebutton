@@ -7,6 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TooltipContainer from '/imports/ui/components/common/tooltip/container';
 import UnsavedChangesModal from '/imports/ui/components/common/modal/unsaved-changes/component';
+import deviceInfo from '/imports/utils/deviceInfo';
 import Styled from './styles';
 
 const PRESENTATION_POLICY = {
@@ -599,7 +600,7 @@ class LockViewersComponent extends Component {
       <Styled.LockViewersModal
         contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
         title={intl.formatMessage(intlMessages.lockViewersTitle)}
-        contentStyle={{ minWidth: '55rem' }}
+        contentStyle={deviceInfo.isMobile ? { height: '90vh' } : { minWidth: '55rem' }}
         {...{
           isOpen,
           onRequestClose: this.handleClose,

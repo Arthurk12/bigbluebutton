@@ -150,10 +150,12 @@ const SettingsTabPanel = styled(TabPanel)`
     margin: 0;
     padding: 0.5rem 1rem;
     border: none;
+    min-height: 0;
     height: auto;
     flex-grow: 1;
     flex-basis: 0;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 `;
 

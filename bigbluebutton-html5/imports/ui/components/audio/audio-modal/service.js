@@ -27,7 +27,6 @@ export const joinMicrophone = (options = {}) => {
   });
 
   return call.then(() => {
-    document.dispatchEvent(new Event('CLOSE_MODAL_AUDIO'));
   }).catch((error) => {
     throw error;
   });
@@ -42,9 +41,6 @@ export const joinListenOnly = () => {
     // blocked, that'll be handled in the modal component when then
     // prop transitions to a state where it was handled OR the user opts
     // to close the modal.
-    if (!Service.autoplayBlocked()) {
-      document.dispatchEvent(new Event('CLOSE_MODAL_AUDIO'));
-    }
   }).catch((error) => {
     throw error;
   });

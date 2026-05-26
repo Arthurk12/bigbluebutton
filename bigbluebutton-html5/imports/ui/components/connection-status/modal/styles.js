@@ -300,7 +300,7 @@ const ConnectionTabList = styled(TabList)`
 const ConnectionTabPanel = styled(TabPanel)`
   display: none;
   margin: 0 0 0 1rem;
-  height: 13rem;
+  height: 10rem;
 
   [dir="rtl"] & {
     margin: 0 1rem 0 0;
