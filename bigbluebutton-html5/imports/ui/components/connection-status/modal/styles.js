@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import ModalSimple from '/imports/ui/components/common/modal/simple/component';
+import GenericModal from '/imports/ui/components/common/modal/generic/component';
 import {
   colorOffWhite,
   colorGrayLightest,
@@ -179,7 +179,7 @@ const CopyContainer = styled.div`
   padding: ${mdPaddingX} 0 0 0;
 `;
 
-const ConnectionStatusModal = styled(ModalSimple)``;
+const ConnectionStatusModal = GenericModal;
 
 const Container = styled.div`
   display: flex;

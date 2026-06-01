@@ -20,10 +20,10 @@ import {
 } from '/imports/ui/stylesheets/styled-components/palette';
 import { fontSizeBase, fontSizeLarger } from '/imports/ui/stylesheets/styled-components/typography';
 import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import ModalSimple from '/imports/ui/components/common/modal/simple/component';
+import GenericModal from '/imports/ui/components/common/modal/generic/component';
 import Icon from '/imports/ui/components/common/icon/component';
 
-const LockViewersModal = styled(ModalSimple)``;
+const LockViewersModal = GenericModal;
 
 const SettingsTabs = styled(Tabs)`
   display: flex;
