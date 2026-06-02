@@ -100,12 +100,19 @@ const GenericModal: React.FC<GenericModalProps> = ({
       // align-items/justify-content no longer affect placement.
       const anchorRect = anchorElement.getBoundingClientRect();
       const anchorCenterX = anchorRect.left + anchorRect.width / 2;
-      const modalWidth = 600;
-      const left = Math.max(0, anchorCenterX - modalWidth / 2);
+      const marginX = 10;
+      const viewportWidth = document.documentElement.clientWidth;
+      // Constrain width so the modal never overflows the viewport (important on mobile).
+      const effectiveWidth = Math.min(600, viewportWidth - 2 * marginX);
+      // Center under the anchor, then clamp so neither edge escapes the viewport.
+      const rawLeft = anchorCenterX - effectiveWidth / 2;
+      const left = Math.max(marginX, Math.min(rawLeft, viewportWidth - effectiveWidth - marginX));
       Object.assign(node.style, {
         position: 'fixed',
         top: `${anchorRect.bottom + 10}px`,
         left: `${left}px`,
+        width: `${effectiveWidth}px`,
+        maxWidth: `${effectiveWidth}px`,
         overflow: 'visible',
       });
     }
