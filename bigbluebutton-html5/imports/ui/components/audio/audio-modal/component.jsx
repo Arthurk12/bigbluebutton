@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import PropTypes from 'prop-types';
@@ -9,6 +10,7 @@ import {
 } from 'react-intl';
 import { useMutation } from '@apollo/client';
 import Styled from './styles';
+import Button from '/imports/ui/components/common/button/component';
 import AudioSettings from '../audio-settings/component';
 import EchoTest from '../echo-test/component';
 import Help from '../help/component';
@@ -163,6 +165,22 @@ const intlMessages = defineMessages({
     id: 'app.audio.audioSettings.findingDevicesTitle',
     description: 'Message for finding audio devices',
   },
+  settingsBackLabel: {
+    id: 'app.audio.backLabel',
+    description: 'Audio settings back button label',
+  },
+  settingsCancelLabel: {
+    id: 'app.audio.audioSettings.cancelLabel',
+    description: 'Audio settings cancel button label',
+  },
+  settingsConfirmLabel: {
+    id: 'app.audio.audioSettings.confirmLabel',
+    description: 'Audio settings confirmation button label',
+  },
+  settingsRetryLabel: {
+    id: 'app.audio.joinAudio',
+    description: 'Audio settings retry/join button label',
+  },
 });
 
 const AudioModal = ({
@@ -225,6 +243,8 @@ const AudioModal = ({
   const [autoplayChecked, setAutoplayChecked] = useState(false);
   const [findingDevices, setFindingDevices] = useState(false);
   const [initialJoinExecuted, setInitialJoinExecuted] = useState(false);
+  const [isSettingsConfirmDisabled, setIsSettingsConfirmDisabled] = useState(false);
+  const audioSettingsRef = useRef(null);
   const [setAway] = useMutation(SET_AWAY);
   const voiceToggle = useToggleVoice();
 
@@ -530,6 +550,7 @@ const AudioModal = ({
 
     return (
       <AudioSettings
+        ref={audioSettingsRef}
         animations={animations}
         handleBack={handleBack}
         handleConfirmation={confirmationCallback}
@@ -558,6 +579,8 @@ const AudioModal = ({
         skipAudioOptions={skipAudioOptions}
         updateInputDevices={updateInputDevices}
         updateOutputDevices={updateOutputDevices}
+        hideFooter
+        onConfirmDisabledChange={setIsSettingsConfirmDisabled}
       />
     );
   };
@@ -729,6 +752,29 @@ const AudioModal = ({
         contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
         title={title}
         contentStyle={{ minHeight: '20rem' }}
+        showDividers={content === 'settings'}
+        footerContent={content === 'settings' ? (
+          <Styled.SettingsFooter>
+            <Styled.SettingsBackButton
+              label={(isConnected || skipAudioOptions())
+                ? intl.formatMessage(intlMessages.settingsCancelLabel)
+                : intl.formatMessage(intlMessages.settingsBackLabel)}
+              color="secondary"
+              onClick={() => audioSettingsRef.current?.handleCancelClick()}
+              disabled={isConnecting}
+            />
+            <Button
+              data-test="joinEchoTestButton"
+              size="md"
+              color="primary"
+              label={isConnected
+                ? intl.formatMessage(intlMessages.settingsConfirmLabel)
+                : intl.formatMessage(intlMessages.settingsRetryLabel)}
+              onClick={() => audioSettingsRef.current?.handleConfirmationClick()}
+              disabled={isSettingsConfirmDisabled}
+            />
+          </Styled.SettingsFooter>
+        ) : null}
         {...{
           setIsOpen,
           isOpen,

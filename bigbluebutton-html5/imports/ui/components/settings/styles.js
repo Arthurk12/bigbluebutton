@@ -46,7 +46,6 @@ const SettingsTabList = styled(TabList)`
   display: flex;
   flex-flow: column;
   margin: 0;
-  border-top: 1px solid ${colorBorder};
   padding: 0;
   width: calc(100% / 3);
   height: 39rem;
@@ -144,9 +143,7 @@ const SettingsTabPanel = styled(TabPanel)`
   display: none;
   flex-grow: 1;
   ${({ $noPadding }) => !$noPadding && 'padding: 1.5rem 3rem'};
-  border-top: 1px solid ${colorBorder};
   border-left: 1px solid ${colorBorder};
-  border-bottom: 1px solid ${colorBorder};
   width: calc(100% / 3 * 2);
 
   [dir="rtl"] & {
@@ -174,11 +171,8 @@ const ActionsContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 1.5rem;
-  padding: 1.5rem;
-  border-top: 1px solid ${colorBorder};
 
   @media ${smallOnly} {
-    padding: 1rem;
     gap: 1rem;
     position: relative;
     bottom: auto;

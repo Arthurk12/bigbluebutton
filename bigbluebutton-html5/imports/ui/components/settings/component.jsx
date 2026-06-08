@@ -417,28 +417,31 @@ class Settings extends Component {
         }}
         onRequestClose={this.handleClose}
         contentStyle={{ width: modalWidth, height: modalHeight, maxWidth: modalWidth }}
+        showDividers
+        footerContent={(
+          <Styled.ActionsContainer>
+            <Styled.ActionButton onClick={this.performClose}>
+              {intl.formatMessage(intlMessages.CancelLabel)}
+            </Styled.ActionButton>
+            <Styled.ActionButton
+              data-test="saveSettingsButton"
+              onClick={() => {
+                this.updateSettings(current, intlMessages.savedAlertLabel, setLocalSettings);
+                if (saved.application.locale !== current.application.locale) {
+                  const { language } = formatLocaleCode(saved.application.locale);
+                  const newLanguage = current.application.locale;
+                  setUseCurrentLocale(newLanguage);
+                  document.body.classList.remove(`lang-${language}`);
+                }
+                setIsOpen(false);
+              }}
+            >
+              {intl.formatMessage(intlMessages.SaveLabel)}
+            </Styled.ActionButton>
+          </Styled.ActionsContainer>
+        )}
       >
         {this.renderModalContent()}
-        <Styled.ActionsContainer>
-          <Styled.ActionButton onClick={this.performClose}>
-            {intl.formatMessage(intlMessages.CancelLabel)}
-          </Styled.ActionButton>
-          <Styled.ActionButton
-            data-test="saveSettingsButton"
-            onClick={() => {
-              this.updateSettings(current, intlMessages.savedAlertLabel, setLocalSettings);
-              if (saved.application.locale !== current.application.locale) {
-                const { language } = formatLocaleCode(saved.application.locale);
-                const newLanguage = current.application.locale;
-                setUseCurrentLocale(newLanguage);
-                document.body.classList.remove(`lang-${language}`);
-              }
-              setIsOpen(false);
-            }}
-          >
-            {intl.formatMessage(intlMessages.SaveLabel)}
-          </Styled.ActionButton>
-        </Styled.ActionsContainer>
       </Styled.Modal>
     );
   }

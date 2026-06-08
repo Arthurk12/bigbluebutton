@@ -601,6 +601,23 @@ class LockViewersComponent extends Component {
         contentLabel={intl.formatMessage(intlMessages.ariaModalTitle)}
         title={intl.formatMessage(intlMessages.lockViewersTitle)}
         contentStyle={deviceInfo.isMobile ? { height: '90vh' } : { minWidth: '55rem' }}
+        showDividers
+        footerContent={(
+          <Styled.ActionsContainer>
+            <Styled.ActionButton
+              onClick={closeModal}
+              data-test="cancelLockSettings"
+            >
+              {intl.formatMessage(intlMessages.buttonCancel)}
+            </Styled.ActionButton>
+            <Styled.ActionButtonPrimary
+              onClick={() => this.handleSave()}
+              data-test="applyLockSettings"
+            >
+              {intl.formatMessage(intlMessages.buttonApply)}
+            </Styled.ActionButtonPrimary>
+          </Styled.ActionsContainer>
+        )}
         {...{
           isOpen,
           onRequestClose: this.handleClose,
@@ -634,20 +651,6 @@ class LockViewersComponent extends Component {
             {this.renderPresentationPermissionsTab()}
           </Styled.SettingsTabPanel>
         </Styled.SettingsTabs>
-        <Styled.ActionsContainer>
-          <Styled.ActionButton
-            onClick={closeModal}
-            data-test="cancelLockSettings"
-          >
-            {intl.formatMessage(intlMessages.buttonCancel)}
-          </Styled.ActionButton>
-          <Styled.ActionButtonPrimary
-            onClick={() => this.handleSave()}
-            data-test="applyLockSettings"
-          >
-            {intl.formatMessage(intlMessages.buttonApply)}
-          </Styled.ActionButtonPrimary>
-        </Styled.ActionsContainer>
       </Styled.LockViewersModal>
     );
   }
