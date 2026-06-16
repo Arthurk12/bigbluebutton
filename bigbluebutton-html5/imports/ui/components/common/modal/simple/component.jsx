@@ -14,7 +14,6 @@ const propTypes = {
   isOpen: PropTypes.bool,
   onRequestClose: PropTypes.func,
   priority: PropTypes.string,
-  'data-test': PropTypes.string,
   children: PropTypes.node,
 };
 
@@ -28,7 +27,6 @@ const defaultProps = {
   isOpen: false,
   onRequestClose: null,
   priority: undefined,
-  'data-test': undefined,
   children: null,
 };
 
@@ -42,7 +40,6 @@ const ModalSimple = ({
   isOpen,
   onRequestClose,
   priority,
-  'data-test': dataTest,
   children,
   // legacy props — intentionally ignored (handled by GenericModal/BBBModal internally)
   // eslint-disable-next-line no-unused-vars
@@ -74,7 +71,6 @@ const ModalSimple = ({
       shouldCloseOnOverlayClick={shouldCloseOnOverlayClick}
       shouldCloseOnEsc={shouldCloseOnEsc}
       priority={priority}
-      data-test={dataTest}
       anchorElement={anchorElement}
       {...otherProps}
     >

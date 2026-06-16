@@ -11,7 +11,6 @@ export interface ModalSimpleProps {
   isOpen?: boolean;
   onRequestClose?: (() => void) | null;
   priority?: ModalPriority | string;
-  'data-test'?: string;
   children?: React.ReactNode;
   /** Legacy props — accepted and ignored */
   shouldShowCloseButton?: boolean;

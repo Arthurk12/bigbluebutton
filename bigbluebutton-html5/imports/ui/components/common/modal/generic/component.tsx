@@ -37,7 +37,9 @@ export interface GenericModalProps {
   /** Custom inline styles applied directly to the modal content element. */
   contentStyle?: React.CSSProperties;
   /** Test identifier propagated to the modal wrapper for automated testing. */
-  'data-test'?: string;
+  dataTest?: string;
+  /** Test identifier propagated to the modal close button for automated testing. */
+  closeButtonDataTest?: string;
   /**
    * When provided, positions the modal content directly below this element
    * (popover / anchored style). The dark backdrop is preserved.
@@ -83,7 +85,8 @@ const GenericModal: React.FC<GenericModalProps> = ({
   priority,
   contentStyle,
   anchorElement,
-  'data-test': dataTest,
+  dataTest,
+  closeButtonDataTest,
 }) => {
   // contentRef: applied directly to the ReactModal content element via the
   // BBBModal v2.1.0 API (ModalProps now extends ReactModal.Props).
@@ -116,10 +119,6 @@ const GenericModal: React.FC<GenericModalProps> = ({
         overflow: 'visible',
       });
     }
-
-    if (dataTest) {
-      node.setAttribute('data-test', dataTest);
-    }
   }, [anchorElement, contentStyle, dataTest]);
 
   return (
@@ -138,6 +137,8 @@ const GenericModal: React.FC<GenericModalProps> = ({
       contentRef={contentRefCallback}
       parentSelector={() => document.querySelector<HTMLElement>('#modals-container') ?? document.body}
       portalClassName={priority ? `modal-${priority}` : undefined}
+      testId={dataTest}
+      closeButtonDataTest={closeButtonDataTest}
     >
       {children}
     </BBBModal>
