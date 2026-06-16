@@ -513,6 +513,7 @@ class ConnectionStatusComponent extends PureComponent {
         data-test="connectionStatusModal"
         allowScroll={false}
         noFooter={false}
+        showDividers
         footerContent={this.renderCopyDataButton()}
       >
         <Styled.Container>
