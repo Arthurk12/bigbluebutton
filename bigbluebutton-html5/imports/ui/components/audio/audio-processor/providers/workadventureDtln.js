@@ -4,18 +4,42 @@ const SAMPLE_RATE = 16000;
 
 const isSupported = () => isGenericWasmProcessingSupported();
 
-const loadFiles = async () => {
-  // The published worklet bundle embeds the LiteRT wasm bytes and both DTLN
-  // model files, so there's nothing to prefetch separately here -
-  // createProcessorStream() loads everything through
-  // createNoiseSuppressionAudioWorklet() below, on first use.
+// Resolved once and reused: the package memoizes the LiteRT wasm binary
+// module-globally and the browser caches the worklet module, so a second
+// prefetch would still re-instantiate LiteRT inside a throwaway worklet for
+// nothing. Cleared on failure so a later join retries, as BBBA's loader does.
+let prefetch = null;
+
+const prefetchProcessorAssets = async () => {
+  const { createNoiseSuppressionAudioWorklet } = await import('@workadventure/noise-suppression/audio-worklet');
+
+  // OfflineAudioContext, not a real one: it is never rendered and carries no
+  // autoplay gating, so this is safe to run outside a user gesture.
+  const worklet = await createNoiseSuppressionAudioWorklet(
+    new OfflineAudioContext(1, 1, SAMPLE_RATE),
+  );
+
+  try {
+    await worklet.ready;
+  } finally {
+    worklet.dispose();
+  }
+};
+
+const loadFiles = () => {
+  if (!prefetch) {
+    prefetch = prefetchProcessorAssets().catch((error) => {
+      prefetch = null;
+      throw error;
+    });
+  }
+
+  return prefetch;
 };
 
 const createProcessorStream = async (stream) => {
-  // Dynamic import, not a top-level one: this keeps the package's actual
-  // runtime code (and webpack's chunk for it) out of the bundle for
-  // deployments that never select this provider - only isSupported()/
-  // loadFiles() need to be cheap to statically import (see service.js).
+  // Already resolved by loadFiles() on the join path; awaited again here for
+  // the callers that create a stream without going through it.
   const { createNoiseSuppressionAudioWorklet } = await import('@workadventure/noise-suppression/audio-worklet');
 
   // DTLN operates at a fixed 16kHz/mono, unlike BBBA which runs at whatever
