@@ -37,38 +37,52 @@ const loadFiles = () => {
   return prefetch;
 };
 
-const createProcessorStream = async (stream) => {
-  // Already resolved by loadFiles() on the join path; awaited again here for
-  // the callers that create a stream without going through it.
-  const { createNoiseSuppressionAudioWorklet } = await import('@workadventure/noise-suppression/audio-worklet');
+// Already resolved by loadFiles() on the join path; chained again here for
+// the callers that create a stream without going through it.
+const createProcessorStream = (stream) => import('@workadventure/noise-suppression/audio-worklet')
+  .then(({ createNoiseSuppressionAudioWorklet }) => new Promise((resolve, reject) => {
+    // DTLN operates at a fixed 16kHz/mono, unlike BBBA which runs at whatever
+    // rate the source stream provides. MediaStreamAudioSourceNode resamples
+    // the incoming track to the context's rate automatically.
+    const context = new AudioContext({ sampleRate: SAMPLE_RATE });
+    let worklet = null;
 
-  // DTLN operates at a fixed 16kHz/mono, unlike BBBA which runs at whatever
-  // rate the source stream provides. MediaStreamAudioSourceNode resamples
-  // the incoming track to the context's rate automatically.
-  const context = new AudioContext({ sampleRate: SAMPLE_RATE });
+    const closeAndReject = (error) => {
+      worklet?.dispose();
+      context.close?.().catch(() => {});
+      reject(error);
+    };
 
-  await context.resume();
+    const setUpWorklet = () => {
+      const source = context.createMediaStreamSource(stream);
+      const destination = context.createMediaStreamDestination();
 
-  const source = context.createMediaStreamSource(stream);
-  const destination = context.createMediaStreamDestination();
-  // threads/numThreads default to false/unset - enabling them needs
-  // COOP/COEP headers this client doesn't set today, so this stays on the
-  // single-threaded default rather than requesting cross-origin isolation.
-  const worklet = await createNoiseSuppressionAudioWorklet(context);
-  await worklet.ready;
+      // threads/numThreads default to false/unset - enabling them needs
+      // COOP/COEP headers this client doesn't set today, so this stays on
+      // the single-threaded default rather than requesting cross-origin
+      // isolation.
+      createNoiseSuppressionAudioWorklet(context).then((createdWorklet) => {
+        worklet = createdWorklet;
 
-  source.connect(worklet.node);
-  worklet.node.connect(destination);
+        return worklet.ready.then(() => {
+          source.connect(worklet.node);
+          worklet.node.connect(destination);
 
-  return {
-    stream: destination.stream,
-    context,
-    // The package exposes no runtime enable/disable toggle - dispose() is
-    // its only lifecycle control - so there's nothing to wire up here.
-    setEnabled: () => {},
-    destroy: () => worklet.dispose(),
-  };
-};
+          resolve({
+            stream: destination.stream,
+            context,
+            // The package exposes no runtime enable/disable toggle -
+            // dispose() is its only lifecycle control - so there's nothing
+            // to wire up here.
+            setEnabled: () => {},
+            destroy: () => worklet.dispose(),
+          });
+        });
+      }).catch(closeAndReject);
+    };
+
+    context.resume().then(setUpWorklet).catch(closeAndReject);
+  }));
 
 // The package's docs ask consumers to disable the browser's own
 // noiseSuppression so it doesn't double-process the signal alongside DTLN.
