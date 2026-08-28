@@ -117,8 +117,8 @@ const filterSupportedConstraints = (audioDeviceConstraints) => {
   }
 };
 
-// Used by doGUM()'s getUserMedia retry ladder: dropping deviceId (the only
-// thing that retry is meant to give up on) must not also silently reset
+// First rung of doGUM()'s getUserMedia retry ladder: dropping deviceId (the
+// usual cause) must not also silently reset
 // echoCancellation/autoGainControl/noiseSuppression - including a
 // provider's forcedMicrophoneConstraints - back to the browser's own
 // defaults, which are `true` for all three in Firefox/Chrome/Safari alike.
@@ -126,6 +126,18 @@ const withoutDeviceIdConstraint = (audioConstraints) => {
   if (!audioConstraints || typeof audioConstraints !== 'object') return true;
   const { deviceId, ...rest } = audioConstraints;
   return rest;
+};
+
+// Last rung. media.audio.audioWasmProcessing.constraints and
+// media.audio.microphoneConstraints are free-form admin config and may hold an
+// exact/min/max value that is itself what overconstrained the request;
+// filterSupportedConstraints() only checks that the browser knows the
+// constraint name, not that the device can satisfy it. Keep only what a
+// provider hard-requires, so the retry cannot fail for the same reason twice.
+const forcedConstraintsOnly = () => {
+  const forced = getProviderForcedMicrophoneConstraints();
+
+  return Object.keys(forced || {}).length > 0 ? { ...forced } : true;
 };
 
 const getWasmProcessingSettings = () => {
@@ -264,6 +276,27 @@ const loadWasmProcessor = async () => {
   return false;
 };
 
+// Retry without the device, then - if the remaining constraints are what the
+// device cannot satisfy - without them either.
+const retryWithoutDevice = async (audioConstraints) => {
+  try {
+    return await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+  } catch (error) {
+    if (error.name !== 'OverconstrainedError') throw error;
+
+    logger.warn({
+      logCode: 'audio_dogum_constraint_rollback',
+      extraInfo: {
+        errorName: error.name,
+        errorMessage: error.message,
+        constraint: error.constraint,
+      },
+    }, 'doGUM: retry still overconstrained, dropping configured constraints');
+
+    return navigator.mediaDevices.getUserMedia({ audio: forcedConstraintsOnly() });
+  }
+};
+
 const doGUM = async (
   constraints, {
     adoptProcessorAsPrimary = true,
@@ -366,10 +399,12 @@ const doGUM = async (
           extraInfo: {
             errorName: idealError.name,
             errorMessage: idealError.message,
+            constraints,
+            fallbackAudioConstraints,
           },
         }, 'doGUM: ideal deviceId also failed, falling back without a specific device');
 
-        stream = await navigator.mediaDevices.getUserMedia({ audio: fallbackAudioConstraints });
+        stream = await retryWithoutDevice(fallbackAudioConstraints);
       }
     } else if (retryOnFailure) {
       logger.warn({
@@ -378,10 +413,11 @@ const doGUM = async (
           constraints,
           errorName: error.name,
           errorMessage: error.message,
+          fallbackAudioConstraints,
         },
       }, 'Audio getUserMedia returned OverconstrainedError, rollback');
 
-      stream = await navigator.mediaDevices.getUserMedia({ audio: fallbackAudioConstraints });
+      stream = await retryWithoutDevice(fallbackAudioConstraints);
     } else {
       throw error;
     }
