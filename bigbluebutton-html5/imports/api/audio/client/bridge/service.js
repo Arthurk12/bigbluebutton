@@ -327,12 +327,7 @@ const doGUM = async (
       // configured wasmConstraints (media.audio.audioWasmProcessing.constraints)
       // - e.g. the WorkAdventure/DTLN provider's docs ask for the browser's
       // own noiseSuppression to stay off so it doesn't double-process the
-      // signal alongside the model. That can't be expressed as just another
-      // default: settings.yml ships audioWasmProcessing.constraints
-      // non-empty (tuned for BBBA), so a merely-overridable value would
-      // silently lose to it for every deployment that hasn't customized
-      // that block. forcedMicrophoneConstraints is applied last so it always
-      // wins; today only the WA/DTLN provider forces anything.
+      // signal alongside the model. Merge these on top of the configured constraints.
       const forcedMicrophoneConstraints = getProviderForcedMicrophoneConstraints();
       // eslint-disable-next-line no-param-reassign
       constraints.audio = filterSupportedConstraints({
