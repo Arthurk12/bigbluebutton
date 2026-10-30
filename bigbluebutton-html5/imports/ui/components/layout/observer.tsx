@@ -7,6 +7,7 @@ import {
   isMobile,
   getDeviceType,
   getInitialSidebarContentPanel,
+  setClientFontSize,
 } from './utils';
 import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 import { Input, Layout } from './layoutTypes';
@@ -161,12 +162,7 @@ const LayoutObserver: React.FC = () => {
     const DESKTOP_FONT_SIZE = APP_CONFIG.desktopFontSize;
     const MOBILE_FONT_SIZE = APP_CONFIG.mobileFontSize;
     const fontSize = isMobile() ? MOBILE_FONT_SIZE : DESKTOP_FONT_SIZE;
-    document.getElementsByTagName('html')[0].style.fontSize = fontSize;
-
-    layoutContextDispatch({
-      type: ACTIONS.SET_FONT_SIZE,
-      value: parseInt(fontSize.slice(0, -2), 10),
-    });
+    setClientFontSize(fontSize, layoutContextDispatch);
 
     layoutContextDispatch({
       type: ACTIONS.SET_HAS_ACTIONBAR,

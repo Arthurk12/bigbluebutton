@@ -1,5 +1,6 @@
 import { equals } from 'ramda';
 import {
+  ACTIONS,
   DEVICE_ORIENTATION,
   DEVICE_TYPE,
   LAYOUT_ELEMENTS,
@@ -29,6 +30,14 @@ const isDesktop = () => windowSize() >= tabletLandscapeUpperBoundary;
 const getWaitLayout = () => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(WAIT_LAYOUT_PARAMETER) || false;
+};
+
+const setClientFontSize = (fontSize, layoutContextDispatch) => {
+  window.document.documentElement.style.fontSize = fontSize;
+  layoutContextDispatch({
+    type: ACTIONS.SET_FONT_SIZE,
+    value: parseInt(fontSize, 10),
+  });
 };
 
 /**
@@ -223,5 +232,5 @@ const isPhoneLandscape = (browser) => deviceInfo.isPhone
 export {
   suportedLayouts, LAYOUTS_SYNC, getSupportedLayouts, isLayoutSupported, layoutAllowedInSettings,
   getWaitLayout, getDeviceType, getInitialSidebarContentPanel,
-  isValidSynchronizationLayout, isPhoneLandscape,
+  isValidSynchronizationLayout, isPhoneLandscape, setClientFontSize,
 };

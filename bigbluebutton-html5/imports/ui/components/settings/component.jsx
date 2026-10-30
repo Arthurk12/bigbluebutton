@@ -17,6 +17,7 @@ import { setUseCurrentLocale } from '../../core/local-states/useCurrentLocale';
 import Transcription from '/imports/ui/components/settings/submenus/transcription/component';
 import UnsavedChangesModal from '/imports/ui/components/common/modal/unsaved-changes/component';
 import { SETTINGS_TABS, getSettingsTabs } from './enums';
+import { setClientFontSize } from '/imports/ui/components/layout/utils';
 
 const intlMessages = defineMessages({
   appTabLabel: {
@@ -128,10 +129,6 @@ const propTypes = {
 };
 
 class Settings extends Component {
-  static setHtmlFontSize(size) {
-    document.getElementsByTagName('html')[0].style.fontSize = size;
-  }
-
   constructor(props) {
     super(props);
 
@@ -249,8 +246,8 @@ class Settings extends Component {
 
   performClose() {
     const { saved } = this.state;
-    const { setIsOpen } = this.props;
-    Settings.setHtmlFontSize(saved.application.fontSize);
+    const { setIsOpen, layoutContextDispatch } = this.props;
+    setClientFontSize(saved.application.fontSize, layoutContextDispatch);
     document.getElementsByTagName('html')[0].lang = saved.application.locale;
     setIsOpen(false);
   }

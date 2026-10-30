@@ -6,7 +6,7 @@ import { defineMessages, injectIntl } from 'react-intl';
 import BaseMenu from '../base/component';
 import Styled from './styles';
 import WakeLockService from '/imports/ui/components/wake-lock/service';
-import { ACTIONS } from '/imports/ui/components/layout/enums';
+import { setClientFontSize } from '/imports/ui/components/layout/utils';
 import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 
 const MIN_FONTSIZE = 0;
@@ -97,10 +97,6 @@ const intlMessages = defineMessages({
 });
 
 class ApplicationMenu extends BaseMenu {
-  static setHtmlFontSize(size) {
-    document.getElementsByTagName('html')[0].style.fontSize = size;
-  }
-
   constructor(props) {
     super(props);
 
@@ -157,13 +153,8 @@ class ApplicationMenu extends BaseMenu {
     const obj = this.state;
     obj.settings.fontSize = size;
     this.setState(obj, () => {
-      ApplicationMenu.setHtmlFontSize(this.state.settings.fontSize);
+      setClientFontSize(this.state.settings.fontSize, layoutContextDispatch);
       this.handleUpdateFontSize(this.state.settings.fontSize);
-    });
-
-    layoutContextDispatch({
-      type: ACTIONS.SET_FONT_SIZE,
-      value: parseInt(size.slice(0, -2), 10),
     });
   }
 
