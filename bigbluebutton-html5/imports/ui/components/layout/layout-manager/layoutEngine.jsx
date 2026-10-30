@@ -132,7 +132,7 @@ const LayoutEngine = () => {
   };
 
   const calculatesNavbarHeight = () => {
-    const { navBarHeight } = DEFAULT_VALUES;
+    const navBarHeight = DEFAULT_VALUES.navBarHeightRem * fontSize;
 
     const finalHeight = navBarOutput.hideTopRow ? navBarHeight / 2 : navBarHeight;
 
@@ -172,10 +172,9 @@ const LayoutEngine = () => {
       };
     }
 
-    const { actionBarHeight, actionBarPadding } = DEFAULT_VALUES;
+    const { actionBarHeightRem, actionBarPadding } = DEFAULT_VALUES;
 
-    const BASE_FONT_SIZE = 14; // 90% font size
-    const height = ((actionBarHeight / BASE_FONT_SIZE) * fontSize);
+    const height = actionBarHeightRem * fontSize;
 
     return {
       height: height + (actionBarPadding * 2),
@@ -316,11 +315,9 @@ const LayoutEngine = () => {
   };
 
   const calculatesSidebarContentBounds = (sidebarNavWidth) => {
-    const { navBarHeight } = DEFAULT_VALUES;
-
     let top = bannerAreaHeight();
 
-    if (isMobile) top = navBarHeight + bannerAreaHeight();
+    if (isMobile) top = calculatesNavbarHeight() + bannerAreaHeight();
 
     let left = isMobile ? 0 : sidebarNavWidth;
     let right = isMobile ? 0 : sidebarNavWidth;

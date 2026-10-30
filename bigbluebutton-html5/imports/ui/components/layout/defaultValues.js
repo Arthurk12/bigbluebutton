@@ -28,11 +28,11 @@ const DEFAULT_VALUES = {
 
   bannerHeight: 34,
 
-  navBarHeight: 85,
+  navBarHeightRem: 6,
   navBarTop: 0,
   navBarTabOrder: 3,
 
-  actionBarHeight: 42,
+  actionBarHeightRem: 3,
   actionBarPadding: 11.2,
   actionBarTabOrder: 6,
 

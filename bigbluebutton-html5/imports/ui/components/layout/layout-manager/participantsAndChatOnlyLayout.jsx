@@ -15,7 +15,7 @@ const windowWidth = () => window.document.documentElement.clientWidth;
 const windowHeight = () => window.document.documentElement.clientHeight;
 
 const ParticipantsAndChatOnlyLayout = (props) => {
-  const { bannerAreaHeight, isMobile } = props;
+  const { bannerAreaHeight, calculatesNavbarHeight, isMobile } = props;
 
   function usePrevious(value) {
     const ref = useRef();
@@ -129,7 +129,7 @@ const ParticipantsAndChatOnlyLayout = (props) => {
       mediaBounds.height = mediaAreaBounds.height;
     }
     mediaBounds.width = mediaAreaBounds.width;
-    mediaBounds.top = DEFAULT_VALUES.navBarHeight + bannerAreaHeight();
+    mediaBounds.top = calculatesNavbarHeight() + bannerAreaHeight();
     mediaBounds.left = !isRTL ? mediaAreaBounds.left : null;
     mediaBounds.right = isRTL ? sidebarSize : null;
     mediaBounds.zIndex = 1;

@@ -92,7 +92,8 @@ const UnifiedLayout = (props) => {
     const { sidebarContentAuxiliary } = input;
     const isMultiFunctionalModeActive = sidebarContentAuxiliary.isOpen;
     const { height: actionBarHeight } = calculatesActionbarHeight();
-    const mediaAreaHeight = windowHeight() - (DEFAULT_VALUES.navBarHeight + actionBarHeight);
+    const navBarHeight = calculatesNavbarHeight();
+    const mediaAreaHeight = windowHeight() - (navBarHeight + actionBarHeight);
     const sidebarContentMarginToMedia = windowWidth()
       * SIDEBAR_CONTENT_MARGIN_TO_MEDIA_PERCENTAGE_WIDTH;
     const mediaAreaWidth = windowWidth()
@@ -102,7 +103,7 @@ const UnifiedLayout = (props) => {
     const sidebarSize = sidebarNavWidth + sidebarContentWidth;
 
     dropZones[CAMERADOCK_POSITION.CONTENT_TOP] = {
-      top: DEFAULT_VALUES.navBarHeight,
+      top: navBarHeight,
       left: !isRTL ? sidebarSize : null,
       right: isRTL ? sidebarSize : null,
       width: mediaAreaWidth,
@@ -111,7 +112,7 @@ const UnifiedLayout = (props) => {
     };
 
     dropZones[CAMERADOCK_POSITION.CONTENT_RIGHT] = {
-      top: DEFAULT_VALUES.navBarHeight + DROP_ZONE_DEFAUL_SIZE,
+      top: navBarHeight + DROP_ZONE_DEFAUL_SIZE,
       left: isRTL
         ? sidebarContentMarginToMedia
         : windowWidth() - DROP_ZONE_DEFAUL_SIZE - sidebarContentMarginToMedia,
@@ -121,7 +122,7 @@ const UnifiedLayout = (props) => {
     };
 
     dropZones[CAMERADOCK_POSITION.CONTENT_BOTTOM] = {
-      top: DEFAULT_VALUES.navBarHeight + mediaAreaHeight - DROP_ZONE_DEFAUL_SIZE,
+      top: navBarHeight + mediaAreaHeight - DROP_ZONE_DEFAUL_SIZE,
       left: !isRTL ? sidebarSize : null,
       right: isRTL ? sidebarSize : null,
       width: mediaAreaWidth,
@@ -130,7 +131,7 @@ const UnifiedLayout = (props) => {
     };
 
     dropZones[CAMERADOCK_POSITION.CONTENT_LEFT] = {
-      top: DEFAULT_VALUES.navBarHeight + DROP_ZONE_DEFAUL_SIZE,
+      top: navBarHeight + DROP_ZONE_DEFAUL_SIZE,
       left: !isRTL ? sidebarSize : null,
       right: isRTL ? sidebarSize : null,
       height: mediaAreaHeight - 2 * DROP_ZONE_DEFAUL_SIZE,
@@ -313,7 +314,7 @@ const UnifiedLayout = (props) => {
     let sidebarContentHeight = 0;
     if (sidebarContentInput.isOpen) {
       if (isMobile) {
-        sidebarContentHeight = windowHeight() - DEFAULT_VALUES.navBarHeight;
+        sidebarContentHeight = windowHeight() - calculatesNavbarHeight();
       } else if (
         cameraDockInput.numCameras > 0
         && getCameraDockPosition() === CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM
@@ -516,7 +517,7 @@ const UnifiedLayout = (props) => {
     const { height: actionBarHeight } = calculatesActionbarHeight();
     const navBarHeight = calculatesNavbarHeight();
     const mediaAreaHeight = windowHeight()
-      - (DEFAULT_VALUES.navBarHeight + actionBarHeight + bannerAreaHeight());
+      - (navBarHeight + actionBarHeight + bannerAreaHeight());
     const sidebarContentMarginToMedia = windowWidth()
       * SIDEBAR_CONTENT_MARGIN_TO_MEDIA_PERCENTAGE_WIDTH;
     const mediaAreaWidth = windowWidth()
@@ -803,7 +804,7 @@ const UnifiedLayout = (props) => {
       value: {
         width: windowWidth() - sidebarNavWidth.width - sidebarContentWidth.width
           - (windowWidth() * SIDEBAR_CONTENT_MARGIN_TO_MEDIA_PERCENTAGE_WIDTH),
-        height: windowHeight() - DEFAULT_VALUES.navBarHeight - actionBarHeight,
+        height: windowHeight() - navbarBounds.height - actionBarHeight,
       },
     });
 

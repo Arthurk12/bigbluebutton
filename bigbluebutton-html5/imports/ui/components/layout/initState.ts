@@ -18,11 +18,11 @@ export const INITIAL_INPUT_STATE = {
   },
   navBar: {
     hasNavBar: true,
-    height: DEFAULT_VALUES.navBarHeight,
+    height: DEFAULT_VALUES.navBarHeightRem * DEFAULT_VALUES.fontSize,
   },
   actionBar: {
     hasActionBar: true,
-    height: DEFAULT_VALUES.actionBarHeight,
+    height: DEFAULT_VALUES.actionBarHeightRem * DEFAULT_VALUES.fontSize,
   },
   sidebarNavigation: {
     isOpen: true,
