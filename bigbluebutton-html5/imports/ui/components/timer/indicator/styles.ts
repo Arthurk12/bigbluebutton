@@ -30,7 +30,7 @@ const TimerWrapper = styled.div`
 const Timer = styled.div`
   margin-top: 0.5rem;
   display: flex;
-  max-height: ${timerPaddingXL});
+  max-height: ${timerPaddingXL};
 `;
 
 const timerRunning = `
